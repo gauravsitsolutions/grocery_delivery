@@ -119,7 +119,7 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  // ───────────────── UI PARTS ─────────────────
+  // UI Parts
 
   Widget _buildHeader(bool isMobile) {
     return Column(

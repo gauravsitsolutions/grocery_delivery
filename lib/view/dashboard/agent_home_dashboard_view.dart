@@ -31,7 +31,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ================= STATUS =================
+              // Status
               Row(
                 children: [
                   Stack(
@@ -100,7 +100,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
               SizedBox(height: R.h(16)),
 
-              // ================= GO ONLINE =================
+              // Go Online
               Container(
                 padding: EdgeInsets.all(R.w(14)),
                 decoration: BoxDecoration(
@@ -148,7 +148,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
               SizedBox(height: R.h(24)),
 
-              // ================= CURRENT TASK =================
+              // Current Task
               Text(
                 'Current Task & Delivery',
                 style: TextStyle(
@@ -168,7 +168,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
               SizedBox(height: R.h(24)),
 
-              // ================= NEW ORDER =================
+              // New Order
               Opacity(
                 opacity: isOnline ? 1 : 0.35,
                 child: AbsorbPointer(
@@ -209,7 +209,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
               SizedBox(height: R.h(24)),
 
-              // ================= DELIVERY QUEUE =================
+              // Delivery Queue
               Opacity(
                 opacity: isOnline ? 1 : 0.35,
                 child: AbsorbPointer(
@@ -246,7 +246,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
               SizedBox(height: R.h(24)),
 
-              // ================= AVAILABLE =================
+              // Available
               Opacity(
                 opacity: isOnline ? 1 : 0.35,
                 child: AbsorbPointer(
@@ -297,7 +297,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  // ================= CURRENT TASK CARD =================
+  // Current Task Card
 
   Widget _currentTaskCard() {
     return Container(
@@ -430,7 +430,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  // ================= QUEUE CARD =================
+  // Queue Card
 
   Widget _queueCard(String title, String price, String badge) {
     return Container(
@@ -495,7 +495,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  // ================= ORDER CARD =================
+  // Order Card
 
   Widget _orderCard({
     required String title,

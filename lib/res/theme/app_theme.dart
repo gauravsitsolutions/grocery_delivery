@@ -8,7 +8,7 @@ class AppTheme {
     useMaterial3: false, // keep UI unchanged
     scaffoldBackgroundColor: AppColors.scaffoldBg,
 
-    // ---------------- COLORS ----------------
+    // Colors
     colorScheme: const ColorScheme.light(
       primary: AppColors.primaryGreen,
       onPrimary: AppColors.black,
@@ -16,7 +16,7 @@ class AppTheme {
       onSurface: AppColors.black,
     ),
 
-    // ---------------- APP BAR ----------------
+    // App Bar
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -29,7 +29,7 @@ class AppTheme {
       ),
     ),
 
-    // ---------------- INPUTS ----------------
+    // Inputs
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.cardBg,
@@ -47,7 +47,7 @@ class AppTheme {
       focusedErrorBorder: _outlineBorder(AppColors.error),
     ),
 
-    // ---------------- BUTTONS ----------------
+    // Buttons
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryGreen,
@@ -64,13 +64,13 @@ class AppTheme {
       ),
     ),
 
-    // ---------------- ICONS ----------------
+    // Icons
     iconTheme: const IconThemeData(
       color: AppColors.black,
       size: 22,
     ),
 
-    // ---------------- DIVIDER ----------------
+    // Divider
     dividerTheme: const DividerThemeData(
       color: AppColors.inputBorder,
       thickness: 1,
