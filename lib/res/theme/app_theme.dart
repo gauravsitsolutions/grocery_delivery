@@ -11,9 +11,9 @@ class AppTheme {
     // ---------------- COLORS ----------------
     colorScheme: const ColorScheme.light(
       primary: AppColors.primaryGreen,
-      onPrimary: Colors.black,
+      onPrimary: AppColors.black,
       surface: AppColors.scaffoldBg,
-      onSurface: Colors.black,
+      onSurface: AppColors.black,
     ),
 
     // ---------------- APP BAR ----------------
@@ -21,9 +21,9 @@ class AppTheme {
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
-      iconTheme: IconThemeData(color: Colors.black),
+      iconTheme: IconThemeData(color: AppColors.black),
       titleTextStyle: TextStyle(
-        color: Colors.black,
+        color: AppColors.black,
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
@@ -43,15 +43,15 @@ class AppTheme {
       border: _outlineBorder(AppColors.inputBorder),
       enabledBorder: _outlineBorder(AppColors.inputBorder),
       focusedBorder: _outlineBorder(AppColors.primaryGreen),
-      errorBorder: _outlineBorder(Colors.red),
-      focusedErrorBorder: _outlineBorder(Colors.red),
+      errorBorder: _outlineBorder(AppColors.error),
+      focusedErrorBorder: _outlineBorder(AppColors.error),
     ),
 
     // ---------------- BUTTONS ----------------
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryGreen,
-        foregroundColor: Colors.black,
+        foregroundColor: AppColors.black,
         elevation: 0,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(
@@ -66,7 +66,7 @@ class AppTheme {
 
     // ---------------- ICONS ----------------
     iconTheme: const IconThemeData(
-      color: Colors.black,
+      color: AppColors.black,
       size: 22,
     ),
 

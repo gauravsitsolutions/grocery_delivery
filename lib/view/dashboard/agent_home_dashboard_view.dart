@@ -47,7 +47,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         child: CircleAvatar(
                           radius: R.r(6),
                           backgroundColor:
-                              isOnline ? AppColors.primaryGreen : Colors.grey,
+                              isOnline ? AppColors.primaryGreen : AppColors.grey,
                         ),
                       ),
                     ],
@@ -71,7 +71,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                               fontSize: R.sp(18),
                               fontWeight: FontWeight.w700,
                               color:
-                                  isOnline ? Colors.black : AppColors.bodyText,
+                                  isOnline ? AppColors.black : AppColors.bodyText,
                             ),
                           ),
                           SizedBox(width: R.w(6)),
@@ -79,7 +79,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                             Icons.circle,
                             size: R.sp(10),
                             color:
-                                isOnline ? AppColors.primaryGreen : Colors.grey,
+                                isOnline ? AppColors.primaryGreen : AppColors.grey,
                           ),
                         ],
                       ),
@@ -92,7 +92,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     child: Icon(
                       RemixIcons.notification_2_line,
                       size: R.sp(22),
-                      color: Colors.black,
+                      color: AppColors.black,
                     ),
                   ),
                 ],
@@ -344,7 +344,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           Container(
             padding: EdgeInsets.all(R.w(14)),
             decoration: BoxDecoration(
-              color: const Color(0xFFEAFBF0),
+              color: AppColors.softGreenBg,
               borderRadius: BorderRadius.circular(R.r(16)),
             ),
             child: Row(
@@ -381,14 +381,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   radius: R.r(22),
                   backgroundColor: AppColors.white,
                   child: Icon(RemixIcons.chat_3_line,
-                      size: R.sp(18), color: Colors.black),
+                      size: R.sp(18), color: AppColors.black),
                 ),
                 SizedBox(width: R.w(10)),
                 CircleAvatar(
                   radius: R.r(22),
                   backgroundColor: AppColors.white,
                   child: Icon(RemixIcons.phone_line,
-                      size: R.sp(18), color: Colors.black),
+                      size: R.sp(18), color: AppColors.black),
                 ),
               ],
             ),
@@ -412,14 +412,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     style: TextStyle(
                       fontSize: R.sp(15),
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: AppColors.black,
                     ),
                   ),
                   SizedBox(width: R.w(8)),
                   Icon(
                     Icons.navigation,
                     size: R.sp(18),
-                    color: Colors.black,
+                    color: AppColors.black,
                   ),
                 ],
               ),

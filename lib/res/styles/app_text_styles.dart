@@ -30,6 +30,6 @@ class AppTextStyles {
   static TextStyle get button => TextStyle(
         fontSize: R.sp(16),
         fontWeight: FontWeight.w700,
-        color: Colors.black,
+        color: AppColors.black,
       );
 }

@@ -49,4 +49,8 @@ class AppColors {
   static const Color summaryBlueIcon = Color(0xFF2F6BFF);
   static const Color summaryOrangeIcon = Color(0xFFFF8A00);
   static const Color summaryPurpleIcon = Color(0xFF7B4EFF);
+
+  // ───────────── Additional ─────────────
+  static const Color softGreenBg = Color(0xFFEAFBF0);
+  static const Color greyText = Colors.grey;
 }
