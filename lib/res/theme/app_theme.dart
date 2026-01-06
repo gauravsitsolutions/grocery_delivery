@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+
+class AppTheme {
+  AppTheme._(); // prevents instantiation
+
+  static ThemeData lightTheme = ThemeData(
+    useMaterial3: false, // keep UI unchanged
+    scaffoldBackgroundColor: AppColors.scaffoldBg,
+
+    // ---------------- COLORS ----------------
+    colorScheme: const ColorScheme.light(
+      primary: AppColors.primaryGreen,
+      onPrimary: Colors.black,
+      surface: AppColors.scaffoldBg,
+      onSurface: Colors.black,
+    ),
+
+    // ---------------- APP BAR ----------------
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      iconTheme: IconThemeData(color: Colors.black),
+      titleTextStyle: TextStyle(
+        color: Colors.black,
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+
+    // ---------------- INPUTS ----------------
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: AppColors.cardBg,
+      hintStyle: const TextStyle(color: AppColors.hintText),
+      prefixIconColor: AppColors.inputIcon,
+      suffixIconColor: AppColors.inputIcon,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 16,
+      ),
+      border: _outlineBorder(AppColors.inputBorder),
+      enabledBorder: _outlineBorder(AppColors.inputBorder),
+      focusedBorder: _outlineBorder(AppColors.primaryGreen),
+      errorBorder: _outlineBorder(Colors.red),
+      focusedErrorBorder: _outlineBorder(Colors.red),
+    ),
+
+    // ---------------- BUTTONS ----------------
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        minimumSize: const Size(double.infinity, 56),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+
+    // ---------------- ICONS ----------------
+    iconTheme: const IconThemeData(
+      color: Colors.black,
+      size: 22,
+    ),
+
+    // ---------------- DIVIDER ----------------
+    dividerTheme: const DividerThemeData(
+      color: AppColors.inputBorder,
+      thickness: 1,
+      space: 24,
+    ),
+  );
+
+  // Reusable border
+  static OutlineInputBorder _outlineBorder(Color color) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide(color: color),
+    );
+  }
+}
