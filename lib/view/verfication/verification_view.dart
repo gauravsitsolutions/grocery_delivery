@@ -76,7 +76,7 @@ class _VerificationViewState extends State<VerificationView> {
 
   @override
   Widget build(BuildContext context) {
-    R.init(context); // ✅ REQUIRED
+    R.init(context);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,

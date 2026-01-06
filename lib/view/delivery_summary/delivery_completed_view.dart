@@ -28,7 +28,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
 
   @override
   Widget build(BuildContext context) {
-    R.init(context); // ✅ REQUIRED
+    R.init(context);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,

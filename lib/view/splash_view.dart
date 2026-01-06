@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     Timer(const Duration(seconds: 2), () {
-      // ✅ RESTORE STATUS BAR
+      // RESTORE STATUS BAR
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.edgeToEdge,
       );
@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    R.init(context); // ✅ REQUIRED FOR RESPONSIVENESS
+    R.init(context);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -79,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen>
             scale: _scaleAnimation,
             child: Image.asset(
               'assets/images/app_logo.png',
-              width: R.w(240), // ✅ RESPONSIVE LOGO SIZE
+              width: R.w(240),
             ),
           ),
         ),

@@ -23,7 +23,7 @@ class _SlideToCompleteWidgetState extends State<SlideToCompleteWidget> {
 
   @override
   Widget build(BuildContext context) {
-    R.init(context); // ✅ REQUIRED
+    R.init(context);
 
     final double height = R.h(56);
     final double handleSize = R.w(44);

@@ -9,7 +9,7 @@ class NavigationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    R.init(context); // ✅ init responsive
+    R.init(context);
     final topInset = MediaQuery.of(context).padding.top;
 
     return Scaffold(

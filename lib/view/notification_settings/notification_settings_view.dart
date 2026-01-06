@@ -22,7 +22,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
 
   @override
   Widget build(BuildContext context) {
-    R.init(context); // ✅ required once
+    R.init(context);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,

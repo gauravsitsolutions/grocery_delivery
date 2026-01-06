@@ -9,7 +9,7 @@ class DeliveriesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    R.init(context); // ✅ required once per screen
+    R.init(context);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,

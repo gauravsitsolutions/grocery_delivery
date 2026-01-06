@@ -42,7 +42,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
 
   @override
   Widget build(BuildContext context) {
-    R.init(context); // ✅ REQUIRED FOR RESPONSIVENESS
+    R.init(context);
 
     return PersistentTabView(
       context,
@@ -69,7 +69,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
           label: 'Profile',
         ),
       ],
-      navBarHeight: R.h(70), // ✅ responsive height
+      navBarHeight: R.h(70),
       navBarStyle: NavBarStyle.style1,
       backgroundColor: AppColors.white,
       handleAndroidBackButtonPress: true,
