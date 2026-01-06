@@ -1,4 +1,4 @@
-# samrudhi_delivery_agent_app
+# Samruddhi Delivery Agent App
 
 A new Flutter project.
 
