@@ -2,7 +2,8 @@ class AppRoutes {
   // Auth
   static const login = '/login';
   static const forgotPassword = '/forgot-password';
-  static const resetPassword = '/reset-password';
+  static const forgotPasswordOtp = '/forgot-password-otp';
+  static const setNewPassword = '/set-new-password';
   static const passwordResetSuccess = '/password-reset-success';
 
   // Main

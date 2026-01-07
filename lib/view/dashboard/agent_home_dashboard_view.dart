@@ -6,18 +6,24 @@ import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
 
 class AgentDashboardView extends StatefulWidget {
-  const AgentDashboardView({super.key});
+  final bool isOnline;
+  final ValueChanged<bool> onStatusChanged;
+
+  const AgentDashboardView({
+    super.key,
+    required this.isOnline,
+    required this.onStatusChanged,
+  });
 
   @override
   State<AgentDashboardView> createState() => _AgentDashboardViewState();
 }
 
 class _AgentDashboardViewState extends State<AgentDashboardView> {
-  bool isOnline = true;
-
   @override
   Widget build(BuildContext context) {
     R.init(context);
+    final isOnline = widget.isOnline;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -151,9 +157,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     ),
                     RemixIconToggle(
                       value: isOnline,
-                      onChanged: (val) {
-                        setState(() => isOnline = val);
-                      },
+                      onChanged: widget.onStatusChanged,
                     ),
                   ],
                 ),
@@ -162,20 +166,25 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               SizedBox(height: R.h(24)),
 
               // Current Task
-              Text(
-                'Current Task & Delivery',
-                style: TextStyle(
-                  fontSize: R.sp(20),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: R.h(12)),
-
+              // Current Task
               Opacity(
                 opacity: isOnline ? 1 : 0.35,
                 child: AbsorbPointer(
                   absorbing: !isOnline,
-                  child: _currentTaskCard(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Current Task & Delivery',
+                        style: TextStyle(
+                          fontSize: R.sp(20),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: R.h(12)),
+                      _currentTaskCard(),
+                    ],
+                  ),
                 ),
               ),
 
@@ -411,10 +420,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             width: double.infinity,
             height: R.h(48),
             child: ElevatedButton(
-              onPressed: isOnline ? () {} : null,
+              onPressed: widget.isOnline ? () {} : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    isOnline ? AppColors.primaryGreen : AppColors.borderLight,
+                    widget.isOnline ? AppColors.primaryGreen : AppColors.borderLight,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -576,7 +585,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: isOnline ? () {} : null,
+                  onPressed: widget.isOnline ? () {} : null,
                   icon: Icon(Icons.close, size: R.sp(18)),
                   label: Text(
                     'Reject',
@@ -587,7 +596,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               SizedBox(width: R.w(12)),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: isOnline
+                  onPressed: widget.isOnline
                       ? () {
                           Navigator.of(context, rootNavigator: true)
                               .pushNamed(AppRoutes.customer_info);

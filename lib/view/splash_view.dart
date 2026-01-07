@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:samrudhi_delivery_agent_app/auth/login/login_view.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,12 +16,25 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
+
+  // Logo
+  late Animation<double> _logoScale;
+
+  // App name
+  late Animation<Offset> _titleSlide;
+  late Animation<double> _titleFade;
+
+  // Feature row
+  late Animation<Offset> _featuresSlide;
+  late Animation<double> _featuresFade;
+
+  bool _showCenterLoader = false;
+  String _version = '';
 
   @override
   void initState() {
     super.initState();
+    _getAppVersion();
 
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.immersiveSticky,
@@ -28,40 +42,88 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(seconds: 4),
     );
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
+    // Logo hover
+    _logoScale = Tween<double>(begin: 0.9, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.25, curve: Curves.easeOut),
+      ),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    // App name
+    _titleSlide = _slide(0.30, 0.45);
+    _titleFade = _fade(0.30, 0.45);
+
+    // Feature row (same animation type, later)
+    _featuresSlide = _slide(0.60, 0.80);
+    _featuresFade = _fade(0.60, 0.80);
+
+    // Listen when animation completes
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _onAnimationCompleted();
+      }
+    });
 
     _controller.forward();
-
-    Timer(const Duration(seconds: 2), () {
-      // RESTORE STATUS BAR
-      SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.edgeToEdge,
-      );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginView()),
-      );
-    });
   }
 
-  @override
-  void dispose() {
-    // 🔐 SAFETY RESTORE
+  Future<void> _getAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _version = packageInfo.version;
+      });
+    }
+  }
+
+  Animation<Offset> _slide(double start, double end) {
+    return Tween<Offset>(begin: const Offset(0, 0.6), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Interval(start, end, curve: Curves.easeOut),
+      ),
+    );
+  }
+
+  Animation<double> _fade(double start, double end) {
+    return Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Interval(start, end, curve: Curves.easeIn),
+      ),
+    );
+  }
+
+  Future<void> _onAnimationCompleted() async {
+    // Show centered loader
+    if (mounted) {
+      setState(() {
+        _showCenterLoader = true;
+      });
+    }
+
+    // Keep loader for few seconds
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // RESTORE STATUS BAR
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,
     );
 
+    Navigator.pushReplacementNamed(context, AppRoutes.login);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+    );
     _controller.dispose();
     super.dispose();
   }
@@ -69,21 +131,154 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     R.init(context);
+    // bool isTablet = MediaQuery.of(context).size.shortestSide >= 600;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Image.asset(
-              'assets/images/app_logo.png',
-              width: R.w(240),
+      body: Stack(
+        alignment: Alignment.center,
+        children: [
+          /// CONTENT
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              /// LOGO
+              ScaleTransition(
+                scale: _logoScale,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(60),
+                  child: Image.asset(
+                    'assets/images/app_logo.png',
+                    height: R.w(160),
+                    width: R.w(160),
+                    fit: BoxFit.contain, // Changed to contain to avoid cropping if aspect ratio mismatches
+                  ),
+                ),
+              ),
+
+              SizedBox(height: R.h(40)),
+
+              /// APP NAME
+              FadeTransition(
+                opacity: _titleFade,
+                child: SlideTransition(
+                  position: _titleSlide,
+                  child: ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+                    ).createShader(bounds),
+                    child: Text(
+                      'Samruddha Kirana',
+                      style: TextStyle(
+                        fontSize: R.sp(30),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: R.h(60)),
+
+              /// FEATURES ROW
+              FadeTransition(
+                opacity: _featuresFade,
+                child: SlideTransition(
+                  position: _featuresSlide,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: const [
+                      _FeatureItem(
+                        icon: Icons.local_shipping,
+                        text: 'Fast\nDelivery',
+                      ),
+                      _FeatureItem(
+                        icon: Icons.security,
+                        text: 'Secure\nPayments',
+                      ),
+                      _FeatureItem(
+                        icon: Icons.verified,
+                        text: 'Quality\nProducts',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          /// CENTER LOADER (AFTER ALL ANIMATIONS)
+          if (_showCenterLoader)
+            const IgnorePointer(
+              ignoring: true,
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+                ),
+              ),
+            ),
+
+          /// VERSION NUMBER (BOTTOM)
+          Positioned(
+            bottom: R.h(40),
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'Version $_version',
+                style: TextStyle(
+                  color: AppColors.bodyText,
+                  fontSize: R.sp(14),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+}
+
+class _FeatureItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _FeatureItem({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(R.w(12)),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.5), // Increased opacity slightly for visibility on light bg
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: Colors.blue, size: R.sp(22)),
+        ),
+        SizedBox(height: R.h(8)),
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.blue,
+            fontSize: R.sp(14),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

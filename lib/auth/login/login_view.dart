@@ -164,7 +164,7 @@ class _LoginViewState extends State<LoginView> {
                 child: GestureDetector(
                   onTap: () => _switchMethod(LoginMethod.password),
                   child: _methodButton(
-                    text: 'Email & Password',
+                    text: 'Agent ID & Password',
                     active: _loginMethod == LoginMethod.password,
                   ),
                 ),
@@ -192,7 +192,7 @@ class _LoginViewState extends State<LoginView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isOtp ? 'Mobile Number' : 'Email or Agent ID',
+          isOtp ? 'Mobile Number' : 'Agent ID',
           style: AppTextStyles.label.copyWith(fontSize: R.sp(14)),
         ),
         SizedBox(height: R.h(8)),
@@ -244,6 +244,22 @@ class _LoginViewState extends State<LoginView> {
                 ),
                 onPressed: () =>
                     setState(() => _obscurePassword = !_obscurePassword),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.forgotPassword);
+              },
+              child: Text(
+                'Forgot Password?',
+                style: TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w600,
+                  fontSize: R.sp(14),
+                ),
               ),
             ),
           ),

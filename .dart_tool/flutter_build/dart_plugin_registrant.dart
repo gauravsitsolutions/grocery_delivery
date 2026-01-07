@@ -8,8 +8,10 @@
 import 'dart:io'; // flutter_ignore: dart_io_import.
 import 'package:url_launcher_android/url_launcher_android.dart' as url_launcher_android;
 import 'package:url_launcher_ios/url_launcher_ios.dart' as url_launcher_ios;
+import 'package:package_info_plus/package_info_plus.dart' as package_info_plus;
 import 'package:url_launcher_linux/url_launcher_linux.dart' as url_launcher_linux;
 import 'package:url_launcher_macos/url_launcher_macos.dart' as url_launcher_macos;
+import 'package:package_info_plus/package_info_plus.dart' as package_info_plus;
 import 'package:url_launcher_windows/url_launcher_windows.dart' as url_launcher_windows;
 
 @pragma('vm:entry-point')
@@ -39,6 +41,15 @@ class _PluginRegistrant {
 
     } else if (Platform.isLinux) {
       try {
+        package_info_plus.PackageInfoPlusLinuxPlugin.registerWith();
+      } catch (err) {
+        print(
+          '`package_info_plus` threw an error: $err. '
+          'The app may not function as expected until you remove this plugin from pubspec.yaml'
+        );
+      }
+
+      try {
         url_launcher_linux.UrlLauncherLinux.registerWith();
       } catch (err) {
         print(
@@ -58,6 +69,15 @@ class _PluginRegistrant {
       }
 
     } else if (Platform.isWindows) {
+      try {
+        package_info_plus.PackageInfoPlusWindowsPlugin.registerWith();
+      } catch (err) {
+        print(
+          '`package_info_plus` threw an error: $err. '
+          'The app may not function as expected until you remove this plugin from pubspec.yaml'
+        );
+      }
+
       try {
         url_launcher_windows.UrlLauncherWindows.registerWith();
       } catch (err) {

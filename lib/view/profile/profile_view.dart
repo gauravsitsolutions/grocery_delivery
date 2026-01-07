@@ -4,6 +4,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -81,14 +82,22 @@ class ProfileView extends StatelessWidget {
               _logoutButton(),
 
               SizedBox(height: R.h(16)),
-              Center(
-                child: Text(
-                  'Version 2.4.1 (Build 204)',
-                  style: TextStyle(
-                    fontSize: R.sp(12),
-                    color: AppColors.bodyText,
-                  ),
-                ),
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Center(
+                      child: Text(
+                        'Version ${snapshot.data!.version}',
+                        style: TextStyle(
+                          fontSize: R.sp(12),
+                          color: AppColors.bodyText,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox();
+                },
               ),
             ],
           ),

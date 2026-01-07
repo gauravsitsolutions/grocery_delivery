@@ -18,6 +18,7 @@ class AgentBottomNavView extends StatefulWidget {
 class _AgentBottomNavViewState extends State<AgentBottomNavView> {
   final PersistentTabController _controller =
       PersistentTabController(initialIndex: 0);
+  bool isOnline = true;
 
   PersistentBottomNavBarItem _navItem({
     required IconData icon,
@@ -44,38 +45,64 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
   Widget build(BuildContext context) {
     R.init(context);
 
-    return PersistentTabView(
-      context,
-      controller: _controller,
-      screens: const [
-        AgentDashboardView(),
-        DeliveriesView(),
-        ProfileView(),
+    // Calculate nav bar height + bottom padding
+    final double navHeight = R.h(70) + MediaQuery.of(context).padding.bottom;
+
+    return Stack(
+      children: [
+        PersistentTabView(
+          context,
+          controller: _controller,
+          screens: [
+            AgentDashboardView(
+              isOnline: isOnline,
+              onStatusChanged: (val) {
+                setState(() => isOnline = val);
+              },
+            ),
+            const DeliveriesView(),
+            const ProfileView(),
+          ],
+          items: [
+            _navItem(
+              icon: Remix.home_line,
+              activeIcon: RemixIcons.home_fill,
+              label: 'Home',
+            ),
+            _navItem(
+              icon: Remix.truck_line,
+              activeIcon: RemixIcons.truck_fill,
+              label: 'Deliveries',
+            ),
+            _navItem(
+              icon: RemixIcons.user_line,
+              activeIcon: Remix.user_fill,
+              label: 'Profile',
+            ),
+          ],
+          navBarHeight: R.h(70),
+          navBarStyle: NavBarStyle.style1,
+          backgroundColor: AppColors.white,
+          handleAndroidBackButtonPress: true,
+          resizeToAvoidBottomInset: true,
+          stateManagement: true,
+          hideNavigationBarWhenKeyboardAppears: true,
+        ),
+
+        // Lock Layer for Bottom Navigation
+        if (!isOnline)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: navHeight,
+            child: AbsorbPointer(
+              child: Container(
+                color: Colors.white.withOpacity(0.5),
+              ),
+            ),
+          ),
       ],
-      items: [
-        _navItem(
-          icon: Remix.home_line,
-          activeIcon: RemixIcons.home_fill,
-          label: 'Home',
-        ),
-        _navItem(
-          icon: Remix.truck_line,
-          activeIcon: RemixIcons.truck_fill,
-          label: 'Deliveries',
-        ),
-        _navItem(
-          icon: RemixIcons.user_line,
-          activeIcon: Remix.user_fill,
-          label: 'Profile',
-        ),
-      ],
-      navBarHeight: R.h(70),
-      navBarStyle: NavBarStyle.style1,
-      backgroundColor: AppColors.white,
-      handleAndroidBackButtonPress: true,
-      resizeToAvoidBottomInset: true,
-      stateManagement: true,
-      hideNavigationBarWhenKeyboardAppears: true,
     );
   }
 }
