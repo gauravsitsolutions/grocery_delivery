@@ -4,7 +4,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
+
 
 class VerificationView extends StatefulWidget {
   const VerificationView({super.key});
@@ -59,7 +59,7 @@ class _VerificationViewState extends State<VerificationView> {
   }
 
   void _onVerify() {
-    Navigator.of(context).pushReplacementNamed(AppRoutes.delivery_summary);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.deliverySummary);
   }
 
   @override
@@ -80,6 +80,20 @@ class _VerificationViewState extends State<VerificationView> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: AppColors.scaffoldBg,
+        elevation: 0,
+        leading: const BackButton(color: AppColors.headingText),
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
+        title: Text(
+          'Verification',
+          style: TextStyle(
+            fontSize: R.sp(18),
+            fontWeight: FontWeight.w700,
+            color: AppColors.headingText,
+          ),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.only(
@@ -87,7 +101,7 @@ class _VerificationViewState extends State<VerificationView> {
           ),
           child: Column(
             children: [
-              _header(),
+              // _header() removed, moved to AppBar
               SizedBox(height: R.h(40)),
               _icon(),
               SizedBox(height: R.h(32)),
@@ -112,25 +126,7 @@ class _VerificationViewState extends State<VerificationView> {
 
   // ================= HEADER =================
 
-  Widget _header() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: R.w(16)),
-      child: Row(
-        children: [
-          const BackButton(),
-          const Spacer(),
-          Text(
-            'Verification',
-            style: TextStyle(
-              fontSize: R.sp(18),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const Spacer(flex: 2),
-        ],
-      ),
-    );
-  }
+
 
   // ================= ICON =================
 
@@ -139,7 +135,7 @@ class _VerificationViewState extends State<VerificationView> {
       width: R.r(120),
       height: R.r(120),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen.withOpacity(0.12),
+        color: AppColors.primaryGreen.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -207,7 +203,7 @@ class _VerificationViewState extends State<VerificationView> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: R.r(10),
               ),
             ],
@@ -246,7 +242,7 @@ class _VerificationViewState extends State<VerificationView> {
         borderRadius: BorderRadius.circular(R.r(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: R.r(10),
           ),
         ],
@@ -307,7 +303,7 @@ class _VerificationViewState extends State<VerificationView> {
           onPressed: _isOtpComplete ? _onVerify : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryGreen,
-            disabledBackgroundColor: AppColors.primaryGreen.withOpacity(0.4),
+            disabledBackgroundColor: AppColors.primaryGreen.withValues(alpha: 0.4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(R.r(16)),
             ),

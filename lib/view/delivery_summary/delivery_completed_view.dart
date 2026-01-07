@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:lottie/lottie.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
@@ -36,7 +37,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
         leading: const BackButton(color: AppColors.headingText),
-        centerTitle: true,
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
         title: Text(
           'Summary',
           style: TextStyle(
@@ -83,24 +84,16 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
     return Container(
       width: R.r(120),
       height: R.r(120),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.softGreyBg,
-        border: Border.all(
-          color: AppColors.primaryGreen,
-          width: R.r(3),
-        ),
+        // Removed border as Lottie usually looks better without it or has its own
       ),
-      child: Center(
-        child: CircleAvatar(
-          radius: R.r(32),
-          backgroundColor: AppColors.primaryGreen,
-          child: Icon(
-            Icons.check,
-            color: AppColors.white,
-            size: R.sp(32),
-          ),
-        ),
+      child: Lottie.asset(
+        'assets/lottie/success_check.json',
+        width: R.r(120),
+        height: R.r(120),
+        fit: BoxFit.contain,
+        repeat: false, // Usually success animations run once
       ),
     );
   }
@@ -346,6 +339,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
       child: ElevatedButton(
         onPressed: () async {
           await _requestReview();
+          if (!mounted) return;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

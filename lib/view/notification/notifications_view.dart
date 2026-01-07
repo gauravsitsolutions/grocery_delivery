@@ -93,6 +93,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     return AppBar(
       backgroundColor: AppColors.scaffoldBg,
       elevation: 0,
+      centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
       title: Text(
         'Notifications',
         style: TextStyle(
@@ -216,7 +217,7 @@ class _NotificationsViewState extends State<NotificationsView> {
         border: Border.all(color: AppColors.primaryGreen),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryGreen.withOpacity(.15),
+            color: AppColors.primaryGreen.withValues(alpha: .15),
             blurRadius: R.r(12),
           ),
         ],
@@ -308,7 +309,7 @@ class _NotificationsViewState extends State<NotificationsView> {
         borderRadius: BorderRadius.circular(R.r(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.04),
+            color: Colors.black.withValues(alpha: .04),
             blurRadius: R.r(12),
           ),
         ],
@@ -374,7 +375,7 @@ class _NotificationsViewState extends State<NotificationsView> {
   Widget _icon(IconData icon, Color color, {Color? bg}) {
     return CircleAvatar(
       radius: R.r(26),
-      backgroundColor: bg ?? color.withOpacity(.15),
+      backgroundColor: bg ?? color.withValues(alpha: .15),
       child: Icon(icon, color: color, size: R.sp(20)),
     );
   }

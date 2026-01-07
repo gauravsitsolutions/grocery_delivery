@@ -101,20 +101,44 @@ class _LoginViewState extends State<LoginView> {
           if (response.token != null) {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('auth_token', response.token!);
+            debugPrint('Login: Token saved successfully: ${response.token}');
+            
             if (response.user != null) {
               await prefs.setInt('user_id', response.user!.id);
               await prefs.setString('user_name', response.user!.name);
               await prefs.setString('user_role', response.user!.role);
             }
+          } else {
+            debugPrint('Login: Warning - No token in response!');
           }
+
+          if (!mounted) return;
           
+          // 1. Hide Keyboard
+          FocusScope.of(context).unfocus();
+          
+          // 2. Show Custom Success Snack
           ScaffoldMessenger.of(context).showSnackBar(
              SnackBar(
               backgroundColor: AppColors.success,
-              content: Text('Login Successful',
-                  style: TextStyle(color: AppColors.white, fontSize: R.sp(14))),
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.all(R.w(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(12))),
+              content: Row(
+                children: [
+                  const Icon(RemixIcons.check_line, color: Colors.white),
+                  SizedBox(width: R.w(12)),
+                  Text('Login Successful',
+                      style: TextStyle(color: AppColors.white, fontSize: R.sp(14), fontWeight: FontWeight.w600)),
+                ],
+              ),
             ),
           );
+          
+          // 3. Wait for user to see it
+          await Future.delayed(const Duration(seconds: 1));
+          
+          if(!mounted) return;
           Navigator.pushNamed(context, AppRoutes.bottomNav);
         } else {
           // API returned success=false but no exception threw
@@ -135,13 +159,24 @@ class _LoginViewState extends State<LoginView> {
       
       if (!_isOtpSent) {
         // Send OTP logic here
-        setState(() {
-          _isOtpSent = true;
-          _startTimer();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP sent successfully')),
-        );
+        setState(() => _isLoading = true);
+        try {
+          await _apiService.sendOtp(_mobileController.text.trim());
+          if (!mounted) return;
+
+          setState(() {
+            _isOtpSent = true;
+            _startTimer();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('OTP sent successfully')),
+          );
+        } catch (e) {
+          if (!mounted) return;
+          _showError(e.toString().replaceAll('Exception: ', ''));
+        } finally {
+          if (mounted) setState(() => _isLoading = false);
+        }
         return;
       }
 
@@ -149,7 +184,69 @@ class _LoginViewState extends State<LoginView> {
         _showError('Please enter valid OTP');
         return;
       }
-      Navigator.pushNamed(context, AppRoutes.bottomNav);
+      
+      setState(() => _isLoading = true);
+
+      try {
+        // Real API Call
+        final response = await _apiService.verifyOtp(
+          _mobileController.text.trim(), 
+          _otpController.text.trim()
+        );
+
+        if (!mounted) return;
+
+        if (response.status) {
+           // Save Session Data
+          if (response.token != null) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('auth_token', response.token!);
+            
+            if (response.user != null) {
+              await prefs.setInt('user_id', response.user!.id);
+              await prefs.setString('user_name', response.user!.name);
+              await prefs.setString('user_role', response.user!.role);
+            }
+          }
+
+          if (!mounted) return;
+
+          // 1. Hide Keyboard
+          FocusScope.of(context).unfocus();
+
+          // 2. Show Success
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating, 
+              margin: EdgeInsets.all(R.w(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(12))),
+              content: Row(
+                children: [
+                  const Icon(RemixIcons.check_line, color: Colors.white),
+                  SizedBox(width: R.w(12)),
+                  Text('Login Successful',
+                      style: TextStyle(color: AppColors.white, fontSize: R.sp(14), fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          );
+
+          // 3. Waiting for user to see message
+          await Future.delayed(const Duration(seconds: 1));
+
+          if (!mounted) return;
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.bottomNav, (route) => false);
+          
+        } else {
+           _showError(response.message.isNotEmpty ? response.message : 'Invalid OTP');
+        }
+      } catch (e) {
+        if (!mounted) return;
+        _showError(e.toString().replaceAll('Exception: ', ''));
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -170,7 +267,7 @@ class _LoginViewState extends State<LoginView> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: AppColors.scaffoldBg,
+        statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
@@ -397,11 +494,26 @@ class _LoginViewState extends State<LoginView> {
           child: Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () {
-                _startTimer(); // Restart timer on resend
-                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('OTP Resent successfully')),
-                );
+              onPressed: () async {
+                setState(() => _isLoading = true);
+                try {
+                  await _apiService.resendOtp(_mobileController.text.trim());
+                  if (!mounted) return;
+                  
+                  _startTimer(); // Restart timer on resend
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('OTP Resent successfully'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  _showError(e.toString().replaceAll('Exception: ', ''));
+                } finally {
+                  if (mounted) setState(() => _isLoading = false);
+                }
               },
               child: Text(
                 'Resend Code',

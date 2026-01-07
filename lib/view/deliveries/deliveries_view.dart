@@ -16,7 +16,7 @@ class DeliveriesView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
         title: Text(
           'My Deliveries',
           style: TextStyle(

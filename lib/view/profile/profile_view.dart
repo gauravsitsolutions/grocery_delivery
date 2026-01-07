@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'dart:developer';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
+
+  @override
+  State<ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView> {
+  bool _isLoggingOut = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +36,7 @@ class ProfileView extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        centerTitle: true,
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
       ),
       body: SafeArea(
         bottom: false,
@@ -96,7 +105,6 @@ class ProfileView extends StatelessWidget {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     text = 'Verifying version...';
                   } else if (snapshot.hasError) {
-                    // This creates visible feedback if the plugin isn't linked (MissingPluginException)
                     text = 'Version info unavailable (Restart App)'; 
                   } else if (snapshot.hasData) {
                     text = 'Version ${snapshot.data!.version}';
@@ -457,37 +465,96 @@ class ProfileView extends StatelessWidget {
   }
 
   // ================= LOGOUT =================
-  Future<void> _handleLogout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Clear all data
-    if (context.mounted) {
-       Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login, // Ensure this route exists in your routes map
-        (route) => false,
-      );
-    }
-  }
+  // ================= LOGOUT =================
+  Future<void> _handleLogout() async {
+    if (_isLoggingOut) return;
+    
+    setState(() => _isLoggingOut = true);
 
-  Widget _logoutButton() {
-    return Builder(
-      builder: (context) {
-        return OutlinedButton.icon(
-          onPressed: () => _handleLogout(context),
-          icon: const Icon(RemixIcons.logout_circle_r_line, color: AppColors.error),
-          label: Text(
-            'Log Out',
-            style: TextStyle(fontSize: R.sp(16), color: AppColors.error),
-          ),
-          style: OutlinedButton.styleFrom(
-            minimumSize: Size(double.infinity, R.h(56)),
-            side: const BorderSide(color: AppColors.error),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(R.r(16)),
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      log('Logout initiated. Token present: ${token != null}');
+
+      if (token != null) {
+        try {
+          // Attempt API logout with a short timeout to prevent UI freeze
+          log('Calling Logout API...');
+          await ApiService().logout(token).timeout(const Duration(seconds: 3));
+          log('Logout API call successful');
+        } catch (e) {
+          log('Logout API failed or timed out: $e');
+          // Start local logout regardless of API failure
+        }
+      }
+
+      log('Clearing SharedPreferences...');
+      await prefs.clear();
+      log('SharedPreferences cleared.');
+      
+      if (!mounted) {
+        log('Context not mounted, skipping navigation');
+        return;
+      }
+
+      // Show Logout Success
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(R.w(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(12))),
+            content: Row(
+              children: [
+                const Icon(RemixIcons.logout_circle_r_line, color: Colors.white),
+                SizedBox(width: R.w(12)),
+                Text('Logout Successful',
+                    style: TextStyle(color: AppColors.white, fontSize: R.sp(14), fontWeight: FontWeight.w600)),
+              ],
             ),
           ),
         );
       }
+
+      // Wait a moment
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (!mounted) return;
+      
+      log('Navigating to Login Screen...');
+      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+        AppRoutes.login,
+        (route) => false,
+      );
+    } catch (e) {
+      log('Critical Error during logout: $e');
+      setState(() => _isLoggingOut = false); // Re-enable button if something crashes
+    }
+  }
+
+  Widget _logoutButton() {
+    return OutlinedButton.icon(
+      onPressed: _isLoggingOut ? null : _handleLogout,
+      icon: _isLoggingOut 
+        ? SizedBox(
+            width: R.sp(20), 
+            height: R.sp(20), 
+            child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.error)
+          )
+        : const Icon(RemixIcons.logout_circle_r_line, color: AppColors.error),
+      label: Text(
+        _isLoggingOut ? 'Logging Out...' : 'Log Out',
+        style: TextStyle(fontSize: R.sp(16), color: AppColors.error),
+      ),
+      style: OutlinedButton.styleFrom(
+        minimumSize: Size(double.infinity, R.h(56)),
+        side: const BorderSide(color: AppColors.error),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(R.r(16)),
+        ),
+      ),
     );
   }
 }

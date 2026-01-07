@@ -5,6 +5,7 @@ import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'res/theme/app_theme.dart';
 
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/widget/connection_status_wrapper.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,6 +13,8 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +25,17 @@ class MyApp extends StatelessWidget {
       routes: AppPages.routes,
       builder: (context, child) {
         R.init(context);
-        return Theme(
-          data: AppTheme.lightTheme,
-          child: ResponsiveBreakpoints.builder(
-            child: child!,
-            breakpoints: const [
-              Breakpoint(start: 0, end: 450, name: MOBILE),
-              Breakpoint(start: 451, end: 800, name: TABLET),
-              Breakpoint(start: 801, end: 1920, name: DESKTOP),
-            ],
+        return ConnectionStatusWrapper(
+          child: Theme(
+            data: AppTheme.lightTheme,
+            child: ResponsiveBreakpoints.builder(
+              child: child!,
+              breakpoints: const [
+                Breakpoint(start: 0, end: 450, name: MOBILE),
+                Breakpoint(start: 451, end: 800, name: TABLET),
+                Breakpoint(start: 801, end: 1920, name: DESKTOP),
+              ],
+            ),
           ),
         );
       },

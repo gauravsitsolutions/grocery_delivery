@@ -33,11 +33,11 @@ class AppPages {
           isOnline: true,
           onStatusChanged: (_) {},
         ),
-    AppRoutes.customer_info: (_) => const CustomerInfoView(),
+    AppRoutes.customerInfo: (_) => const CustomerInfoView(),
     AppRoutes.notification: (_) => const NotificationsView(),
-    AppRoutes.notification_settings: (_) => const NotificationSettingsView(),
-    AppRoutes.delivery_summary: (_) => const DeliverySummaryView(),
-    AppRoutes.navigation_view: (_) => const NavigationView(),
-    AppRoutes.verification_view: (_) => const VerificationView(),
+    AppRoutes.notificationSettings: (_) => const NotificationSettingsView(),
+    AppRoutes.deliverySummary: (_) => const DeliverySummaryView(),
+    AppRoutes.navigationView: (_) => const NavigationView(),
+    AppRoutes.verificationView: (_) => const VerificationView(),
   };
 }

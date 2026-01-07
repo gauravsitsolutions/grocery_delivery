@@ -26,7 +26,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
         leading: const BackButton(color: AppColors.headingText),
         title: Text(
           'Order #48291',
@@ -99,7 +99,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
               SlideToCompleteWidget(
                 enabled: instructionsRead,
                 onCompleted: () {
-                  Navigator.pushNamed(context, AppRoutes.navigation_view);
+                  Navigator.pushNamed(context, AppRoutes.navigationView);
                 },
               ),
             ],

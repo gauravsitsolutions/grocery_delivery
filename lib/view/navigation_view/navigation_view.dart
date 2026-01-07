@@ -122,7 +122,7 @@ class NavigationView extends StatelessWidget {
           borderRadius: BorderRadius.circular(R.r(40)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: R.r(12),
             ),
           ],
@@ -181,7 +181,7 @@ class NavigationView extends StatelessWidget {
         vertical: R.h(10),
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.85),
+        color: Colors.black.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(R.r(30)),
       ),
       child: Row(
@@ -219,7 +219,7 @@ class NavigationView extends StatelessWidget {
         borderRadius: BorderRadius.circular(R.r(14)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: R.r(8),
           ),
         ],
@@ -387,7 +387,7 @@ class NavigationView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(R.r(18)),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryGreen.withOpacity(0.35),
+                    color: AppColors.primaryGreen.withValues(alpha: 0.35),
                     blurRadius: R.r(14),
                     offset: Offset(0, R.h(6)),
                   ),

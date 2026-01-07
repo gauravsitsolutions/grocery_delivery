@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/res/styles/app_text_styles.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+import 'dart:async';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 
 class ForgotPasswordOTPView extends StatefulWidget {
   const ForgotPasswordOTPView({super.key});
@@ -14,11 +15,46 @@ class ForgotPasswordOTPView extends StatefulWidget {
 
 class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
   final List<TextEditingController> _controllers =
-      List.generate(4, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
+      List.generate(6, (index) => TextEditingController()); // Changed to 6
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode()); // Changed to 6
+
+  final ApiService _apiService = ApiService();
+  Timer? _timer;
+  int _start = 600; // 10 minutes
+  bool _isTimerRunning = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    setState(() {
+      _start = 600; // 10 minutes
+      _isTimerRunning = true;
+    });
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_start == 0) {
+        setState(() {
+          _isTimerRunning = false;
+          timer.cancel();
+        });
+      } else {
+        setState(() {
+          _start--;
+        });
+      }
+    });
+  }
+
+
 
   @override
   void dispose() {
+    _timer?.cancel();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -27,9 +63,10 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
     }
     super.dispose();
   }
+// ... (skipping unchanged code)
 
   void _onChanged(String value, int index) {
-    if (value.length == 1 && index < 3) {
+    if (value.length == 1 && index < 5) { // Changed to index < 5
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
@@ -39,6 +76,8 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
   @override
   Widget build(BuildContext context) {
     R.init(context);
+    final mobileArgs = ModalRoute.of(context)?.settings.arguments;
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
@@ -49,7 +88,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
           'OTP Verification',
           style: AppTextStyles.heading.copyWith(fontSize: R.sp(18)),
         ),
-        centerTitle: true,
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -69,13 +108,13 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                         children: [
                           SizedBox(height: R.h(20)),
                           Text(
-                            'Enter 4-digit code',
+                            'Enter 6-digit code', // Changed text
                             style: AppTextStyles.heading
                                 .copyWith(fontSize: R.sp(24)),
                           ),
                           SizedBox(height: R.h(10)),
                           Text(
-                            'We\'ve sent a 4-digit code to your Agent ID or phone.',
+                            'We\'ve sent a 6-digit code to your Agent ID or phone.', // Changed text
                             textAlign: TextAlign.center,
                             style: AppTextStyles.subHeading.copyWith(
                               fontSize: R.sp(14),
@@ -87,10 +126,10 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: List.generate(
-                              4,
+                              6, // Changed to 6
                               (index) => SizedBox(
-                                width: R.w(50),
-                                height: R.h(60),
+                                width: R.w(45), // Reduced width to fit 6 items
+                                height: R.h(55), // Adjusted height
                                 child: TextField(
                                   controller: _controllers[index],
                                   focusNode: _focusNodes[index],
@@ -104,21 +143,22 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                     counterText: '',
                                     filled: true,
                                     fillColor: AppColors.white,
+                                    contentPadding: EdgeInsets.zero, // Centered text better
                                     border: OutlineInputBorder(
                                       borderRadius:
-                                          BorderRadius.circular(R.r(12)),
+                                          BorderRadius.circular(R.r(8)), // Slightly smaller radius
                                       borderSide: BorderSide(
                                           color: AppColors.borderLight),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius:
-                                          BorderRadius.circular(R.r(12)),
+                                          BorderRadius.circular(R.r(8)),
                                       borderSide: BorderSide(
                                           color: AppColors.borderLight),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius:
-                                          BorderRadius.circular(R.r(12)),
+                                          BorderRadius.circular(R.r(8)),
                                       borderSide: const BorderSide(
                                           color: AppColors.primaryGreen),
                                     ),
@@ -139,12 +179,51 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                     color: AppColors.bodyText,
                                     fontSize: R.sp(14)),
                               ),
-                              TextButton(
-                                onPressed: () {},
-                                child: Text(
-                                  'Resend Code (0:59)',
+                                TextButton(
+                                onPressed: (_isTimerRunning || _isLoading) 
+                                ? null 
+                                : () async {
+                                    final mobileArgs = ModalRoute.of(context)?.settings.arguments;
+                                    if (mobileArgs == null || mobileArgs is! String) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Error: Mobile number missing')),
+                                      );
+                                      return;
+                                    }
+
+                                    final scaffoldMessenger = ScaffoldMessenger.of(context);
+                                    setState(() => _isLoading = true);
+                                    try {
+                                      await _apiService.sendForgotPasswordOtp(mobileArgs);
+                                      if (!mounted) return;
+                                      
+                                      scaffoldMessenger.showSnackBar(
+                                        const SnackBar(
+                                          content: Text('OTP Resent Successfully'),
+                                          backgroundColor: AppColors.success,
+                                        ),
+                                      );
+                                      _startTimer();
+                                    } catch (e) {
+                                      if (!mounted) return;
+                                      scaffoldMessenger.showSnackBar(
+                                        SnackBar(
+                                          content: Text(e.toString().replaceAll('Exception: ', '')),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                    } finally {
+                                      if (mounted) setState(() => _isLoading = false);
+                                    }
+                                  },
+                                child: _isLoading
+                                ? SizedBox(height: R.sp(14), width: R.sp(14), child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryGreen))
+                                : Text(
+                                  _isTimerRunning 
+                                    ? 'Resend Code (0:${_start.toString().padLeft(2, '0')})'
+                                    : 'Resend Code',
                                   style: TextStyle(
-                                    color: AppColors.primaryGreen,
+                                    color: _isTimerRunning ? AppColors.hintText : AppColors.primaryGreen,
                                     fontWeight: FontWeight.bold,
                                     fontSize: R.sp(14),
                                   ),
@@ -160,13 +239,52 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                             width: double.infinity,
                             height: R.h(50),
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 // Validate and go next
                                 bool isFilled = _controllers
                                     .every((c) => c.text.isNotEmpty);
-                                if (isFilled) {
+                                
+                                if (!isFilled) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Please enter full 6-digit OTP')),
+                                  );
+                                  return;
+                                }
+
+                                if (mobileArgs == null) {
+                                   ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Error: Mobile number missing')),
+                                  );
+                                  return;
+                                }
+
+                                setState(() => _isLoading = true);
+
+                                try {
+                                  final otp = _controllers.map((c) => c.text).join();
+                                  final mobile = mobileArgs.toString();
+                                  
+                                  // Call API
+                                  await _apiService.verifyForgotPasswordOtp(mobile, otp);
+
+                                  if (!context.mounted) return;
+
+                                  // Pass the mobile number to the next screen
                                   Navigator.pushNamed(
-                                      context, AppRoutes.setNewPassword);
+                                      context, 
+                                      AppRoutes.setNewPassword,
+                                      arguments: mobile,
+                                  );
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(e.toString().replaceAll('Exception: ', '')),
+                                      backgroundColor: AppColors.error,
+                                    ),
+                                  );
+                                } finally {
+                                  if (mounted) setState(() => _isLoading = false);
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -175,7 +293,13 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                   borderRadius: BorderRadius.circular(R.r(8)),
                                 ),
                               ),
-                              child: Text(
+                              child: _isLoading 
+                                ? SizedBox(
+                                    height: R.sp(20),
+                                    width: R.sp(20),
+                                    child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.black),
+                                  )
+                                : Text(
                                 'Verify Code',
                                 style: TextStyle(
                                   fontSize: R.sp(16),

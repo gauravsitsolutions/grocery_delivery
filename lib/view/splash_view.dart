@@ -117,16 +117,26 @@ class _SplashScreenState extends State<SplashScreen>
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values, // This brings back Status Bar + Nav Bar
     );
+    
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ));
 
     // Check for saved session
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
+    
+    // Using print since 'log' needs developer import, checking if already imported or using print
+    debugPrint('Splash: Saved Token found: $token'); 
 
     if (!mounted) return;
 
     if (token != null && token.isNotEmpty) {
+      debugPrint('Splash: Navigating to Dashboard (Session Valid)');
       Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
     } else {
+      debugPrint('Splash: Navigating to Login (No Session)');
       Navigator.pushReplacementNamed(context, AppRoutes.login);
     }
   }
@@ -268,11 +278,11 @@ class _FeatureItem extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(R.w(12)),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.5), // Increased opacity slightly for visibility on light bg
+            color: Colors.white.withValues(alpha: 0.5), // Increased opacity slightly for visibility on light bg
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),

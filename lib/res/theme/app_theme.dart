@@ -21,7 +21,6 @@ class AppTheme {
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      centerTitle: true,
       iconTheme: const IconThemeData(color: AppColors.black),
       titleTextStyle: TextStyle(
         color: AppColors.black,
@@ -46,6 +45,12 @@ class AppTheme {
       focusedBorder: _outlineBorder(AppColors.primaryGreen),
       errorBorder: _outlineBorder(AppColors.error),
       focusedErrorBorder: _outlineBorder(AppColors.error),
+    ),
+    
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: AppColors.primaryGreen,
+      selectionColor: AppColors.primaryGreen.withValues(alpha: 0.3),
+      selectionHandleColor: AppColors.primaryGreen,
     ),
 
     // Buttons

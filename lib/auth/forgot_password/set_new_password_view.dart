@@ -4,6 +4,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/res/styles/app_text_styles.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 
 class SetNewPasswordView extends StatefulWidget {
   const SetNewPasswordView({super.key});
@@ -18,11 +19,75 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
+  final ApiService _apiService = ApiService();
+  bool _isLoading = false;
+
   @override
   void dispose() {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(R.w(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(8))),
+      ),
+    );
+  }
+
+  Future<void> _handleSetPassword() async {
+    // 1. Validate Form
+    if (!_hasMinLength || !_hasUpperCase || !_hasNumber || !_hasSpecialChar) {
+      _showError("Password does not meet requirements");
+      return;
+    }
+
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      _showError("Passwords do not match");
+      return;
+    }
+    
+    // 2. Get Mobile from Arguments
+    final mobileArgs = ModalRoute.of(context)?.settings.arguments;
+    if (mobileArgs == null || mobileArgs is! String) {
+      _showError("Error: User details missing. Please restart.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 3. Call API
+      final response = await _apiService.resetPassword(
+        mobileArgs, 
+        _newPasswordController.text
+      );
+      
+      if (!mounted) return;
+
+      if (response['status'] == true) {
+         // Success -> Navigate to Success Screen
+         Navigator.pushNamedAndRemoveUntil(
+           context, 
+           AppRoutes.passwordResetSuccess,
+           (route) => false, // Clear stack so user can't go back to change password again
+         );
+      } else {
+        _showError(response['message'] ?? 'Failed to reset password');
+      }
+
+    } catch (e) {
+      _showError(e.toString().replaceAll('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   bool get _hasMinLength => _newPasswordController.text.length >= 8;
@@ -68,7 +133,7 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
           'Set New Password',
           style: AppTextStyles.heading.copyWith(fontSize: R.sp(18)),
         ),
-        centerTitle: true,
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -146,19 +211,16 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
                 width: double.infinity,
                 height: R.h(50),
                 child: ElevatedButton(
-                  onPressed: () {
-                     if (_hasMinLength && _hasUpperCase && _hasNumber && _hasSpecialChar && 
-                         _newPasswordController.text == _confirmPasswordController.text) {
-                        Navigator.pushNamed(context, AppRoutes.passwordResetSuccess);
-                     }
-                  },
+                  onPressed: _isLoading ? null : _handleSetPassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(R.r(8)),
                     ),
                   ),
-                  child: Text(
+                  child: _isLoading 
+                    ? SizedBox(height: R.sp(20), width: R.sp(20), child: const CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+                    : Text(
                     'Set Password',
                     style: TextStyle(
                       fontSize: R.sp(16),

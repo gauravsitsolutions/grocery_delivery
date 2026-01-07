@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:remixicon/remixicon.dart';
@@ -7,6 +6,8 @@ import 'package:samrudhi_delivery_agent_app/view/dashboard/agent_home_dashboard_
 import 'package:samrudhi_delivery_agent_app/view/deliveries/deliveries_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/profile/profile_view.dart';
 import '../../constant/app_color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 
 class AgentBottomNavView extends StatefulWidget {
   const AgentBottomNavView({super.key});
@@ -56,8 +57,61 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
           screens: [
             AgentDashboardView(
               isOnline: isOnline,
-              onStatusChanged: (val) {
-                setState(() => isOnline = val);
+              onStatusChanged: (val) async {
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  final token = prefs.getString('auth_token');
+
+                  if (token == null) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Error: Authentication token not found')),
+                    );
+                    return;
+                  }
+
+                  final apiService = ApiService();
+                  await apiService.updateAgentStatus(token, val);
+
+                  if (!context.mounted) return;
+                  setState(() => isOnline = val);
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(
+                            val ? RemixIcons.checkbox_circle_line : RemixIcons.close_circle_line,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: R.w(12)),
+                          Text(
+                            val ? 'You are now Online' : 'You are now Offline',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: R.sp(14),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: val ? AppColors.primaryGreen : AppColors.error,
+                      behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.all(R.w(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(12)),
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString().replaceAll('Exception: ', '')),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
               },
             ),
             const DeliveriesView(),
@@ -98,7 +152,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
             height: navHeight,
             child: AbsorbPointer(
               child: Container(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
               ),
             ),
           ),

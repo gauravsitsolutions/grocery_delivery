@@ -207,7 +207,7 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
         padding: EdgeInsets.all(R.w(14)),
         decoration: BoxDecoration(
           color:
-              active ? AppColors.primaryGreen.withOpacity(.15) : Colors.white,
+              active ? AppColors.primaryGreen.withValues(alpha: .15) : Colors.white,
           borderRadius: BorderRadius.circular(R.r(16)),
           border: Border.all(
             color: active ? AppColors.primaryGreen : Colors.grey.shade300,
@@ -270,7 +270,7 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
           children: [
             CircleAvatar(
               backgroundColor: active
-                  ? AppColors.primaryGreen.withOpacity(.2)
+                  ? AppColors.primaryGreen.withValues(alpha: .2)
                   : Colors.grey.shade200,
               child: Icon(icon, color: Colors.black),
             ),

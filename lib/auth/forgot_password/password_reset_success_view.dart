@@ -21,7 +21,7 @@ class PasswordResetSuccessView extends StatelessWidget {
               const Spacer(),
               CircleAvatar(
                 radius: R.r(60),
-                backgroundColor: AppColors.primaryGreen.withOpacity(0.2),
+                backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
                 child: CircleAvatar(
                   radius: R.r(45),
                   backgroundColor: AppColors.primaryGreen,

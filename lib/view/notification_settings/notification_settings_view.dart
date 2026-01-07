@@ -30,7 +30,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
         leading: const BackButton(color: AppColors.headingText),
-        centerTitle: true,
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
         title: Text(
           'Notification Settings',
           style: TextStyle(
@@ -130,7 +130,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
         borderRadius: BorderRadius.circular(R.r(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: R.r(12),
           ),
         ],
@@ -159,7 +159,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
             width: R.w(44),
             height: R.w(44),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.15),
+              color: AppColors.primaryGreen.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(R.r(12)),
             ),
             child: Icon(

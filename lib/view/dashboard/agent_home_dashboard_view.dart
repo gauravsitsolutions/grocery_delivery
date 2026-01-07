@@ -129,7 +129,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: AppColors.primaryGreen.withOpacity(0.15),
+                      backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.15),
                       child: Icon(Icons.flash_on,
                           size: R.sp(18), color: AppColors.primaryGreen),
                     ),
@@ -499,7 +499,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 padding:
                     EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.15),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(R.r(12)),
                 ),
                 child: Text(
@@ -612,7 +612,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     onPressed: widget.isOnline
                         ? () {
                             Navigator.of(context, rootNavigator: true)
-                                .pushNamed(AppRoutes.customer_info);
+                                .pushNamed(AppRoutes.customerInfo);
                           }
                         : null,
                     icon: Icon(Icons.check, size: R.sp(18)),
