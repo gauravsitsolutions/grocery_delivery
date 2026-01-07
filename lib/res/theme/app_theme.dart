@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
 class AppTheme {
   AppTheme._(); // prevents instantiation
 
-  static ThemeData lightTheme = ThemeData(
+  static ThemeData get lightTheme => ThemeData(
     useMaterial3: false, // keep UI unchanged
     scaffoldBackgroundColor: AppColors.scaffoldBg,
 
@@ -17,14 +18,14 @@ class AppTheme {
     ),
 
     // App Bar
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
-      iconTheme: IconThemeData(color: AppColors.black),
+      iconTheme: const IconThemeData(color: AppColors.black),
       titleTextStyle: TextStyle(
         color: AppColors.black,
-        fontSize: 18,
+        fontSize: R.sp(18),
         fontWeight: FontWeight.w600,
       ),
     ),
@@ -57,8 +58,8 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        textStyle: const TextStyle(
-          fontSize: 16,
+        textStyle: TextStyle(
+          fontSize: R.sp(16),
           fontWeight: FontWeight.bold,
         ),
       ),
