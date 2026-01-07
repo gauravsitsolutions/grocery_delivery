@@ -85,18 +85,30 @@ class ProfileView extends StatelessWidget {
               FutureBuilder<PackageInfo>(
                 future: PackageInfo.fromPlatform(),
                 builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Center(
+                  String text = '';
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    text = 'Verifying version...';
+                  } else if (snapshot.hasError) {
+                    // This creates visible feedback if the plugin isn't linked (MissingPluginException)
+                    text = 'Version info unavailable (Restart App)'; 
+                  } else if (snapshot.hasData) {
+                    text = 'Version ${snapshot.data!.version}';
+                  }
+
+                  if (text.isEmpty) return const SizedBox();
+
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: R.h(20)),
                       child: Text(
-                        'Version ${snapshot.data!.version}',
+                        text,
                         style: TextStyle(
                           fontSize: R.sp(12),
                           color: AppColors.bodyText,
                         ),
                       ),
-                    );
-                  }
-                  return const SizedBox();
+                    ),
+                  );
                 },
               ),
             ],
