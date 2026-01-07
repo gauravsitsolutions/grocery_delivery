@@ -111,9 +111,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
-    // RESTORE STATUS BAR
+    // RESTORE STATUS BAR EXPLICITLY
     SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge,
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values, // This brings back Status Bar + Nav Bar
     );
 
     Navigator.pushReplacementNamed(context, AppRoutes.login);
