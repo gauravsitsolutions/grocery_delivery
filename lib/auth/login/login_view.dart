@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:remixicon/remixicon.dart';
@@ -19,19 +20,64 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   bool _obscurePassword = true;
   LoginMethod _loginMethod = LoginMethod.password;
+  bool _isOtpSent = false;
+  // ignore: unused_field
+  int _start = 30; 
+  Timer? _timer;
+
 
   final _emailOrIdController = TextEditingController();
   final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _otpController = TextEditingController();
+  // Using list for 4-digit pin box
+  final List<TextEditingController> _otpControllers = 
+      List.generate(4, (index) => TextEditingController());
+  final List<FocusNode> _otpFocusNodes = 
+      List.generate(4, (index) => FocusNode());
 
   @override
   void dispose() {
+    _timer?.cancel();
     _emailOrIdController.dispose();
     _mobileController.dispose();
     _passwordController.dispose();
-    _otpController.dispose();
+    for (var controller in _otpControllers) {
+      controller.dispose();
+    }
+    for (var node in _otpFocusNodes) {
+      node.dispose();
+    }
     super.dispose();
+  }
+  
+  void _startTimer() {
+    setState(() {
+      _start = 30;
+      _timer?.cancel();
+    });
+    const oneSec = Duration(seconds: 1);
+    _timer = Timer.periodic(
+      oneSec,
+      (Timer timer) {
+        if (_start == 0) {
+          setState(() {
+            timer.cancel();
+          });
+        } else {
+          setState(() {
+            _start--;
+          });
+        }
+      },
+    );
+  }
+  
+  void _onOtpChanged(String value, int index) {
+    if (value.length == 1 && index < 3) {
+      _otpFocusNodes[index + 1].requestFocus();
+    } else if (value.isEmpty && index > 0) {
+      _otpFocusNodes[index - 1].requestFocus();
+    }
   }
 
   void _switchMethod(LoginMethod method) {
@@ -41,7 +87,10 @@ class _LoginViewState extends State<LoginView> {
       _emailOrIdController.clear();
       _mobileController.clear();
       _passwordController.clear();
-      _otpController.clear();
+      _passwordController.clear();
+      for (var controller in _otpControllers) {
+        controller.clear();
+      }
     });
   }
 
@@ -52,13 +101,31 @@ class _LoginViewState extends State<LoginView> {
         _showError('Please enter ID and password');
         return;
       }
+      Navigator.pushNamed(context, AppRoutes.bottomNav);
     } else {
       if (_mobileController.text.length != 10) {
         _showError('Enter valid mobile number');
         return;
       }
+      
+      if (!_isOtpSent) {
+        // Send OTP logic here
+        setState(() {
+          _isOtpSent = true;
+          _startTimer();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('OTP sent successfully')),
+        );
+        return;
+      }
+
+      if (_otpControllers.any((controller) => controller.text.isEmpty)) {
+        _showError('Please enter valid OTP');
+        return;
+      }
+      Navigator.pushNamed(context, AppRoutes.bottomNav);
     }
-    Navigator.pushNamed(context, AppRoutes.bottomNav);
   }
 
   void _showError(String message) {
@@ -270,21 +337,98 @@ class _LoginViewState extends State<LoginView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('OTP', style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
-        SizedBox(height: R.h(8)),
-        TextField(
-          controller: _otpController,
-          keyboardType: TextInputType.number,
-          cursorColor: AppColors.primaryGreen,
-          decoration: InputDecoration(
-            hintText: 'Enter OTP',
-            prefixIcon: Icon(
-              RemixIcons.message_3_line,
-              color: AppColors.inputIcon,
-              size: R.sp(18),
+        Visibility(
+          visible: _isOtpSent,
+          maintainSize: true,
+          maintainAnimation: true,
+          maintainState: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('OTP', style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
+              SizedBox(height: R.h(8)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(
+                  4,
+                  (index) => SizedBox(
+                    width: R.w(60), // Adjusted width for better spacing
+                    height: R.h(60),
+                    child: TextField(
+                      controller: _otpControllers[index],
+                      focusNode: _otpFocusNodes[index],
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      maxLength: 1,
+                      style: TextStyle(
+                          fontSize: R.sp(20), fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        filled: true,
+                        fillColor: AppColors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(R.r(12)),
+                          borderSide: BorderSide(color: AppColors.borderLight),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(R.r(12)),
+                          borderSide: BorderSide(color: AppColors.borderLight),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(R.r(12)),
+                          borderSide: const BorderSide(
+                              color: AppColors.primaryGreen),
+                        ),
+                      ),
+                      onChanged: (value) => _onOtpChanged(value, index),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        Visibility(
+          visible: _isOtpSent && _start == 0, // Show Only when OTP IS sent AND timer is 0
+          maintainSize: true, // Maintain size to avoid jumps
+          maintainAnimation: true,
+          maintainState: true,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                _startTimer(); // Restart timer on resend
+                 ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('OTP Resent successfully')),
+                );
+              },
+              child: Text(
+                'Resend Code',
+                style: TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w600,
+                  fontSize: R.sp(14),
+                ),
+              ),
             ),
           ),
         ),
+        if(_isOtpSent && _start > 0)
+           Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.only(top: R.h(12), bottom: R.h(12), right: R.w(12)),
+              child: Text(
+                'Resend Code in $_start s',
+                style: TextStyle(
+                  color: AppColors.bodyText,
+                  fontWeight: FontWeight.w500,
+                  fontSize: R.sp(14),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -298,7 +442,7 @@ class _LoginViewState extends State<LoginView> {
         child: Text(
           _loginMethod == LoginMethod.password
               ? 'Log In →'
-              : 'Verify Mobile Number →',
+              : (_isOtpSent ? 'Verify Mobile Number →' : 'Send OTP →'),
           style: TextStyle(fontSize: R.sp(16)),
         ),
       ),

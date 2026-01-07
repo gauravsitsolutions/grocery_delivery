@@ -3,7 +3,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfileView extends StatelessWidget {

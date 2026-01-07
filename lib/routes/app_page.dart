@@ -13,11 +13,14 @@ import 'package:samrudhi_delivery_agent_app/view/notification_settings/notificat
 import 'package:samrudhi_delivery_agent_app/view/verfication/verification_view.dart';
 import 'package:samrudhi_delivery_agent_app/widget/agent_bottom_nav_item.dart';
 
+import 'package:samrudhi_delivery_agent_app/view/splash_view.dart';
+
 import 'app_routes.dart';
 
 class AppPages {
   static final Map<String, WidgetBuilder> routes = {
     // Auth
+    AppRoutes.splash: (_) => const SplashScreen(),
     AppRoutes.login: (_) => const LoginView(),
     AppRoutes.forgotPassword: (_) => const ForgotPasswordView(),
     AppRoutes.forgotPasswordOtp: (_) => const ForgotPasswordOTPView(),

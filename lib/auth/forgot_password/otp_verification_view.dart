@@ -44,10 +44,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.black, size: R.sp(20)),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const BackButton(color: AppColors.black),
         title: Text(
           'OTP Verification',
           style: AppTextStyles.heading.copyWith(fontSize: R.sp(18)),

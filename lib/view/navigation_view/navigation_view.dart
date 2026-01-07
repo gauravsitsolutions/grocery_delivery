@@ -35,9 +35,10 @@ class NavigationView extends StatelessWidget {
             right: R.w(16),
             child: Row(
               children: [
-                _circleButton(
-                  icon: Icons.arrow_back,
-                  onTap: () => Navigator.pop(context),
+                CircleAvatar(
+                  radius: R.r(24),
+                  backgroundColor: AppColors.white,
+                  child: BackButton(color: AppColors.headingText),
                 ),
                 SizedBox(width: R.w(12)),
                 Expanded(child: Center(child: _orderPill())),

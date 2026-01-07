@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_page.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
-import 'package:samrudhi_delivery_agent_app/view/splash_view.dart';
 import 'res/theme/app_theme.dart';
 
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
@@ -19,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       // theme: AppTheme.lightTheme, // Removed to avoid premature access
-      initialRoute: AppRoutes.login,
+      initialRoute: AppRoutes.splash,
       routes: AppPages.routes,
       builder: (context, child) {
         R.init(context);
@@ -35,7 +34,6 @@ class MyApp extends StatelessWidget {
           ),
         );
       },
-      home: SplashScreen(),
     );
   }
 }
