@@ -150,8 +150,8 @@ class _SplashScreenState extends State<SplashScreen>
                   borderRadius: BorderRadius.circular(60),
                   child: Image.asset(
                     'assets/images/app_logo.png',
-                    height: R.w(160),
-                    width: R.w(160),
+                    height: R.w(170),
+                    width: R.w(170),
                     fit: BoxFit.contain, // Changed to contain to avoid cropping if aspect ratio mismatches
                   ),
                 ),
@@ -166,7 +166,7 @@ class _SplashScreenState extends State<SplashScreen>
                   position: _titleSlide,
                   child: ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+                      colors: [AppColors.primaryGreen, AppColors.primaryGreen],
                     ).createShader(bounds),
                     child: Text(
                       'Samruddha Kirana',

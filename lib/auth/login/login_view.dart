@@ -29,11 +29,7 @@ class _LoginViewState extends State<LoginView> {
   final _emailOrIdController = TextEditingController();
   final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
-  // Using list for 4-digit pin box
-  final List<TextEditingController> _otpControllers = 
-      List.generate(4, (index) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = 
-      List.generate(4, (index) => FocusNode());
+  final _otpController = TextEditingController();
 
   @override
   void dispose() {
@@ -41,12 +37,7 @@ class _LoginViewState extends State<LoginView> {
     _emailOrIdController.dispose();
     _mobileController.dispose();
     _passwordController.dispose();
-    for (var controller in _otpControllers) {
-      controller.dispose();
-    }
-    for (var node in _otpFocusNodes) {
-      node.dispose();
-    }
+    _otpController.dispose();
     super.dispose();
   }
   
@@ -71,14 +62,6 @@ class _LoginViewState extends State<LoginView> {
       },
     );
   }
-  
-  void _onOtpChanged(String value, int index) {
-    if (value.length == 1 && index < 3) {
-      _otpFocusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      _otpFocusNodes[index - 1].requestFocus();
-    }
-  }
 
   void _switchMethod(LoginMethod method) {
     if (_loginMethod == method) return;
@@ -88,9 +71,7 @@ class _LoginViewState extends State<LoginView> {
       _mobileController.clear();
       _passwordController.clear();
       _passwordController.clear();
-      for (var controller in _otpControllers) {
-        controller.clear();
-      }
+      _otpController.clear();
     });
   }
 
@@ -120,7 +101,7 @@ class _LoginViewState extends State<LoginView> {
         return;
       }
 
-      if (_otpControllers.any((controller) => controller.text.isEmpty)) {
+      if (_otpController.text.length < 4) {
         _showError('Please enter valid OTP');
         return;
       }
@@ -347,41 +328,16 @@ class _LoginViewState extends State<LoginView> {
             children: [
               Text('OTP', style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
               SizedBox(height: R.h(8)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  4,
-                  (index) => SizedBox(
-                    width: R.w(60), // Adjusted width for better spacing
-                    height: R.h(60),
-                    child: TextField(
-                      controller: _otpControllers[index],
-                      focusNode: _otpFocusNodes[index],
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      maxLength: 1,
-                      style: TextStyle(
-                          fontSize: R.sp(20), fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        filled: true,
-                        fillColor: AppColors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(R.r(12)),
-                          borderSide: BorderSide(color: AppColors.borderLight),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(R.r(12)),
-                          borderSide: BorderSide(color: AppColors.borderLight),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(R.r(12)),
-                          borderSide: const BorderSide(
-                              color: AppColors.primaryGreen),
-                        ),
-                      ),
-                      onChanged: (value) => _onOtpChanged(value, index),
-                    ),
+              TextField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                cursorColor: AppColors.primaryGreen,
+                decoration: InputDecoration(
+                  hintText: 'Enter OTP',
+                  prefixIcon: Icon(
+                    RemixIcons.message_3_line,
+                    color: AppColors.inputIcon,
+                    size: R.sp(18),
                   ),
                 ),
               ),
