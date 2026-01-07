@@ -584,32 +584,49 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: widget.isOnline ? () {} : null,
-                  icon: Icon(Icons.close, size: R.sp(18)),
-                  label: Text(
-                    'Reject',
-                    style: TextStyle(fontSize: R.sp(14)),
+                child: SizedBox(
+                  height: R.h(45),
+                  child: OutlinedButton.icon(
+                    onPressed: widget.isOnline ? () {} : null,
+                    icon: Icon(Icons.close, size: R.sp(18)),
+                    label: Text(
+                      'Reject',
+                      style: TextStyle(
+                          fontSize: R.sp(14), fontWeight: FontWeight.w600),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(12)),
+                      ),
+                    ),
                   ),
                 ),
               ),
               SizedBox(width: R.w(12)),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: widget.isOnline
-                      ? () {
-                          Navigator.of(context, rootNavigator: true)
-                              .pushNamed(AppRoutes.customer_info);
-                        }
-                      : null,
-                  icon: Icon(Icons.check, size: R.sp(18)),
-                  label: Text(
-                    acceptText,
-                    style: TextStyle(
-                        fontSize: R.sp(14), fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
+                child: SizedBox(
+                  height: R.h(45),
+                  child: ElevatedButton.icon(
+                    onPressed: widget.isOnline
+                        ? () {
+                            Navigator.of(context, rootNavigator: true)
+                                .pushNamed(AppRoutes.customer_info);
+                          }
+                        : null,
+                    icon: Icon(Icons.check, size: R.sp(18)),
+                    label: Text(
+                      acceptText,
+                      style: TextStyle(
+                          fontSize: R.sp(14), fontWeight: FontWeight.w600),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(12)),
+                      ),
+                    ),
                   ),
                 ),
               ),
