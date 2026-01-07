@@ -5,6 +5,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -117,7 +118,17 @@ class _SplashScreenState extends State<SplashScreen>
       overlays: SystemUiOverlay.values, // This brings back Status Bar + Nav Bar
     );
 
-    Navigator.pushReplacementNamed(context, AppRoutes.login);
+    // Check for saved session
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    if (!mounted) return;
+
+    if (token != null && token.isNotEmpty) {
+      Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
   }
 
   @override

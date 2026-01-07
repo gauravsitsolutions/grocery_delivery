@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +7,7 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/res/styles/app_text_styles.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
 enum LoginMethod { password, otp }
@@ -21,6 +23,7 @@ class _LoginViewState extends State<LoginView> {
   bool _obscurePassword = true;
   LoginMethod _loginMethod = LoginMethod.password;
   bool _isOtpSent = false;
+  bool _isLoading = false;
   // ignore: unused_field
   int _start = 30; 
   Timer? _timer;
@@ -30,6 +33,8 @@ class _LoginViewState extends State<LoginView> {
   final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
   final _otpController = TextEditingController();
+
+  final ApiService _apiService = ApiService();
 
   @override
   void dispose() {
@@ -75,14 +80,53 @@ class _LoginViewState extends State<LoginView> {
     });
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_loginMethod == LoginMethod.password) {
-      if (_emailOrIdController.text.isEmpty ||
-          _passwordController.text.isEmpty) {
+      final username = _emailOrIdController.text.trim();
+      final password = _passwordController.text.trim();
+
+      if (username.isEmpty || password.isEmpty) {
         _showError('Please enter ID and password');
         return;
       }
-      Navigator.pushNamed(context, AppRoutes.bottomNav);
+
+      setState(() => _isLoading = true);
+      try {
+        final response = await _apiService.loginWithPassword(username, password);
+        
+        if (!mounted) return;
+
+        if (response.status) {
+          // Success
+          if (response.token != null) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('auth_token', response.token!);
+            if (response.user != null) {
+              await prefs.setInt('user_id', response.user!.id);
+              await prefs.setString('user_name', response.user!.name);
+              await prefs.setString('user_role', response.user!.role);
+            }
+          }
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+              backgroundColor: AppColors.success,
+              content: Text('Login Successful',
+                  style: TextStyle(color: AppColors.white, fontSize: R.sp(14))),
+            ),
+          );
+          Navigator.pushNamed(context, AppRoutes.bottomNav);
+        } else {
+          // API returned success=false but no exception threw
+          _showError(response.message.isNotEmpty ? response.message : 'Login failed');
+        }
+      } catch (e) {
+        if (!mounted) return;
+        _showError(e.toString().replaceAll('Exception: ', ''));
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+
     } else {
       if (_mobileController.text.length != 10) {
         _showError('Enter valid mobile number');
@@ -250,9 +294,9 @@ class _LoginViewState extends State<LoginView> {
           maxLength: isOtp ? 10 : null,
           cursorColor: AppColors.primaryGreen,
           decoration: InputDecoration(
-            hintText: isOtp ? 'Enter mobile number' : 'Enter your ID',
+            hintText: isOtp ? 'Enter mobile number' : 'Enter your username',
             prefixIcon: Icon(
-              isOtp ? RemixIcons.phone_line : RemixIcons.id_card_line,
+              isOtp ? RemixIcons.phone_line : RemixIcons.user_3_line,
               color: AppColors.inputIcon,
               size: R.sp(18),
             ),
@@ -394,13 +438,22 @@ class _LoginViewState extends State<LoginView> {
       width: double.infinity,
       height: R.h(54),
       child: ElevatedButton(
-        onPressed: _handleLogin,
-        child: Text(
-          _loginMethod == LoginMethod.password
-              ? 'Log In →'
-              : (_isOtpSent ? 'Verify Mobile Number →' : 'Send OTP →'),
-          style: TextStyle(fontSize: R.sp(16)),
-        ),
+        onPressed: _isLoading ? null : _handleLogin,
+        child: _isLoading
+            ? SizedBox(
+                height: R.h(24),
+                width: R.h(24),
+                child: const CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                _loginMethod == LoginMethod.password
+                    ? 'Log In →'
+                    : (_isOtpSent ? 'Verify Mobile Number →' : 'Send OTP →'),
+                style: TextStyle(fontSize: R.sp(16)),
+              ),
       ),
     );
   }

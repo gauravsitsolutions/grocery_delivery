@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
 
-  @override
   @override
   Widget build(BuildContext context) {
     R.init(context);
@@ -30,24 +31,31 @@ class ProfileView extends StatelessWidget {
       ),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            R.w(16),
-            R.h(16),
-            R.w(16),
-            R.h(24),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _profileHeader(),
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _getUserDetails(),
+          builder: (context, snapshot) {
+            final name = snapshot.data?['name'] ?? 'Agent';
+            final id = snapshot.data?['id']?.toString() ?? '---';
+            final role = snapshot.data?['role'] ?? 'Partner';
+            
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                R.w(16),
+                R.h(16),
+                R.w(16),
+                R.h(24),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   _profileHeader(name, id, role),
 
-              SizedBox(height: R.h(28)), // spacing preserved
+                  SizedBox(height: R.h(28)), // spacing preserved
 
-              _performanceSection(),
-              SizedBox(height: R.h(32)),
+                  _performanceSection(),
+                  SizedBox(height: R.h(32)),
 
-              _infoSection(
+                  _infoSection(
                 title: 'Personal Information',
                 children: [
                   _infoRow(RemixIcons.phone_line, 'Phone Number',
@@ -112,14 +120,31 @@ class ProfileView extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
+      },
+        ), // FutureBuilder
+      ), // SafeArea
+    ); // Scaffold
   }
-
   // ================= HEADER =================
 
-  Widget _profileHeader() {
+  Future<Map<String, dynamic>> _getUserDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('user_name');
+    final id = prefs.getInt('user_id');
+    final role = prefs.getString('user_role');
+    
+    // Debug print to check what's stored
+    debugPrint('Profile Fetch - Name: $name, ID: $id, Role: $role');
+
+    return {
+      'name': name,
+      'id': id,
+      'role': role,
+    };
+  }
+
+  Widget _profileHeader(String name, String id, String role) {
     return Center(
       child: Column(
         children: [
@@ -160,7 +185,7 @@ class ProfileView extends StatelessWidget {
           ),
           SizedBox(height: R.h(12)),
           Text(
-            'Michael Scott',
+            name,
             style: TextStyle(
               fontSize: R.sp(22),
               fontWeight: FontWeight.w700,
@@ -174,11 +199,11 @@ class ProfileView extends StatelessWidget {
               vertical: R.h(4),
             ),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.12),
+              color: AppColors.primaryGreen.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(R.r(20)),
             ),
             child: Text(
-              'ID #8492  •  Grocery Partner',
+              'ID #$id  •  $role',
               style: TextStyle(
                 fontSize: R.sp(13),
                 fontWeight: FontWeight.w600,
@@ -190,6 +215,7 @@ class ProfileView extends StatelessWidget {
       ),
     );
   }
+
 
   // ================= PERFORMANCE =================
 
@@ -335,8 +361,8 @@ class ProfileView extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.primaryGreen.withOpacity(0.25),
-                      AppColors.primaryGreen.withOpacity(0.05),
+                      AppColors.primaryGreen.withValues(alpha: 0.25),
+                      AppColors.primaryGreen.withValues(alpha: 0.05),
                     ],
                   ),
                 ),
@@ -431,22 +457,37 @@ class ProfileView extends StatelessWidget {
   }
 
   // ================= LOGOUT =================
+  Future<void> _handleLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Clear all data
+    if (context.mounted) {
+       Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login, // Ensure this route exists in your routes map
+        (route) => false,
+      );
+    }
+  }
 
   Widget _logoutButton() {
-    return OutlinedButton.icon(
-      onPressed: () {},
-      icon: const Icon(RemixIcons.logout_circle_r_line, color: AppColors.error),
-      label: Text(
-        'Log Out',
-        style: TextStyle(fontSize: R.sp(16), color: AppColors.error),
-      ),
-      style: OutlinedButton.styleFrom(
-        minimumSize: Size(double.infinity, R.h(56)),
-        side: const BorderSide(color: AppColors.error),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(R.r(16)),
-        ),
-      ),
+    return Builder(
+      builder: (context) {
+        return OutlinedButton.icon(
+          onPressed: () => _handleLogout(context),
+          icon: const Icon(RemixIcons.logout_circle_r_line, color: AppColors.error),
+          label: Text(
+            'Log Out',
+            style: TextStyle(fontSize: R.sp(16), color: AppColors.error),
+          ),
+          style: OutlinedButton.styleFrom(
+            minimumSize: Size(double.infinity, R.h(56)),
+            side: const BorderSide(color: AppColors.error),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(R.r(16)),
+            ),
+          ),
+        );
+      }
     );
   }
 }
