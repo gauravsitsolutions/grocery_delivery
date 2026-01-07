@@ -1,0 +1,61 @@
+name: samrudhi_delivery_agent_app
+description: "Samrudhi Delivery Agent App"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.5+1
+  responsive_framework: ^1.5.1
+  lottie: ^3.3.2
+  persistent_bottom_nav_bar: ^6.2.1
+  fl_chart: ^1.1.1
+  remixicon: ^1.4.1
+  in_app_review: ^2.0.11
+  http: ^1.6.0
+  connectivity_plus: ^7.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.5
+
+# --------------------------------------------------
+# App Launcher Icon Configuration (ROOT LEVEL)
+# --------------------------------------------------
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_logo.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  
+
+# --------------------------------------------------
+# Splash Screen Configuration (ROOT LEVEL)
+# --------------------------------------------------
+flutter_native_splash:
+  color: "#F5FAF5"
+  image: assets/images/app_logo.png
+  android: true
+  ios: true
+
+# --------------------------------------------------
+# Flutter Section (ONLY assets, fonts, etc.)
+# --------------------------------------------------
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/lottie/
