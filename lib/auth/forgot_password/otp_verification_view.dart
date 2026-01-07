@@ -20,7 +20,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
 
   final ApiService _apiService = ApiService();
   Timer? _timer;
-  int _start = 600; // 10 minutes
+  int _start = 30;
   bool _isTimerRunning = false;
   bool _isLoading = false;
 
@@ -32,7 +32,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
 
   void _startTimer() {
     setState(() {
-      _start = 600; // 10 minutes
+      _start = 30;
       _isTimerRunning = true;
     });
     _timer?.cancel();
@@ -223,7 +223,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                     ? 'Resend Code (0:${_start.toString().padLeft(2, '0')})'
                                     : 'Resend Code',
                                   style: TextStyle(
-                                    color: _isTimerRunning ? AppColors.hintText : AppColors.primaryGreen,
+                                    color: AppColors.primaryGreen,
                                     fontWeight: FontWeight.bold,
                                     fontSize: R.sp(14),
                                   ),
