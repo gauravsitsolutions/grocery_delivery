@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
-import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
+import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
 import 'package:samrudhi_delivery_agent_app/widget/slide_to_complete_widget.dart';
 
@@ -18,6 +18,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
 
   @override
   Widget build(BuildContext context) {
+    R.init(context);
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
 
@@ -27,19 +28,21 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
         elevation: 0,
         centerTitle: true,
         leading: const BackButton(color: AppColors.headingText),
-        title: const Text(
+        title: Text(
           'Order #48291',
           style: TextStyle(
             color: AppColors.headingText,
             fontWeight: FontWeight.w700,
+            fontSize: R.sp(20),
           ),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16),
+            padding: EdgeInsets.only(right: R.w(16)),
             child: Icon(
               RemixIcons.customer_service_fill,
               color: AppColors.headingText,
+              size: R.sp(24),
             ),
           ),
         ],
@@ -47,17 +50,17 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
 
       // ================= BODY =================
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
+        padding: EdgeInsets.fromLTRB(R.w(16), R.h(16), R.w(16), R.h(150)),
         child: Column(
           children: [
             _customerCard(),
-            const SizedBox(height: 16),
+            SizedBox(height: R.h(16)),
             _mapCard(),
-            const SizedBox(height: 16),
+            SizedBox(height: R.h(16)),
             _instructionCard(),
-            const SizedBox(height: 24),
+            SizedBox(height: R.h(24)),
             _orderHeader(),
-            const SizedBox(height: 12),
+            SizedBox(height: R.h(12)),
             _orderItem(
               'Organic Bananas',
               '1 bunch • \$2.49',
@@ -80,19 +83,19 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
       // ================= BOTTOM =================
       bottomNavigationBar: SafeArea(
         child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: EdgeInsets.fromLTRB(R.w(16), R.h(8), R.w(16), R.h(16)),
           color: AppColors.white,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Verify all items before completing order',
                 style: TextStyle(
                   color: AppColors.bodyText,
-                  fontSize: 13,
+                  fontSize: R.sp(13),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: R.h(12)),
               SlideToCompleteWidget(
                 enabled: instructionsRead,
                 onCompleted: () {
@@ -114,36 +117,36 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                radius: 28,
-                backgroundImage: NetworkImage(
+              CircleAvatar(
+                radius: R.r(28),
+                backgroundImage: const NetworkImage(
                   'https://randomuser.me/api/portraits/women/44.jpg',
                 ),
               ),
-              const SizedBox(width: 12),
-              const Column(
+              SizedBox(width: R.w(12)),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Sarah Jenkins',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: R.sp(18),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: R.h(4)),
                   Text(
                     'Customer since 2021',
                     style: TextStyle(
                       color: AppColors.bodyText,
-                      fontSize: 13,
+                      fontSize: R.sp(13),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: R.h(16)),
           Row(
             children: [
               Expanded(
@@ -154,7 +157,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                   textColor: AppColors.white,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: R.w(12)),
               Expanded(
                 child: _actionButton(
                   icon: RemixIcons.message_3_line,
@@ -181,33 +184,33 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
             children: [
               ClipRRect(
                 borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
+                    BorderRadius.vertical(top: Radius.circular(R.r(20))),
                 child: Image.network(
                   'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=900',
-                  height: 170,
+                  height: R.h(170),
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               ),
               Positioned(
-                left: 16,
-                bottom: 16,
+                left: R.w(16),
+                bottom: R.h(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'DISTANCE',
                       style: TextStyle(
                         color: AppColors.white,
-                        fontSize: 12,
+                        fontSize: R.sp(12),
                       ),
                     ),
-                    SizedBox(height: 4),
+                    SizedBox(height: R.h(4)),
                     Text(
                       '2.4 km • 15 mins',
                       style: TextStyle(
                         color: AppColors.white,
-                        fontSize: 18,
+                        fontSize: R.sp(18),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -217,10 +220,10 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(R.w(16)),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -229,18 +232,18 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                         style: TextStyle(
                           color: AppColors.primaryGreen,
                           fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                          fontSize: R.sp(12),
                         ),
                       ),
-                      SizedBox(height: 6),
+                      SizedBox(height: R.h(6)),
                       Text(
                         '1234 Green Street, Apt 4B',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: R.sp(16),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: R.h(4)),
                       Text(
                         'San Francisco, CA 94109',
                         style: TextStyle(color: AppColors.bodyText),
@@ -248,11 +251,12 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                     ],
                   ),
                 ),
-                const CircleAvatar(
+                CircleAvatar(
                   backgroundColor: AppColors.borderLight,
                   child: Icon(
                     Icons.navigation,
                     color: AppColors.black,
+                    size: R.sp(24),
                   ),
                 ),
               ],
@@ -267,38 +271,44 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
 
   Widget _instructionCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
         color:
             const Color(0xFFFFF7E0), // alert bg (can move to AppColors later)
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(R.r(16)),
         border: Border.all(color: AppColors.borderLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.info, color: AppColors.headingText),
-              SizedBox(width: 8),
+              Icon(Icons.info, color: AppColors.headingText, size: R.sp(24)),
+              SizedBox(width: R.w(8)),
               Text(
                 'DELIVERY INSTRUCTIONS',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: AppColors.headingText,
+                  fontSize: R.sp(14),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Gate Code: 1234. Please do not ring the doorbell, baby is sleeping.',
+            style: TextStyle(fontSize: R.sp(14)),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: R.h(12)),
           Row(
             children: [
-              const Expanded(
-                child: Text('I have read the instructions'),
+              Expanded(
+                key: const ValueKey('instruction_checkbox'),
+                child: Text(
+                  'I have read the instructions',
+                  style: TextStyle(fontSize: R.sp(14)),
+                ),
               ),
               RemixIconToggle(
                 value: instructionsRead,
@@ -315,10 +325,10 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
 
   Widget _orderHeader() {
     return Row(
-      children: const [
+      children: [
         Text(
           'Order Items (5)',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          style: TextStyle(fontSize: R.sp(18), fontWeight: FontWeight.w700),
         ),
         Spacer(),
         Text(
@@ -326,6 +336,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
           style: TextStyle(
             color: AppColors.primaryGreen,
             fontWeight: FontWeight.w700,
+            fontSize: R.sp(14),
           ),
         ),
       ],
@@ -339,26 +350,26 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
     String qty = 'x1',
   }) {
     return _card(
-      margin: const EdgeInsets.only(top: 12),
+      margin: EdgeInsets.only(top: R.h(12)),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(R.r(12)),
             child: Image.network(
               image,
-              width: 56,
-              height: 56,
+              width: R.w(56),
+              height: R.h(56),
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                width: 56,
-                height: 56,
+                width: R.w(56),
+                height: R.h(56),
                 color: AppColors.borderLight,
                 alignment: Alignment.center,
-                child: const Icon(Icons.image_not_supported),
+                child: Icon(Icons.image_not_supported, size: R.sp(24)),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: R.w(12)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,42 +378,42 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: R.sp(16),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: R.h(4)),
                 Text(
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: R.sp(14),
                     color: AppColors.bodyText,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: R.w(12)),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(6)),
             decoration: BoxDecoration(
               color: AppColors.scaffoldBg,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(R.r(10)),
             ),
             child: Text(
               qty,
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: R.sp(14)),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: R.w(12)),
           Container(
-            width: 24,
-            height: 24,
+            width: R.w(24),
+            height: R.h(24),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(R.r(6)),
               border: Border.all(
                 color: AppColors.borderLight,
                 width: 1.5,
@@ -423,21 +434,22 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
     required Color textColor,
   }) {
     return Container(
-      height: 48,
+      height: R.h(48),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(R.r(14)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: textColor),
-          const SizedBox(width: 8),
+          Icon(icon, size: R.sp(18), color: textColor),
+          SizedBox(width: R.w(8)),
           Text(
             label,
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: textColor,
+              fontSize: R.sp(14),
             ),
           ),
         ],
@@ -452,10 +464,10 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
   }) {
     return Container(
       margin: margin,
-      padding: padding ?? const EdgeInsets.all(16),
+      padding: padding ?? EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(R.r(20)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A000000),

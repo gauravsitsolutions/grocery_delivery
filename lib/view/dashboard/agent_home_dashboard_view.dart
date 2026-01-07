@@ -86,13 +86,19 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     ],
                   ),
                   const Spacer(),
-                  CircleAvatar(
-                    radius: R.r(25),
-                    backgroundColor: AppColors.white,
-                    child: Icon(
-                      RemixIcons.notification_2_line,
-                      size: R.sp(22),
-                      color: AppColors.black,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context, rootNavigator: true)
+                          .pushNamed(AppRoutes.notification);
+                    },
+                    child: CircleAvatar(
+                      radius: R.r(25),
+                      backgroundColor: AppColors.white,
+                      child: Icon(
+                        RemixIcons.notification_2_line,
+                        size: R.sp(22),
+                        color: AppColors.black,
+                      ),
                     ),
                   ),
                 ],

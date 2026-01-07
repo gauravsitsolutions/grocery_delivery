@@ -25,16 +25,16 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
     required String label,
   }) {
     return PersistentBottomNavBarItem(
-      icon: Icon(activeIcon, size: 22),
-      inactiveIcon: Icon(icon, size: 22),
+      icon: Icon(activeIcon, size: R.sp(22)),
+      inactiveIcon: Icon(icon, size: R.sp(22)),
       title: label,
 
       // colors handled by library
       activeColorPrimary: AppColors.primaryGreen,
       inactiveColorPrimary: AppColors.hintText,
 
-      textStyle: const TextStyle(
-        fontSize: 12,
+      textStyle: TextStyle(
+        fontSize: R.sp(12),
         fontWeight: FontWeight.w600,
       ),
     );

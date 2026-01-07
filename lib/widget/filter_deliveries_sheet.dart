@@ -226,10 +226,10 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
                 ),
                 const Spacer(),
                 if (active)
-                  const CircleAvatar(
-                    radius: 10,
+                  CircleAvatar(
+                    radius: R.r(10),
                     backgroundColor: AppColors.primaryGreen,
-                    child: Icon(Icons.check, size: 14, color: Colors.black),
+                    child: Icon(Icons.check, size: R.sp(14), color: Colors.black),
                   ),
               ],
             ),
@@ -279,17 +279,28 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                  Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: R.sp(16),
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: R.sp(14),
+                    ),
+                  ),
                 ],
               ),
             ),
             if (active)
-              const CircleAvatar(
-                radius: 12,
+              CircleAvatar(
+                radius: R.r(12),
                 backgroundColor: AppColors.primaryGreen,
-                child: Icon(Icons.circle, size: 10, color: Colors.black),
+                child: Icon(Icons.circle, size: R.sp(10), color: Colors.black),
               ),
           ],
         ),

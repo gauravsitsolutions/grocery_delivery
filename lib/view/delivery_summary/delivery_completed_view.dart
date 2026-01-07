@@ -249,6 +249,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
           ),
           CircleAvatar(
             backgroundColor: AppColors.borderLight,
+            radius: R.r(20),
             child: Icon(
               RemixIcons.home_2_fill,
               color: AppColors.headingText,
@@ -292,6 +293,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
             children: [
               CircleAvatar(
                 backgroundColor: AppColors.softGreyBg,
+                radius: R.r(20),
                 child: Icon(
                   Icons.shopping_bag,
                   color: AppColors.primaryGreen,
@@ -453,10 +455,10 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(20)),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 12,
+            color: const Color(0x0A000000),
+            blurRadius: R.r(12),
           ),
         ],
       ),
