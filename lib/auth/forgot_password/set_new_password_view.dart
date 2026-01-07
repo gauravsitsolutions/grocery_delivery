@@ -74,10 +74,27 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
 
       if (response['status'] == true) {
          // Success -> Navigate to Success Screen
+         // Wait for 2 seconds as requested, to show any success state if needed
+         // (However, since we are navigating to a 'Success Screen', the user likely means 
+         // show the success screen/message itself. But given we are navigating TO the success screen,
+         // the delay might be better placed ON the success screen or BEFORE navigating if we want to show a toast here first.
+         // Assuming user wants to see the result of "Set Password" action momentarily.)
+         
+         // Actually, typically "show that" refers to a success feedback. 
+         // But the destination IS PasswordResetSuccessView.
+         // If the user means "show the success screen for 2 seconds then navigate to LOGIN", 
+         // that logic belongs in PasswordResetSuccessView. 
+         
+         // Let's check if PasswordResetSuccessView auto-navigates.
+         // Retreading the request: "also after password restet show that for 2 second and navigate"
+         // This most likely implies: The "Success View" should be shown for 2 seconds, then go to Login.
+         
+         // SO I should check PasswordResetSuccessView.dart. 
+         
          Navigator.pushNamedAndRemoveUntil(
            context, 
            AppRoutes.passwordResetSuccess,
-           (route) => false, // Clear stack so user can't go back to change password again
+           (route) => false, 
          );
       } else {
         _showError(response['message'] ?? 'Failed to reset password');
@@ -219,7 +236,7 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
                     ),
                   ),
                   child: _isLoading 
-                    ? SizedBox(height: R.sp(20), width: R.sp(20), child: const CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+                    ? SizedBox(height: R.sp(20), width: R.sp(20), child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : Text(
                     'Set Password',
                     style: TextStyle(

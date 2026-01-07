@@ -86,14 +86,15 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
       height: R.r(120),
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        // Removed border as Lottie usually looks better without it or has its own
       ),
-      child: Lottie.asset(
-        'assets/lottie/success_check.json',
-        width: R.r(120),
-        height: R.r(120),
-        fit: BoxFit.contain,
-        repeat: false, // Usually success animations run once
+      child: ClipOval(
+        child: Lottie.asset(
+          'assets/lottie/success_check.json',
+          width: R.r(120),
+          height: R.r(120),
+          fit: BoxFit.contain,
+          repeat: true, 
+        ),
       ),
     );
   }

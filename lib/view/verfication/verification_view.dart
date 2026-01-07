@@ -15,9 +15,9 @@ class VerificationView extends StatefulWidget {
 
 class _VerificationViewState extends State<VerificationView> {
   final List<TextEditingController> _controllers =
-      List.generate(4, (_) => TextEditingController());
+      List.generate(6, (_) => TextEditingController());
 
-  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   bool _isOtpComplete = false;
 
@@ -46,7 +46,7 @@ class _VerificationViewState extends State<VerificationView> {
   }
 
   void _onChanged(String value, int index) {
-    if (value.isNotEmpty && index < 3) {
+    if (value.isNotEmpty && index < 5) {
       _focusNodes[index + 1].requestFocus();
     }
     if (value.isEmpty && index > 0) {
@@ -164,7 +164,7 @@ class _VerificationViewState extends State<VerificationView> {
     return Column(
       children: [
         Text(
-          "We've sent a 4-digit code to",
+          "We've sent a 6-digit code to",
           style: TextStyle(
             fontSize: R.sp(14),
             color: AppColors.bodyText,
@@ -185,47 +185,52 @@ class _VerificationViewState extends State<VerificationView> {
   // ================= OTP =================
 
   Widget _otpFields() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
-        return Container(
-          width: R.r(64),
-          height: R.r(64),
-          margin: EdgeInsets.symmetric(horizontal: R.w(8)),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(R.r(16)),
-            border: Border.all(
-              color: _focusNodes[index].hasFocus
-                  ? AppColors.primaryGreen
-                  : AppColors.borderLight,
-              width: R.r(2),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: R.r(10),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: R.w(16)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(6, (index) {
+          return Container(
+            width: R.r(50), // Reduced width to fit 6 items
+            height: R.r(60), // Adjusted height
+            margin: EdgeInsets.symmetric(horizontal: R.w(4)),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(R.r(12)),
+              border: Border.all(
+                color: _focusNodes[index].hasFocus
+                    ? AppColors.primaryGreen
+                    : AppColors.borderLight,
+                width: R.r(2),
               ),
-            ],
-          ),
-          child: TextField(
-            controller: _controllers[index],
-            focusNode: _focusNodes[index],
-            textAlign: TextAlign.center,
-            maxLength: 1,
-            keyboardType: TextInputType.number,
-            style: TextStyle(
-              fontSize: R.sp(22),
-              fontWeight: FontWeight.w700,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: R.r(8),
+                ),
+              ],
             ),
-            decoration: const InputDecoration(
-              counterText: '',
-              border: InputBorder.none,
+            child: TextField(
+              controller: _controllers[index],
+              focusNode: _focusNodes[index],
+              textAlign: TextAlign.center,
+              maxLength: 1,
+              keyboardType: TextInputType.number,
+              style: TextStyle(
+                fontSize: R.sp(20),
+                fontWeight: FontWeight.w700,
+              ),
+              decoration: const InputDecoration(
+                counterText: '',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (v) => _onChanged(v, index),
             ),
-            onChanged: (v) => _onChanged(v, index),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 

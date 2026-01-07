@@ -1,11 +1,43 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/res/styles/app_text_styles.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
-class PasswordResetSuccessView extends StatelessWidget {
+class PasswordResetSuccessView extends StatefulWidget {
   const PasswordResetSuccessView({super.key});
+
+  @override
+  State<PasswordResetSuccessView> createState() => _PasswordResetSuccessViewState();
+}
+
+class _PasswordResetSuccessViewState extends State<PasswordResetSuccessView> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startNavigationTimer();
+  }
+
+  void _startNavigationTimer() {
+    _timer = Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.login,
+          (route) => false,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +85,7 @@ class PasswordResetSuccessView extends StatelessWidget {
                 height: R.h(50),
                 child: ElevatedButton(
                   onPressed: () {
+                    _timer?.cancel();
                     // Navigate to Login and clear stack
                     Navigator.pushNamedAndRemoveUntil(
                       context,

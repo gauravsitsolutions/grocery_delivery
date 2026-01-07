@@ -41,12 +41,6 @@ flutter_launcher_icons:
   min_sdk_android: 21
   remove_alpha_ios: true
   
-
-# --------------------------------------------------
-# Splash Screen Configuration (ROOT LEVEL)
-# --------------------------------------------------
-
-
 # --------------------------------------------------
 # Flutter Section (ONLY assets, fonts, etc.)
 # --------------------------------------------------

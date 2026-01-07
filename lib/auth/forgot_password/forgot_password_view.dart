@@ -163,7 +163,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     ),
                   ),
                   child: _isLoading 
-                    ? SizedBox(height: R.sp(20), width: R.sp(20), child: const CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+                    ? SizedBox(height: R.sp(20), width: R.sp(20), child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : Text(
                     'Send Reset Code',
                     style: TextStyle(

@@ -297,7 +297,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                 ? SizedBox(
                                     height: R.sp(20),
                                     width: R.sp(20),
-                                    child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.black),
+                                    child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                   )
                                 : Text(
                                 'Verify Code',

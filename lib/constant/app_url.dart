@@ -5,7 +5,7 @@ class AppUrls {
   static const String verifyOtp = '$baseUrl/api/auth/mobile/verify-otp/login';
   static const String resendOtp = '$baseUrl/api/auth/mobile/resend-otp';
   static const String forgotPasswordSendOtp = '$baseUrl/api/auth/forgot-password/send-otp';
-  static const String verifyForgotPasswordOtp = '$baseUrl/api/auth/forgot-password/verify-otp';
+  static const String verifyForgotPasswordOtp = '$baseUrl/api/auth/mobile/verify-otp/forgot_password';
   static const String resetPassword = '$baseUrl/api/auth/reset-password';
   static const String logout = '$baseUrl/api/auth/logout';
   static const String partnerOffline = '$baseUrl/api/partner/status/offline';
