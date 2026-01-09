@@ -1,11 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/widget/filter_deliveries_sheet.dart';
+import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import '../../utils/responsive.dart';
 
-class DeliveriesView extends StatelessWidget {
+class DeliveriesView extends StatefulWidget {
   const DeliveriesView({super.key});
+
+  @override
+  State<DeliveriesView> createState() => _DeliveriesViewState();
+}
+
+class _DeliveriesViewState extends State<DeliveriesView> {
+  final ApiService _apiService = ApiService();
+  List<Order> _orders = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrders();
+  }
+
+  Future<void> _fetchOrders() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      if (token == null) {
+        setState(() {
+          _error = 'User not authenticated';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final response = await _apiService.getNewOrders(token);
+      if (mounted) {
+        setState(() {
+          _orders = response.data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,83 +83,122 @@ class DeliveriesView extends StatelessWidget {
       ),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: R.w(16)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: R.h(16)),
+        child: RefreshIndicator(
+          onRefresh: _fetchOrders,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(horizontal: R.w(16)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: R.h(16)),
+                _searchBar(context),
+                SizedBox(height: R.h(20)),
 
-              _searchBar(context),
-              SizedBox(height: R.h(20)),
-
-              // SUMMARY
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryCard(
-                      title: 'Completed',
-                      value: '12',
-                      icon: RemixIcons.checkbox_circle_fill,
-                      bg: AppColors.summaryBlueBg,
-                      iconColor: AppColors.summaryBlueIcon,
+                // SUMMARY
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SummaryCard(
+                        title: 'Completed',
+                        value: '12',
+                        icon: RemixIcons.checkbox_circle_fill,
+                        bg: AppColors.summaryBlueBg,
+                        iconColor: AppColors.summaryBlueIcon,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: R.w(12)),
-                  Expanded(
-                    child: _SummaryCard(
-                      title: 'Distance',
-                      value: '24km',
-                      icon: RemixIcons.map_pin_fill,
-                      bg: AppColors.summaryOrangeBg,
-                      iconColor: AppColors.summaryOrangeIcon,
+                    SizedBox(width: R.w(12)),
+                    Expanded(
+                      child: _SummaryCard(
+                        title: 'Distance',
+                        value: '24km',
+                        icon: RemixIcons.map_pin_fill,
+                        bg: AppColors.summaryOrangeBg,
+                        iconColor: AppColors.summaryOrangeIcon,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: R.w(12)),
-                  Expanded(
-                    child: _SummaryCard(
-                      title: 'Avg Time',
-                      value: '28m',
-                      icon: RemixIcons.timer_fill,
-                      bg: AppColors.summaryPurpleBg,
-                      iconColor: AppColors.summaryPurpleIcon,
+                    SizedBox(width: R.w(12)),
+                    Expanded(
+                      child: _SummaryCard(
+                        title: 'Avg Time',
+                        value: '28m',
+                        icon: RemixIcons.timer_fill,
+                        bg: AppColors.summaryPurpleBg,
+                        iconColor: AppColors.summaryPurpleIcon,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
 
-              SizedBox(height: R.h(20)),
-              _statusSwitch(),
+                SizedBox(height: R.h(20)),
+                _statusSwitch(),
 
-              SizedBox(height: R.h(22)),
-              _sectionLabel('IN PROGRESS'),
-              SizedBox(height: R.h(10)),
-              _inProgressCard(),
+                SizedBox(height: R.h(22)),
+                _sectionLabel('PENDING ORDERS'),
+                SizedBox(height: R.h(10)),
 
-              SizedBox(height: R.h(26)),
-              _sectionLabel('UP NEXT'),
-              SizedBox(height: R.h(10)),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  child: _isLoading
+                      ? const ListShimmer(count: 3)
+                      : _error != null
+                          ? Center(
+                              key: const ValueKey('error'),
+                              child: Column(
+                                children: [
+                                  Text(_error!,
+                                      style: const TextStyle(
+                                          color: AppColors.error)),
+                                  ElevatedButton(
+                                    onPressed: _fetchOrders,
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : _orders.isEmpty
+                              ? const Center(
+                                  key: ValueKey('empty'),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 20),
+                                    child: Text('No pending orders'),
+                                  ),
+                                )
+                              : Column(
+                                  key: const ValueKey('content'),
+                                  children: _orders
+                                      .map((order) => Column(
+                                            children: [
+                                              _upNextCard(
+                                                orderId:
+                                                    '#${order.orderNumber}',
+                                                distance:
+                                                    '₹ ${order.totalAmount}',
+                                                title:
+                                                    'Status: ${order.status.toUpperCase()}',
+                                                subtitle:
+                                                    '${order.orderItems.length} Items • ${order.createdAt.toString().substring(0, 16)}',
+                                                icon: RemixIcons
+                                                    .shopping_bag_3_line,
+                                                bg: AppColors.summaryBlueBg,
+                                                iconColor:
+                                                    AppColors.summaryBlueIcon,
+                                              ),
+                                              SizedBox(height: R.h(12)),
+                                            ],
+                                          ))
+                                      .toList(),
+                                ),
+                ),
 
-              _upNextCard(
-                orderId: '#ORD-488',
-                distance: '1.1km away',
-                title: 'Drop off by 3:30 PM',
-                subtitle: 'Target • 5 Items',
-                icon: RemixIcons.store_2_fill,
-                bg: AppColors.summaryOrangeBg,
-                iconColor: AppColors.summaryOrangeIcon,
-              ),
-              SizedBox(height: R.h(12)),
-              _upNextCard(
-                orderId: '#ORD-501',
-                distance: '3.4km away',
-                title: 'Pick up by 4:15 PM',
-                subtitle: 'Electronics Store • 1 Item',
-                icon: RemixIcons.archive_2_fill,
-                bg: AppColors.summaryBlueBg,
-                iconColor: AppColors.summaryBlueIcon,
-              ),
-            ],
+                SizedBox(height: R.h(26)),
+                _sectionLabel('IN PROGRESS'),
+                SizedBox(height: R.h(10)),
+                _inProgressCard(),
+                SizedBox(height: R.h(20)),
+              ],
+            ),
           ),
         ),
       ),

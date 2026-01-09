@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
+import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -20,6 +24,55 @@ class AgentDashboardView extends StatefulWidget {
 }
 
 class _AgentDashboardViewState extends State<AgentDashboardView> {
+  final ApiService _apiService = ApiService();
+  List<Order> _orders = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrders();
+  }
+
+  Future<void> _fetchOrders() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      if (token == null) {
+        if (mounted) {
+          setState(() {
+            _error = 'User not authenticated';
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+
+      final response = await _apiService.getNewOrders(token);
+      if (mounted) {
+        setState(() {
+          _orders = response.data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     R.init(context);
@@ -29,290 +82,245 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: R.w(16),
-            vertical: R.h(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Status
-              Row(
-                children: [
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: R.r(22),
-                        backgroundColor: AppColors.borderLight,
-                        child: Icon(Icons.person, size: R.sp(20)),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: CircleAvatar(
-                          radius: R.r(6),
-                          backgroundColor:
-                              isOnline ? AppColors.primaryGreen : AppColors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: R.w(12)),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'STATUS',
-                        style: TextStyle(
-                          fontSize: R.sp(12),
-                          color: AppColors.bodyText,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            isOnline ? 'You are Online' : 'You are Offline',
-                            style: TextStyle(
-                              fontSize: R.sp(18),
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  isOnline ? AppColors.black : AppColors.bodyText,
-                            ),
-                          ),
-                          SizedBox(width: R.w(6)),
-                          Icon(
-                            Icons.circle,
-                            size: R.sp(10),
-                            color:
-                                isOnline ? AppColors.primaryGreen : AppColors.grey,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  const Spacer(),
-                  Opacity(
-                    opacity: isOnline ? 1 : 0.35,
-                    child: AbsorbPointer(
-                      absorbing: !isOnline,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context, rootNavigator: true)
-                              .pushNamed(AppRoutes.notification);
-                        },
-                        child: CircleAvatar(
-                          radius: R.r(25),
-                          backgroundColor: AppColors.white,
-                          child: Icon(
-                            RemixIcons.notification_2_line,
-                            size: R.sp(22),
-                            color: AppColors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: R.h(16)),
-
-              // Go Online
-              Container(
-                padding: EdgeInsets.all(R.w(14)),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(R.r(18)),
-                ),
-                child: Row(
+        child: RefreshIndicator(
+          onRefresh: _fetchOrders,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(
+              horizontal: R.w(16),
+              vertical: R.h(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Status
+                Row(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.15),
-                      child: Icon(Icons.flash_on,
-                          size: R.sp(18), color: AppColors.primaryGreen),
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: R.r(22),
+                          backgroundColor: AppColors.borderLight,
+                          child: Icon(Icons.person, size: R.sp(20)),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            radius: R.r(6),
+                            backgroundColor: isOnline
+                                ? AppColors.primaryGreen
+                                : AppColors.grey,
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(width: R.w(12)),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Go Online',
-                            style: TextStyle(
-                              fontSize: R.sp(16),
-                              fontWeight: FontWeight.w700,
-                            ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'STATUS',
+                          style: TextStyle(
+                            fontSize: R.sp(12),
+                            color: AppColors.bodyText,
                           ),
-                          Text(
-                            'Start receiving orders',
-                            style: TextStyle(
-                              fontSize: R.sp(14),
-                              color: AppColors.bodyText,
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              isOnline ? 'You are Online' : 'You are Offline',
+                              style: TextStyle(
+                                fontSize: R.sp(18),
+                                fontWeight: FontWeight.w700,
+                                color: isOnline
+                                    ? AppColors.black
+                                    : AppColors.bodyText,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                            SizedBox(width: R.w(6)),
+                            Icon(
+                              Icons.circle,
+                              size: R.sp(10),
+                              color: isOnline
+                                  ? AppColors.primaryGreen
+                                  : AppColors.grey,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
+                    const Spacer(),
                     RemixIconToggle(
                       value: isOnline,
                       onChanged: widget.onStatusChanged,
                     ),
                   ],
                 ),
-              ),
+                SizedBox(height: R.h(24)),
 
-              SizedBox(height: R.h(24)),
+                // Order Requests
+                _sectionHeader(
+                  title: 'Order Requests',
+                  action: Text(
+                    'Recent',
+                    style: TextStyle(
+                      fontSize: R.sp(14),
+                      color: AppColors.bodyText,
+                    ),
+                  ),
+                ),
+                SizedBox(height: R.h(12)),
 
-              // Current Task
-              // Current Task
-              Opacity(
-                opacity: isOnline ? 1 : 0.35,
-                child: AbsorbPointer(
-                  absorbing: !isOnline,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Current Task & Delivery',
-                        style: TextStyle(
-                          fontSize: R.sp(20),
-                          fontWeight: FontWeight.w700,
+                GestureDetector(
+                  onTap: () {
+                    // Navigate to details if needed
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(R.w(16)),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(R.r(22)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                      SizedBox(height: R.h(12)),
-                      _currentTaskCard(),
-                    ],
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: R.r(20),
+                              backgroundColor:
+                                  AppColors.primaryGreen.withOpacity(0.1),
+                              child: Icon(
+                                RemixIcons.shopping_bag_3_line,
+                                color: AppColors.primaryGreen,
+                                size: R.sp(20),
+                              ),
+                            ),
+                            SizedBox(width: R.w(12)),
+                            const Expanded(
+                              child: Text(
+                                'Pending Requests',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${_orders.length} Orders',
+                              style: TextStyle(
+                                color: AppColors.primaryGreen,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: R.h(12)),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          child: _isLoading
+                              ? const OrderShimmer()
+                              : _error != null
+                                  ? Center(
+                                      key: const ValueKey('error'),
+                                      child: Text(_error!,
+                                          style: const TextStyle(
+                                              color: AppColors.error)))
+                                  : _orders.isEmpty
+                                      ? const Center(
+                                          key: ValueKey('empty'),
+                                          child: Text('No new orders'))
+                                      : _orderCard(
+                                          key: const ValueKey('content'),
+                                          title: _orders.first.orderNumber,
+                                          price:
+                                              '₹ ${_orders.first.totalAmount}',
+                                          meta:
+                                              '${_orders.first.orderItems.length} items • ${_orders.first.status.toUpperCase()}',
+                                          acceptText: 'Accept',
+                                        ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+                SizedBox(height: R.h(24)),
 
-              SizedBox(height: R.h(24)),
-
-              // New Order
-              Opacity(
-                opacity: isOnline ? 1 : 0.35,
-                child: AbsorbPointer(
-                  absorbing: !isOnline,
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'New Order Request',
-                            style: TextStyle(
-                              fontSize: R.sp(20),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '00:23',
-                            style: TextStyle(
-                              fontSize: R.sp(16),
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primaryGreen,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: R.h(12)),
-                      _orderCard(
-                        title: 'Costco',
-                        price: '₹ 32.75',
-                        meta: '2.1 mi away • 15 items',
-                        acceptText: 'Accept',
-                      ),
-                    ],
+                // Current Task Header
+                _sectionHeader(
+                  title: 'Current Task',
+                  action: Text(
+                    'View all',
+                    style: TextStyle(
+                      fontSize: R.sp(14),
+                      color: AppColors.bodyText,
+                    ),
                   ),
                 ),
-              ),
+                SizedBox(height: R.h(12)),
+                _currentTaskCard(),
+                SizedBox(height: R.h(24)),
 
-              SizedBox(height: R.h(24)),
-
-              // Delivery Queue
-              Opacity(
-                opacity: isOnline ? 1 : 0.35,
-                child: AbsorbPointer(
-                  absorbing: !isOnline,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Delivery Queue',
-                            style: TextStyle(
-                              fontSize: R.sp(20),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '2 more',
-                            style: TextStyle(
-                              fontSize: R.sp(14),
-                              color: AppColors.bodyText,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: R.h(12)),
-                      _queueCard('CVS Pharmacy', '₹ 8.25', 'Next Up'),
-                      _queueCard("Trader Joe's", '₹ 22.00', '#2 in queue'),
-                    ],
-                  ),
-                ),
-              ),
-
-              SizedBox(height: R.h(24)),
-
-              // Available
-              Opacity(
-                opacity: isOnline ? 1 : 0.35,
-                child: AbsorbPointer(
-                  absorbing: !isOnline,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Available Orders',
-                            style: TextStyle(
-                              fontSize: R.sp(20),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
+                // Available Orders
+                Opacity(
+                  opacity: isOnline ? 1 : 0.35,
+                  child: AbsorbPointer(
+                    absorbing: !isOnline,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionHeader(
+                          title: 'Available Orders',
+                          action: Text(
                             'See all',
                             style: TextStyle(
                               fontSize: R.sp(14),
                               color: AppColors.bodyText,
                             ),
                           ),
-                        ],
-                      ),
-                      SizedBox(height: R.h(12)),
-                      _orderCard(
-                        title: 'Safeway',
-                        price: '₹ 18.50',
-                        meta: '3.5 mi away • 8 items',
-                        acceptText: 'Accept Order',
-                      ),
-                      _orderCard(
-                        title: 'Target',
-                        price: '₹ 25.10',
-                        meta: '1.2 mi away • 21 items',
-                        acceptText: 'Accept Order',
-                      ),
-                    ],
+                        ),
+                        SizedBox(height: R.h(12)),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          child: _isLoading
+                              ? const ListShimmer(count: 2)
+                              : _error != null
+                                  ? const SizedBox.shrink(
+                                      key: ValueKey('error'))
+                                  : _orders.isEmpty
+                                      ? const Center(
+                                          key: ValueKey('empty'),
+                                          child: Text('No available orders'))
+                                      : Column(
+                                          key: const ValueKey('content'),
+                                          children: _orders
+                                              .skip(1)
+                                              .take(2)
+                                              .map((order) => _orderCard(
+                                                    title: order.orderNumber,
+                                                    price:
+                                                        '₹ ${order.totalAmount}',
+                                                    meta:
+                                                        '${order.orderItems.length} items • ${order.status.toUpperCase()}',
+                                                    acceptText: 'Accept Order',
+                                                  ))
+                                              .toList(),
+                                        ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: R.h(20)),
+              ],
+            ),
           ),
         ),
       ),
@@ -422,8 +430,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: ElevatedButton(
               onPressed: widget.isOnline ? () {} : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    widget.isOnline ? AppColors.primaryGreen : AppColors.borderLight,
+                backgroundColor: widget.isOnline
+                    ? AppColors.primaryGreen
+                    : AppColors.borderLight,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -517,15 +526,33 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
+  Widget _sectionHeader({required String title, required Widget action}) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: R.sp(20),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        action,
+      ],
+    );
+  }
+
   // Order Card
 
   Widget _orderCard({
+    Key? key,
     required String title,
     required String price,
     required String meta,
     required String acceptText,
   }) {
     return Container(
+      key: key,
       margin: EdgeInsets.only(bottom: R.h(12)),
       padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
