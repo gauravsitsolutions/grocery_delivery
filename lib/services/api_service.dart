@@ -419,4 +419,74 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> acceptOrder(String token, int orderId) async {
+    try {
+      final uri = Uri.parse(AppUrls.acceptOrder(orderId));
+      log('API Request: POST $uri');
+
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      log('API Response Status: ${response.statusCode}');
+      log('API Response Body: ${response.body}');
+
+      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonResponse;
+      } else {
+        log('API Error: ${jsonResponse['message']}');
+        throw Exception(jsonResponse['message'] ?? 'Failed to accept order');
+      }
+    } catch (e) {
+      log('API Exception: $e');
+      if (e.toString().contains('Timeout')) {
+        throw Exception(
+            'Connection timed out. Please check your internet connection.');
+      }
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> rejectOrder(String token, int orderId) async {
+    try {
+      final uri = Uri.parse(AppUrls.rejectOrder(orderId));
+      log('API Request: POST $uri');
+
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      log('API Response Status: ${response.statusCode}');
+      log('API Response Body: ${response.body}');
+
+      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonResponse;
+      } else {
+        log('API Error: ${jsonResponse['message']}');
+        throw Exception(jsonResponse['message'] ?? 'Failed to reject order');
+      }
+    } catch (e) {
+      log('API Exception: $e');
+      if (e.toString().contains('Timeout')) {
+        throw Exception(
+            'Connection timed out. Please check your internet connection.');
+      }
+      rethrow;
+    }
+  }
 }

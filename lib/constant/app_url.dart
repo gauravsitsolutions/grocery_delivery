@@ -13,4 +13,8 @@ class AppUrls {
   static const String partnerOffline = '$baseUrl/api/partner/status/offline';
   static const String partnerOnline = '$baseUrl/api/partner/status/online';
   static const String newOrders = '$baseUrl/api/delivery/orders/new';
+  static String acceptOrder(int id) =>
+      '$baseUrl/api/delivery/orders/$id/accept';
+  static String rejectOrder(int id) =>
+      '$baseUrl/api/delivery/orders/$id/reject';
 }

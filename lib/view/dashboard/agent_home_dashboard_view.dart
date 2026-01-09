@@ -3,7 +3,6 @@ import 'package:remixicon/remixicon.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
-import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
@@ -69,6 +68,74 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           _error = e.toString().replaceAll('Exception: ', '');
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _acceptOrder(int orderId) async {
+    if (!mounted) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      if (token == null) return;
+
+      // Show loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Accepting order...'),
+            duration: Duration(seconds: 1)),
+      );
+
+      await _apiService.acceptOrder(token, orderId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Order accepted successfully!')),
+      );
+      _fetchOrders(); // Refresh list
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectOrder(int orderId) async {
+    if (!mounted) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      if (token == null) return;
+
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Rejecting order...'),
+              duration: Duration(seconds: 1)),
+        );
+      }
+
+      await _apiService.rejectOrder(token, orderId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Order rejected successfully!')),
+      );
+      _fetchOrders(); // Refresh list
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
       }
     }
   }
@@ -239,6 +306,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                           child: Text('No new orders'))
                                       : _orderCard(
                                           key: const ValueKey('content'),
+                                          orderId: _orders.first.id,
                                           title: _orders.first.orderNumber,
                                           price:
                                               '₹ ${_orders.first.totalAmount}',
@@ -304,6 +372,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                               .skip(1)
                                               .take(2)
                                               .map((order) => _orderCard(
+                                                    orderId: order.id,
                                                     title: order.orderNumber,
                                                     price:
                                                         '₹ ${order.totalAmount}',
@@ -461,71 +530,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  // Queue Card
-
-  Widget _queueCard(String title, String price, String badge) {
-    return Container(
-      margin: EdgeInsets.only(bottom: R.h(12)),
-      padding: EdgeInsets.all(R.w(16)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(18)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: R.w(40),
-            width: R.w(40),
-            decoration: BoxDecoration(
-              color: AppColors.borderLight,
-              borderRadius: BorderRadius.circular(R.r(10)),
-            ),
-          ),
-          SizedBox(width: R.w(12)),
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: R.sp(16),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                price,
-                style: TextStyle(
-                  fontSize: R.sp(16),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: R.h(6)),
-              Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(R.r(12)),
-                ),
-                child: Text(
-                  badge,
-                  style: TextStyle(
-                    fontSize: R.sp(12),
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _sectionHeader({required String title, required Widget action}) {
     return Row(
       children: [
@@ -546,6 +550,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Widget _orderCard({
     Key? key,
+    required int orderId,
     required String title,
     required String price,
     required String meta,
@@ -614,7 +619,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 child: SizedBox(
                   height: R.h(45),
                   child: OutlinedButton.icon(
-                    onPressed: widget.isOnline ? () {} : null,
+                    onPressed:
+                        widget.isOnline ? () => _rejectOrder(orderId) : null,
                     icon: Icon(Icons.close, size: R.sp(18)),
                     label: Text(
                       'Reject',
@@ -636,12 +642,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 child: SizedBox(
                   height: R.h(45),
                   child: ElevatedButton.icon(
-                    onPressed: widget.isOnline
-                        ? () {
-                            Navigator.of(context, rootNavigator: true)
-                                .pushNamed(AppRoutes.customerInfo);
-                          }
-                        : null,
+                    onPressed:
+                        widget.isOnline ? () => _acceptOrder(orderId) : null,
                     icon: Icon(Icons.check, size: R.sp(18)),
                     label: Text(
                       acceptText,
