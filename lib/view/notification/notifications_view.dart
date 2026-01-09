@@ -53,7 +53,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                   title: 'Peak Pay Active 🔥',
                   time: '2h ago',
                   message:
-                      'Earn an extra \$2.00 per delivery in Downtown zone between 5 PM and 8 PM tonight.',
+                      'Earn an extra ₹2.00 per delivery in Downtown zone between 5 PM and 8 PM tonight.',
                   unread: true,
                 ),
                 SizedBox(height: R.h(24)),
@@ -66,7 +66,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                   title: 'Order #8829 Completed',
                   time: 'Yesterday',
                   message:
-                      'Successfully delivered to 123 Main St. Total payout: \$18.25',
+                      'Successfully delivered to 123 Main St. Total payout: ₹18.25',
                 ),
                 SizedBox(height: R.h(12)),
                 _notificationCard(
@@ -251,7 +251,7 @@ class _NotificationsViewState extends State<NotificationsView> {
           ),
           SizedBox(height: R.h(8)),
           Text(
-            '\$15.50 • 5.2 mi',
+            '₹15.50 • 5.2 mi',
             style: TextStyle(
               color: AppColors.primaryGreen,
               fontWeight: FontWeight.w700,

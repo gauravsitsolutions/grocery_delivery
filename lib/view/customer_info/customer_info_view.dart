@@ -63,17 +63,17 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
             SizedBox(height: R.h(12)),
             _orderItem(
               'Organic Bananas',
-              '1 bunch • \$2.49',
+              '1 bunch • ₹2.49',
               'https://images.unsplash.com/photo-1574226516831-e1dff420e37b?w=400',
             ),
             _orderItem(
               'Whole Milk',
-              '1 gallon • \$4.99',
+              '1 gallon • ₹4.99',
               'https://images.unsplash.com/photo-1585238342028-4bbc0d77b7aa?w=400',
             ),
             _orderItem(
               'Sourdough Bread',
-              'Sliced • \$5.49',
+              'Sliced • ₹5.49',
               'https://images.unsplash.com/photo-1608198093002-de2b4f20b7b8?w=400',
             ),
           ],
@@ -332,7 +332,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
         ),
         Spacer(),
         Text(
-          'Est. Earnings: \$18.50',
+          'Est. Earnings: ₹18.50',
           style: TextStyle(
             color: AppColors.primaryGreen,
             fontWeight: FontWeight.w700,
@@ -398,7 +398,8 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
           ),
           SizedBox(width: R.w(12)),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(6)),
+            padding:
+                EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(6)),
             decoration: BoxDecoration(
               color: AppColors.scaffoldBg,
               borderRadius: BorderRadius.circular(R.r(10)),

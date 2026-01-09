@@ -13,8 +13,14 @@ class AppUrls {
   static const String partnerOffline = '$baseUrl/api/partner/status/offline';
   static const String partnerOnline = '$baseUrl/api/partner/status/online';
   static const String newOrders = '$baseUrl/api/delivery/orders/new';
+
+  static const String myOrders = '$baseUrl/api/delivery/orders/queue';
+  static const String productImages = '$baseUrl/storage/product_images/';
   static String acceptOrder(int id) =>
       '$baseUrl/api/delivery/orders/$id/accept';
   static String rejectOrder(int id) =>
       '$baseUrl/api/delivery/orders/$id/reject';
+  static String orderDetails(int id) => '$baseUrl/api/orders/$id';
+  static String orderItems(int id) => '$baseUrl/api/orders/$id/items';
+  static String pickupOrder(int id) => '$baseUrl/api/orders/$id/pickup';
 }

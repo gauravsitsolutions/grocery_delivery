@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 /// =======================
 /// Order Response Model
@@ -6,28 +7,82 @@ import 'dart:convert';
 class OrderResponse {
   final bool status;
   final List<Order> data;
+  final int? currentPage;
+  final int? lastPage;
+  final int? total;
 
   OrderResponse({
     required this.status,
     required this.data,
+    this.currentPage,
+    this.lastPage,
+    this.total,
   });
 
   factory OrderResponse.fromJson(Map<String, dynamic> json) {
     final rawData = json['data'];
     List<Order> orders = [];
+    int? current;
+    int? last;
+    int? totalCount;
 
     if (rawData is List) {
       orders = rawData.map((e) => Order.fromJson(e)).toList();
-    } else if (rawData is Map && rawData['orders'] is List) {
-      orders =
-          (rawData['orders'] as List).map((e) => Order.fromJson(e)).toList();
+    } else if (rawData is Map) {
+      // Handle pagination object
+      if (rawData['data'] is List) {
+        orders =
+            (rawData['data'] as List).map((e) => Order.fromJson(e)).toList();
+      } else if (rawData['orders'] is List) {
+        orders =
+            (rawData['orders'] as List).map((e) => Order.fromJson(e)).toList();
+      }
+
+      // Parse pagination meta if available
+      current = rawData['current_page'];
+      last = rawData['last_page'];
+      totalCount = rawData['total'];
     }
 
     return OrderResponse(
       status: json['status'] == true || json['status'] == 'success',
       data: orders,
+      currentPage: current,
+      lastPage: last,
+      total: totalCount,
     );
   }
+}
+
+/// =======================
+/// Customer Model
+/// =======================
+class Customer {
+  final int id;
+  final String firstName;
+  final String lastName;
+  final String mobile;
+  final String? profilePhoto;
+
+  Customer({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.mobile,
+    this.profilePhoto,
+  });
+
+  factory Customer.fromJson(Map<String, dynamic> json) {
+    return Customer(
+      id: json['id'] ?? 0,
+      firstName: json['first_name'] ?? '',
+      lastName: json['last_name'] ?? '',
+      mobile: json['mobile'] ?? '',
+      profilePhoto: json['profile_photo'],
+    );
+  }
+
+  String get fullName => '$firstName $lastName'.trim();
 }
 
 /// =======================
@@ -48,6 +103,8 @@ class Order {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<OrderItem> orderItems;
+  final DeliveryAddress? deliveryAddress;
+  final Customer? user;
 
   Order({
     required this.id,
@@ -64,6 +121,8 @@ class Order {
     required this.createdAt,
     required this.updatedAt,
     required this.orderItems,
+    this.deliveryAddress,
+    this.user,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -86,6 +145,39 @@ class Order {
               .map((e) => OrderItem.fromJson(e))
               .toList()
           : [],
+      deliveryAddress: json['delivery_address'] != null
+          ? DeliveryAddress.fromJson(json['delivery_address'])
+          : null,
+      user: json['user'] != null ? Customer.fromJson(json['user']) : null,
+    );
+  }
+}
+
+class DeliveryAddress {
+  final int id;
+  final String addressLine1;
+  final String? addressLine2;
+  final String city;
+  final String state;
+  final String postcode;
+
+  DeliveryAddress({
+    required this.id,
+    required this.addressLine1,
+    this.addressLine2,
+    required this.city,
+    required this.state,
+    required this.postcode,
+  });
+
+  factory DeliveryAddress.fromJson(Map<String, dynamic> json) {
+    return DeliveryAddress(
+      id: json['id'] ?? 0,
+      addressLine1: json['address_line_1'] ?? '',
+      addressLine2: json['address_line_2'],
+      city: json['city'] ?? '',
+      state: json['state'] ?? '',
+      postcode: json['postcode'] ?? '',
     );
   }
 }
@@ -185,13 +277,29 @@ class Product {
 
     if (json['product_images'] is String) {
       try {
-        images = List<String>.from(jsonDecode(json['product_images']));
-      } catch (_) {
+        log('Raw product_images string: ${json['product_images']}'); // Debug log
+        final decoded = jsonDecode(json['product_images']);
+        log('Decoded product_images: $decoded (${decoded.runtimeType})'); // Debug log
+        if (decoded is List) {
+          images = List<String>.from(decoded);
+        }
+      } catch (e) {
+        log('Error parsing product_images string: $e');
         images = [];
       }
     } else if (json['product_images'] is List) {
-      images = List<String>.from(json['product_images']);
+      log('Raw product_images list: ${json['product_images']}'); // Debug log
+      try {
+        images = List<String>.from(json['product_images']);
+      } catch (e) {
+        log('Error parsing product_images list: $e');
+        images = [];
+      }
+    } else {
+      log('product_images is ${json['product_images']?.runtimeType}');
     }
+
+    log('Final parsed images: $images'); // Debug log
 
     return Product(
       id: json['id'] ?? 0,

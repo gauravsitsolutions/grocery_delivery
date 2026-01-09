@@ -1,6 +1,6 @@
 name: samrudhi_delivery_agent_app
 description: "Samrudhi Delivery Agent App"
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -24,13 +24,14 @@ dependencies:
   http: ^1.6.0
   connectivity_plus: ^6.1.0
   shimmer: ^3.0.0
+  cached_network_image: ^3.3.1
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
-
 
 # --------------------------------------------------
 # App Launcher Icon Configuration (ROOT LEVEL)
@@ -41,7 +42,7 @@ flutter_launcher_icons:
   image_path: "assets/images/app_logo.png"
   min_sdk_android: 21
   remove_alpha_ios: true
-  
+
 # --------------------------------------------------
 # Flutter Section (ONLY assets, fonts, etc.)
 # --------------------------------------------------

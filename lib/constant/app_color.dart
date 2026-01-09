@@ -53,4 +53,9 @@ class AppColors {
   // Additional
   static const Color softGreenBg = Color(0xFFEAFBF0);
   static const Color greyText = Colors.grey;
+
+  // Effects
+  static const Color shadow = Color(0xFF000000);
+  static const Color shimmerBase = Color(0xFFE0E0E0);
+  static const Color shimmerHighlight = Color(0xFFF5F5F5);
 }

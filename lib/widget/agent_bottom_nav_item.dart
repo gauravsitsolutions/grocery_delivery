@@ -65,7 +65,9 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   if (token == null) {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error: Authentication token not found')),
+                      const SnackBar(
+                          content:
+                              Text('Error: Authentication token not found')),
                     );
                     return;
                   }
@@ -75,13 +77,15 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
 
                   if (!context.mounted) return;
                   setState(() => isOnline = val);
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
                         children: [
                           Icon(
-                            val ? RemixIcons.checkbox_circle_line : RemixIcons.close_circle_line,
+                            val
+                                ? RemixIcons.checkbox_circle_line
+                                : RemixIcons.close_circle_line,
                             color: Colors.white,
                           ),
                           SizedBox(width: R.w(12)),
@@ -95,7 +99,8 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                           ),
                         ],
                       ),
-                      backgroundColor: val ? AppColors.primaryGreen : AppColors.error,
+                      backgroundColor:
+                          val ? AppColors.primaryGreen : AppColors.error,
                       behavior: SnackBarBehavior.floating,
                       margin: EdgeInsets.all(R.w(16)),
                       shape: RoundedRectangleBorder(
@@ -112,6 +117,9 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                     ),
                   );
                 }
+              },
+              onViewDeliveries: () {
+                _controller.jumpToTab(1); // Switch to Deliveries Tab (index 1)
               },
             ),
             const DeliveriesView(),

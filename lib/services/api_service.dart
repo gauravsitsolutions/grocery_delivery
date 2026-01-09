@@ -385,9 +385,9 @@ class ApiService {
     }
   }
 
-  Future<OrderResponse> getNewOrders(String token) async {
+  Future<OrderResponse> getNewOrders(String token, {int page = 1}) async {
     try {
-      final uri = Uri.parse(AppUrls.newOrders);
+      final uri = Uri.parse('${AppUrls.newOrders}?page=$page');
       log('API Request: GET $uri');
 
       final response = await http.get(
@@ -403,12 +403,53 @@ class ApiService {
       log('API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        return OrderResponse.fromJson(jsonResponse);
+        final dynamic jsonResponse = jsonDecode(response.body);
+        if (jsonResponse is List) {
+          return OrderResponse.fromJson({'data': jsonResponse, 'status': true});
+        }
+        return OrderResponse.fromJson(jsonResponse as Map<String, dynamic>);
       } else {
         final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
         log('API Error: ${jsonResponse['message']}');
         throw Exception(jsonResponse['message'] ?? 'Failed to fetch orders');
+      }
+    } catch (e) {
+      log('API Exception: $e');
+      if (e.toString().contains('Timeout')) {
+        throw Exception(
+            'Connection timed out. Please check your internet connection.');
+      }
+      rethrow;
+    }
+  }
+
+  Future<OrderResponse> getMyOrders(String token, {int page = 1}) async {
+    try {
+      final uri = Uri.parse('${AppUrls.myOrders}?page=$page');
+      log('API Request: GET $uri');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      log('API Response Status: ${response.statusCode}');
+      log('API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final dynamic jsonResponse = jsonDecode(response.body);
+        if (jsonResponse is List) {
+          return OrderResponse.fromJson({'data': jsonResponse, 'status': true});
+        }
+        return OrderResponse.fromJson(jsonResponse as Map<String, dynamic>);
+      } else {
+        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        log('API Error: ${jsonResponse['message']}');
+        throw Exception(jsonResponse['message'] ?? 'Failed to fetch my orders');
       }
     } catch (e) {
       log('API Exception: $e');
@@ -486,6 +527,111 @@ class ApiService {
         throw Exception(
             'Connection timed out. Please check your internet connection.');
       }
+      rethrow;
+    }
+  }
+
+  Future<Order> getOrderDetails(String token, int orderId) async {
+    try {
+      final uri = Uri.parse(AppUrls.orderDetails(orderId));
+      log('API Request: GET $uri');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      log('API Response Status: ${response.statusCode}');
+      log('API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
+          return Order.fromJson(jsonResponse['data']);
+        } else {
+          throw Exception(jsonResponse['message'] ?? 'Failed to parse order');
+        }
+      } else {
+        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        log('API Error: ${jsonResponse['message']}');
+        throw Exception(
+            jsonResponse['message'] ?? 'Failed to fetch order details');
+      }
+    } catch (e) {
+      log('API Exception: $e');
+      if (e.toString().contains('Timeout')) {
+        throw Exception(
+            'Connection timed out. Please check your internet connection.');
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<OrderItem>> getOrderItems(String token, int orderId) async {
+    try {
+      final uri = Uri.parse(AppUrls.orderItems(orderId));
+      log('API Request: GET $uri');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      log('API Response Status: ${response.statusCode}');
+      log('API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == true && jsonResponse['data'] is List) {
+          return (jsonResponse['data'] as List)
+              .map((e) => OrderItem.fromJson(e))
+              .toList();
+        } else {
+          throw Exception(jsonResponse['message'] ?? 'Failed to parse items');
+        }
+      } else {
+        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        log('API Error: ${jsonResponse['message']}');
+        throw Exception(
+            jsonResponse['message'] ?? 'Failed to fetch order items');
+      }
+    } catch (e) {
+      log('API Exception: $e');
+      if (e.toString().contains('Timeout')) {
+        throw Exception(
+            'Connection timed out. Please check your internet connection.');
+      }
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> pickupOrder(String token, int orderId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(AppUrls.pickupOrder(orderId)),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['status'] == true) {
+        return data;
+      } else {
+        throw Exception(data['message'] ?? 'Failed to pickup order');
+      }
+    } catch (e) {
+      log('Error picking up order: $e');
       rethrow;
     }
   }
