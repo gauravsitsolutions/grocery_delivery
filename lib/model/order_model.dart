@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+/// =======================
+/// Order Response Model
+/// =======================
 class OrderResponse {
   final bool status;
   final List<Order> data;
@@ -10,15 +13,26 @@ class OrderResponse {
   });
 
   factory OrderResponse.fromJson(Map<String, dynamic> json) {
+    final rawData = json['data'];
+    List<Order> orders = [];
+
+    if (rawData is List) {
+      orders = rawData.map((e) => Order.fromJson(e)).toList();
+    } else if (rawData is Map && rawData['orders'] is List) {
+      orders =
+          (rawData['orders'] as List).map((e) => Order.fromJson(e)).toList();
+    }
+
     return OrderResponse(
-      status: json['status'] ?? false,
-      data: json['data'] != null
-          ? (json['data'] as List).map((i) => Order.fromJson(i)).toList()
-          : [],
+      status: json['status'] == true || json['status'] == 'success',
+      data: orders,
     );
   }
 }
 
+/// =======================
+/// Order Model
+/// =======================
 class Order {
   final int id;
   final int userId;
@@ -59,27 +73,26 @@ class Order {
       offerId: json['offer_id'],
       couponCode: json['coupon_code'],
       orderNumber: json['order_number'] ?? '',
-      subtotal: json['subtotal'] ?? '0.00',
-      deliveryCharge: json['delivery_charge'] ?? '0.00',
-      discount: json['discount'] ?? '0.00',
-      couponDiscount: json['coupon_discount'] ?? '0.00',
-      totalAmount: json['total_amount'] ?? '0.00',
+      subtotal: json['subtotal']?.toString() ?? '0.00',
+      deliveryCharge: json['delivery_charge']?.toString() ?? '0.00',
+      discount: json['discount']?.toString() ?? '0.00',
+      couponDiscount: json['coupon_discount']?.toString() ?? '0.00',
+      totalAmount: json['total_amount']?.toString() ?? '0.00',
       status: json['status'] ?? '',
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : DateTime.now(),
-      orderItems: json['order_items'] != null
+      createdAt: _parseDate(json['created_at']),
+      updatedAt: _parseDate(json['updated_at']),
+      orderItems: json['order_items'] is List
           ? (json['order_items'] as List)
-              .map((i) => OrderItem.fromJson(i))
+              .map((e) => OrderItem.fromJson(e))
               .toList()
           : [],
     );
   }
 }
 
+/// =======================
+/// Order Item Model
+/// =======================
 class OrderItem {
   final int id;
   final int orderId;
@@ -109,20 +122,19 @@ class OrderItem {
       orderId: json['order_id'] ?? 0,
       productId: json['product_id'] ?? 0,
       quantity: json['quantity'] ?? 0,
-      price: json['price'] ?? '0.00',
-      total: json['total'] ?? '0.00',
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : DateTime.now(),
+      price: json['price']?.toString() ?? '0.00',
+      total: json['total']?.toString() ?? '0.00',
+      createdAt: _parseDate(json['created_at']),
+      updatedAt: _parseDate(json['updated_at']),
       product:
-          json['product'] != null ? Product.fromJson(json['product']) : null,
+          json['product'] is Map ? Product.fromJson(json['product']) : null,
     );
   }
 }
 
+/// =======================
+/// Product Model
+/// =======================
 class Product {
   final int id;
   final int? warehouseId;
@@ -170,12 +182,15 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     List<String> images = [];
-    if (json['product_images'] != null) {
+
+    if (json['product_images'] is String) {
       try {
         images = List<String>.from(jsonDecode(json['product_images']));
-      } catch (e) {
+      } catch (_) {
         images = [];
       }
+    } else if (json['product_images'] is List) {
+      images = List<String>.from(json['product_images']);
     }
 
     return Product(
@@ -188,21 +203,29 @@ class Product {
       expiryDays: json['expiry_days'],
       sku: json['sku'],
       description: json['description'],
-      basePrice: json['base_price'] ?? '0.00',
-      retailerPrice: json['retailer_price'] ?? '0.00',
-      mrp: json['mrp'] ?? '0.00',
+      basePrice: json['base_price']?.toString() ?? '0.00',
+      retailerPrice: json['retailer_price']?.toString() ?? '0.00',
+      mrp: json['mrp']?.toString() ?? '0.00',
       discountType: json['discount_type'],
-      discountValue: json['discount_value'] ?? '0.00',
+      discountValue: json['discount_value']?.toString() ?? '0.00',
       taxId: json['tax_id'],
-      gstPercentage: json['gst_percentage'] ?? '0.00',
+      gstPercentage: json['gst_percentage']?.toString() ?? '0.00',
       stock: json['stock'] ?? 0,
       productImages: images,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : DateTime.now(),
+      createdAt: _parseDate(json['created_at']),
+      updatedAt: _parseDate(json['updated_at']),
     );
+  }
+}
+
+/// =======================
+/// Date Parser (Shared)
+/// =======================
+DateTime _parseDate(dynamic value) {
+  if (value == null) return DateTime.now();
+  try {
+    return DateTime.parse(value.toString());
+  } catch (_) {
+    return DateTime.now();
   }
 }
