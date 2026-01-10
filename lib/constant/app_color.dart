@@ -58,4 +58,27 @@ class AppColors {
   static const Color shadow = Color(0xFF000000);
   static const Color shimmerBase = Color(0xFFE0E0E0);
   static const Color shimmerHighlight = Color(0xFFF5F5F5);
+
+  // New Colors
+  static const Color mapBackground = Color(0xFFE8ECEF);
+  static const Color paleGreen = Color(0xFFE8F5E9);
+  static const Color routeColor = Color(0xFF69F0AE);
+  static const Color markerBlue = Color(0xFF448AFF);
+
+  static const Color iconBgBlue = Color(0xFFEAF1FF);
+  static const Color iconBgOrange = Color(0xFFFFF6E0);
+  static const Color iconBgGrey = Color(0xFFEFF3F8);
+
+  static const Color black12 = Colors.black12;
+  static const Color black87 = Colors.black87;
+
+  // Standard Colors
+  static const Color blue = Colors.blue;
+  static const Color orange = Colors.orange;
+  static const Color green = Colors.green;
+
+  // Grey Variants
+  static Color? grey200 = Colors.grey[200];
+  static Color? grey500 = Colors.grey[500];
+  static Color? grey600 = Colors.grey[600];
 }

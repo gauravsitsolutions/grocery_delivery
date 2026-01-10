@@ -73,7 +73,7 @@ class OrderDeliveryScreen extends StatelessWidget {
 
   Widget _buildMapBackground() {
     return Container(
-      color: const Color(0xFFE8ECEF), // Light grey map color
+      color: AppColors.mapBackground, // Light grey map color
       child: CustomPaint(
         painter: MapGridPainter(), // faint dot pattern
         child: Container(),
@@ -89,17 +89,17 @@ class OrderDeliveryScreen extends StatelessWidget {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: AppColors.black.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
           ],
         ),
-        child: Icon(icon, color: Colors.black87, size: 24),
+        child: Icon(icon, color: AppColors.black87, size: 24),
       ),
     );
   }
@@ -108,11 +108,11 @@ class OrderDeliveryScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppColors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -126,7 +126,7 @@ class OrderDeliveryScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: Colors.grey,
+              color: AppColors.grey,
               letterSpacing: 1.0,
             ),
           ),
@@ -137,7 +137,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                 const TextSpan(
                   text: "12 mins",
                   style: TextStyle(
-                    color: Colors.black,
+                    color: AppColors.black,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -145,7 +145,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                 TextSpan(
                   text: " · 3.2 km",
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: AppColors.grey600,
                     fontSize: 16,
                   ),
                 ),
@@ -163,14 +163,14 @@ class OrderDeliveryScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: AppColors.black12,
             blurRadius: 20,
             offset: Offset(0, -5),
           )
@@ -185,8 +185,8 @@ class OrderDeliveryScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 26,
-                backgroundColor: Colors.grey[200],
-                child: Icon(Remix.user_line, color: Colors.grey[500]),
+                backgroundColor: AppColors.grey200,
+                child: Icon(Remix.user_line, color: AppColors.grey500),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -207,7 +207,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey[500],
+                        color: AppColors.grey500,
                       ),
                     ),
                   ],
@@ -244,7 +244,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey,
+                        color: AppColors.grey,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -278,7 +278,7 @@ class OrderDeliveryScreen extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -306,7 +306,7 @@ class OrderDeliveryScreen extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F5E9), // Light green
+          color: AppColors.paleGreen, // Light green
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: AppColors.primaryGreen, size: 22),
@@ -321,7 +321,7 @@ class MapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.withValues(alpha: 0.2)
+      ..color = AppColors.grey.withValues(alpha: 0.2)
       ..strokeWidth = 1.5;
 
     const step = 40.0;
@@ -342,8 +342,7 @@ class RoutePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color =
-          const Color(0xFF69F0AE).withValues(alpha: 0.8) // Brand Green light
+      ..color = AppColors.routeColor.withValues(alpha: 0.8) // Brand Green light
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round;
@@ -389,11 +388,11 @@ class _DestinationMarker extends StatelessWidget {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: AppColors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               )
@@ -418,22 +417,23 @@ class _UserMarker extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 4),
+          border: Border.all(color: AppColors.white, width: 4),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
+              color: AppColors.black.withValues(alpha: 0.15),
               blurRadius: 8,
               offset: const Offset(0, 4),
             )
           ]),
       child: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF448AFF), // Blue
+          color: AppColors.markerBlue, // Blue
           shape: BoxShape.circle,
         ),
-        child: const Icon(Remix.navigation_fill, color: Colors.white, size: 20),
+        child:
+            const Icon(Remix.navigation_fill, color: AppColors.white, size: 20),
       ),
     );
   }

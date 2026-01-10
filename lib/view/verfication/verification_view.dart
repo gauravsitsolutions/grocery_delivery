@@ -5,7 +5,6 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
-
 class VerificationView extends StatefulWidget {
   const VerificationView({super.key});
 
@@ -126,8 +125,6 @@ class _VerificationViewState extends State<VerificationView> {
 
   // ================= HEADER =================
 
-
-
   // ================= ICON =================
 
   Widget _icon() {
@@ -206,7 +203,7 @@ class _VerificationViewState extends State<VerificationView> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: AppColors.black.withValues(alpha: 0.04),
                   blurRadius: R.r(8),
                 ),
               ],
@@ -247,7 +244,7 @@ class _VerificationViewState extends State<VerificationView> {
         borderRadius: BorderRadius.circular(R.r(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.black.withValues(alpha: 0.05),
             blurRadius: R.r(10),
           ),
         ],
@@ -308,7 +305,8 @@ class _VerificationViewState extends State<VerificationView> {
           onPressed: _isOtpComplete ? _onVerify : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryGreen,
-            disabledBackgroundColor: AppColors.primaryGreen.withValues(alpha: 0.4),
+            disabledBackgroundColor:
+                AppColors.primaryGreen.withValues(alpha: 0.4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(R.r(16)),
             ),

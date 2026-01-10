@@ -37,8 +37,8 @@ class _NotificationsViewState extends State<NotificationsView> {
                 SizedBox(height: R.h(12)),
                 _notificationCard(
                   icon: Icons.map,
-                  iconBg: const Color(0xFFEAF1FF),
-                  iconColor: Colors.blue,
+                  iconBg: AppColors.iconBgBlue,
+                  iconColor: AppColors.blue,
                   title: 'Route Updated',
                   time: '10m ago',
                   message:
@@ -48,8 +48,8 @@ class _NotificationsViewState extends State<NotificationsView> {
                 SizedBox(height: R.h(12)),
                 _notificationCard(
                   icon: Icons.attach_money,
-                  iconBg: const Color(0xFFFFF6E0),
-                  iconColor: Colors.orange,
+                  iconBg: AppColors.iconBgOrange,
+                  iconColor: AppColors.orange,
                   title: 'Peak Pay Active 🔥',
                   time: '2h ago',
                   message:
@@ -61,8 +61,8 @@ class _NotificationsViewState extends State<NotificationsView> {
                 SizedBox(height: R.h(12)),
                 _notificationCard(
                   icon: Icons.check_circle,
-                  iconBg: const Color(0xFFEFF3F8),
-                  iconColor: Colors.grey,
+                  iconBg: AppColors.iconBgGrey,
+                  iconColor: AppColors.grey,
                   title: 'Order #8829 Completed',
                   time: 'Yesterday',
                   message:
@@ -71,8 +71,8 @@ class _NotificationsViewState extends State<NotificationsView> {
                 SizedBox(height: R.h(12)),
                 _notificationCard(
                   icon: Icons.info,
-                  iconBg: const Color(0xFFEFF3F8),
-                  iconColor: Colors.grey,
+                  iconBg: AppColors.iconBgGrey,
+                  iconColor: AppColors.grey,
                   title: 'App Update v2.4',
                   time: '2d ago',
                   message:
@@ -150,7 +150,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                       child: Text(
                         '3',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: R.sp(12),
                           fontWeight: FontWeight.w700,
                         ),
@@ -161,9 +161,9 @@ class _NotificationsViewState extends State<NotificationsView> {
               selected: selected,
               onSelected: (_) => setState(() => selectedTab = i),
               selectedColor: AppColors.primaryGreen,
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.white,
               labelStyle: TextStyle(
-                color: selected ? Colors.white : AppColors.headingText,
+                color: selected ? AppColors.white : AppColors.headingText,
                 fontWeight: FontWeight.w700,
               ),
               shape: StadiumBorder(
@@ -246,7 +246,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                 ),
               ),
               SizedBox(width: R.w(8)),
-              const CircleAvatar(radius: 5, backgroundColor: Colors.green),
+              const CircleAvatar(radius: 5, backgroundColor: AppColors.green),
             ],
           ),
           SizedBox(height: R.h(8)),
@@ -273,7 +273,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                 child: _actionButton(
                   'Accept',
                   AppColors.primaryGreen,
-                  Colors.white,
+                  AppColors.white,
                 ),
               ),
               SizedBox(width: R.w(12)),
@@ -305,11 +305,11 @@ class _NotificationsViewState extends State<NotificationsView> {
     return Container(
       padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: .04),
+            color: AppColors.black.withValues(alpha: .04),
             blurRadius: R.r(12),
           ),
         ],
@@ -347,7 +347,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                         width: R.w(10),
                         height: R.w(10),
                         decoration: const BoxDecoration(
-                          color: Colors.blue,
+                          color: AppColors.blue,
                           shape: BoxShape.circle,
                         ),
                       ),
