@@ -197,6 +197,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
       if (token == null) return;
 
+      if (!mounted) return;
+
       // Show loading
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -338,7 +340,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Hero(
-                          tag: 'order_number_${orderId}',
+                          tag: 'order_number_$orderId',
                           child: Material(
                             color: Colors.transparent,
                             child: Text(
@@ -595,16 +597,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     // Chat Button
                     _iconButton(
                       icon: RemixIcons.message_2_line,
-                      onTap: () {
-                        // TODO: Implement chat
-                      },
+                      onTap: () {},
                     ),
                     SizedBox(width: R.w(8)),
                     // Phone Button
                     _iconButton(
                       icon: RemixIcons.phone_fill,
                       onTap: () {
-                        // TODO: Implement call
+                        
                       },
                     ),
                   ],

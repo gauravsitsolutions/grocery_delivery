@@ -68,6 +68,8 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
 
       if (token == null) return;
 
+      if (!mounted) return;
+
       // Show loading
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -137,7 +139,6 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.pop(context); // Close dialog
-        Navigator.pop(context); // Close AvailableOrdersView
 
         // Navigate to details of the accepted order
         PersistentNavBarNavigator.pushNewScreen(

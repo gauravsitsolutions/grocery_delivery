@@ -183,7 +183,7 @@ class OrderDetailsView extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -242,98 +242,6 @@ class OrderDetailsView extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDeliveryFooter(BuildContext context, OrderViewModel viewModel) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildSupportLink(),
-          const SizedBox(height: 12),
-          Container(
-            height: 54,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F3F5),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: Text(
-                    "SLIDE TO COMPLETE",
-                    style: TextStyle(
-                      color: Color(0xFF495057),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: viewModel.swipePosition,
-                  child: GestureDetector(
-                    onHorizontalDragUpdate: (details) {
-                      if (!viewModel.hasReadInstructions) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                "Please read and confirm instructions first"),
-                            backgroundColor: Colors.orange,
-                          ),
-                        );
-                        return;
-                      }
-                      double newPos =
-                          viewModel.swipePosition + details.delta.dx;
-                      if (newPos < 0) newPos = 0;
-                      if (newPos >
-                          MediaQuery.of(context).size.width - 16 - 16 - 54) {
-                        newPos =
-                            MediaQuery.of(context).size.width - 16 - 16 - 54;
-                      }
-                      viewModel.swipePosition = newPos;
-                    },
-                    onHorizontalDragEnd: (details) async {
-                      if (viewModel.swipePosition >
-                          MediaQuery.of(context).size.width * 0.6) {
-                        viewModel.swipePosition =
-                            MediaQuery.of(context).size.width - 16 - 16 - 54;
-                        // Handle completion logic here if needed
-                      } else {
-                        viewModel.swipePosition = 0;
-                      }
-                    },
-                    child: Container(
-                      width: 54,
-                      height: 54,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0052CC),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Remix.arrow_right_s_line,
-                          color: Colors.white, size: 28),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ],

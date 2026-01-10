@@ -4,7 +4,6 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:math' as math;
 
 class OrderDeliveryScreen extends StatelessWidget {
   const OrderDeliveryScreen({super.key});
@@ -12,7 +11,6 @@ class OrderDeliveryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<OrderViewModel>();
-    final order = viewModel.order!;
 
     return Scaffold(
       body: Stack(
@@ -95,7 +93,7 @@ class OrderDeliveryScreen extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -114,7 +112,7 @@ class OrderDeliveryScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -285,7 +283,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 0,
-                shadowColor: AppColors.primaryGreen.withOpacity(0.4),
+                shadowColor: AppColors.primaryGreen.withValues(alpha: 0.4),
               ),
               child: const Text(
                 "Arrived at Destination",
@@ -323,7 +321,7 @@ class MapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
+      ..color = Colors.grey.withValues(alpha: 0.2)
       ..strokeWidth = 1.5;
 
     const step = 40.0;
@@ -344,7 +342,8 @@ class RoutePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF69F0AE).withOpacity(0.8) // Brand Green light
+      ..color =
+          const Color(0xFF69F0AE).withValues(alpha: 0.8) // Brand Green light
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round;
@@ -394,7 +393,7 @@ class _DestinationMarker extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               )
@@ -424,7 +423,7 @@ class _UserMarker extends StatelessWidget {
           border: Border.all(color: Colors.white, width: 4),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 8,
               offset: const Offset(0, 4),
             )

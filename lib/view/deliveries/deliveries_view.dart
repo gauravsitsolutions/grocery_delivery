@@ -432,7 +432,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                     children: [
                       CircleAvatar(
                         radius: R.r(24),
-                        backgroundColor: statusColor.withOpacity(0.1),
+                        backgroundColor: statusColor.withValues(alpha: 0.1),
                         child: Icon(
                           RemixIcons.truck_line,
                           color: statusColor,
@@ -546,7 +546,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
         borderRadius: BorderRadius.circular(R.r(22)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

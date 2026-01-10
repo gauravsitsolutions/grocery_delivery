@@ -7,15 +7,15 @@ class AnimatedOrderCard extends StatefulWidget {
   final bool animateOnMount;
 
   const AnimatedOrderCard({
-    Key? key,
+    super.key,
     required this.child,
     this.duration = const Duration(milliseconds: 300),
     this.onRemove,
     this.animateOnMount = true,
-  }) : super(key: key);
+  });
 
   @override
-  _AnimatedOrderCardState createState() => _AnimatedOrderCardState();
+  State<AnimatedOrderCard> createState() => _AnimatedOrderCardState();
 }
 
 class _AnimatedOrderCardState extends State<AnimatedOrderCard>

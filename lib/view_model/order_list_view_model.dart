@@ -78,8 +78,9 @@ class OrderListViewModel extends ChangeNotifier {
   }
 
   Future<void> loadMoreNewOrders() async {
-    if (_isNewOrdersLoadingMore || _isNewOrdersLoading || !_newOrdersHasMore)
+    if (_isNewOrdersLoadingMore || _isNewOrdersLoading || !_newOrdersHasMore) {
       return;
+    }
 
     _isNewOrdersLoadingMore = true;
     _newOrdersPage++;
@@ -132,7 +133,9 @@ class OrderListViewModel extends ChangeNotifier {
   Future<void> loadMoreMyDeliveries() async {
     if (_isMyDeliveriesLoadingMore ||
         _isMyDeliveriesLoading ||
-        !_myDeliveriesHasMore) return;
+        !_myDeliveriesHasMore) {
+      return;
+    }
 
     _isMyDeliveriesLoadingMore = true;
     _myDeliveriesPage++;
