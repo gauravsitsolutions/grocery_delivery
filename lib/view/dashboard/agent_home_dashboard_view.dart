@@ -826,6 +826,25 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   SizedBox(height: R.h(12)),
                   _currentTaskCard(_currentOrder!),
                   SizedBox(height: R.h(24)),
+                ] else if (_currentOrder != null) ...[
+                  // Current Task Header
+                  _sectionHeader(
+                    title: 'Current Task',
+                    action: GestureDetector(
+                      onTap: widget.onViewDeliveries,
+                      child: Text(
+                        'View all',
+                        style: TextStyle(
+                          fontSize: R.sp(14),
+                          color: AppColors.primaryGreen,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: R.h(12)),
+                  _currentTaskCard(_currentOrder!),
+                  SizedBox(height: R.h(24)),
                 ],
 
                 // New Order Request
