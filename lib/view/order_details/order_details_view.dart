@@ -5,19 +5,30 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_pickup_screen.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivery_screen.dart';
+import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:shimmer/shimmer.dart';
 
 class OrderDetailsView extends StatelessWidget {
   final int orderId;
   final String? orderNumber;
-  const OrderDetailsView({super.key, required this.orderId, this.orderNumber});
+  final Order?
+      order; // Accepting dynamic to avoid cyclical dependency issues if strictly typed, though Order type is better. Using Order type since it flows down.
+
+  const OrderDetailsView(
+      {super.key, required this.orderId, this.orderNumber, this.order});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => OrderViewModel(orderId: orderId)..fetchOrderDetails(),
+      create: (_) => OrderViewModel(orderId: orderId, initialOrder: order)
+        ..fetchOrderDetails(),
       child: Consumer<OrderViewModel>(
         builder: (context, viewModel, child) {
+          // If in Delivery Mode (and order is loaded), show full-screen Delivery Screen
+          if (!viewModel.isPickupMode && viewModel.order != null) {
+            return const OrderDeliveryScreen();
+          }
+
           return Scaffold(
             backgroundColor: const Color(0xFFF8F9FA),
             appBar: _buildAppBar(context, viewModel),
@@ -29,9 +40,9 @@ class OrderDetailsView extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
+  PreferredSizeWidget? _buildAppBar(
       BuildContext context, OrderViewModel viewModel) {
-    if (viewModel.isLoading || viewModel.order == null) {
+    if (viewModel.order == null) {
       return AppBar(
         title: const Text("Order Details"),
         elevation: 0,
@@ -39,6 +50,9 @@ class OrderDetailsView extends StatelessWidget {
         foregroundColor: Colors.black,
       );
     }
+
+    // Safety check just in case logic changes, but normally purely handled above for delivery
+    if (!viewModel.isPickupMode) return null;
 
     final order = viewModel.order!;
     return AppBar(
@@ -53,7 +67,7 @@ class OrderDetailsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            viewModel.isPickupMode ? "Order Pickup" : "Order Delivery",
+            "Order Pickup",
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           Text(
@@ -77,7 +91,7 @@ class OrderDetailsView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, OrderViewModel viewModel) {
-    if (viewModel.isLoading) {
+    if (viewModel.isLoading && viewModel.order == null) {
       return _buildLoadingShimmer();
     }
 
@@ -97,6 +111,7 @@ class OrderDetailsView extends StatelessWidget {
       );
     }
 
+    // Only used for Pickup mode now
     return RefreshIndicator(
       onRefresh: viewModel.fetchOrderDetails,
       child: SingleChildScrollView(
@@ -104,10 +119,7 @@ class OrderDetailsView extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 16),
-            if (viewModel.isPickupMode)
-              const OrderPickupScreen()
-            else
-              const OrderDeliveryScreen(),
+            const OrderPickupScreen(),
             const SizedBox(height: 24),
           ],
         ),
@@ -116,43 +128,49 @@ class OrderDetailsView extends StatelessWidget {
   }
 
   Widget _buildLoadingShimmer() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: ListView.builder(
-        itemCount: 5,
-        itemBuilder: (_, __) => Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+    return Scaffold(
+        appBar: AppBar(
+            title: const Text("Loading..."),
+            backgroundColor: Colors.white,
+            elevation: 0),
+        body: Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: ListView.builder(
+            itemCount: 5,
+            itemBuilder: (_, __) => Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: 150,
+                    height: 20,
+                    color: Colors.white,
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Container(
-                width: 150,
-                height: 20,
-                color: Colors.white,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   Widget? _buildBottomAction(BuildContext context, OrderViewModel viewModel) {
     if (viewModel.isLoading || viewModel.order == null) return null;
 
+    // Only for pickup, delivery handles its own status
     return viewModel.isPickupMode
         ? _buildPickupFooter(context, viewModel)
-        : _buildDeliveryFooter(context, viewModel);
+        : null;
   }
 
   Widget _buildPickupFooter(BuildContext context, OrderViewModel viewModel) {

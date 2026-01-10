@@ -5,634 +5,343 @@ import 'package:http/http.dart' as http;
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/user_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 
 class ApiService {
-  Future<LoginResponse> loginWithPassword(
-      String username, String password) async {
+  Future<dynamic> _processRequest(
+      Future<http.Response> Function() request) async {
     try {
-      final uri = Uri.parse(AppUrls.loginPassword);
-      log('API Request: POST $uri');
-      log('Request Body: ${jsonEncode({
-            'username': username,
-            'password': '***'
-          })}');
-
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'username': username,
-              'password': password,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return LoginResponse.fromJson(jsonResponse);
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Login failed');
-      }
+      final response = await request().timeout(const Duration(seconds: 15));
+      return _handleResponse(response);
     } on SocketException {
-      log('API Error: SocketException (No Internet)');
-      throw Exception('No internet connection');
+      throw NetworkException('No internet connection');
     } on FormatException {
-      log('API Error: FormatException (Bad Response)');
-      throw Exception('Bad response format');
+      throw ValidationException('Bad response format');
     } catch (e) {
+      if (e is AppException) rethrow;
       if (e.toString().contains('Timeout')) {
-        throw Exception(
+        throw TimeoutException(
             'Connection timed out. Please check your internet connection.');
       }
-      rethrow;
+      throw AppException(e.toString());
     }
+  }
+
+  dynamic _handleResponse(http.Response response) {
+    log('API Response Status: ${response.statusCode}');
+    log('API Response Body: ${response.body}');
+
+    try {
+      final jsonResponse = jsonDecode(response.body);
+
+      switch (response.statusCode) {
+        case 200:
+        case 201:
+          return jsonResponse;
+        case 400:
+          throw ValidationException(
+              jsonResponse['message'] ?? 'Invalid request');
+        case 401:
+        case 403:
+          throw UnauthorisedException(
+              jsonResponse['message'] ?? 'Unauthorised');
+        case 404:
+          throw ValidationException(jsonResponse['message'] ?? 'Not found');
+        case 500:
+        default:
+          throw ServerException(
+              jsonResponse['message'] ?? 'Server error occurred');
+      }
+    } on FormatException {
+      throw ServerException('Error parsing server response');
+    }
+  }
+
+  Future<LoginResponse> loginWithPassword(
+      String username, String password) async {
+    final uri = Uri.parse(AppUrls.loginPassword);
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: jsonEncode({'username': username, 'password': password}),
+        ));
+
+    return LoginResponse.fromJson(response);
   }
 
   Future<void> logout(String token) async {
-    try {
-      final uri = Uri.parse(AppUrls.logout);
-      log('API Request: POST $uri');
+    final uri = Uri.parse(AppUrls.logout);
+    log('API Request: POST $uri');
+    final sanitizedToken =
+        token.startsWith('Bearer ') ? token.substring(7) : token;
 
-      final sanitizedToken =
-          token.startsWith('Bearer ') ? token.substring(7) : token;
-
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $sanitizedToken',
-        },
-      ).timeout(const Duration(seconds: 15));
-
-      log('Request Headers: {Authorization: Bearer ***}'); // Secure log
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      if (response.statusCode != 200) {
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        throw Exception(jsonResponse['message'] ?? 'Logout failed');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
-    }
+    await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $sanitizedToken',
+          },
+        ));
   }
 
   Future<Map<String, dynamic>> sendOtp(String mobile) async {
-    try {
-      final uri = Uri.parse(AppUrls.loginOtp);
-      log('API Request: POST $uri');
-      log('Request Body: ${jsonEncode({'mobile': mobile})}');
+    final uri = Uri.parse(AppUrls.loginOtp);
+    log('API Request: POST $uri');
 
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'mobile': mobile,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return jsonResponse;
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Failed to send OTP');
-      }
-    } on SocketException {
-      log('API Error: SocketException (No Internet)');
-      throw Exception('No internet connection');
-    } on FormatException {
-      log('API Error: FormatException (Bad Response)');
-      throw Exception('Bad response format');
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
-    }
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: jsonEncode({'mobile': mobile}),
+        ));
+    return response;
   }
 
   Future<LoginResponse> verifyOtp(String mobile, String otp) async {
-    try {
-      final uri = Uri.parse(AppUrls.verifyOtp);
-      log('API Request: POST $uri');
-      log('Request Body: ${jsonEncode({'mobile': mobile, 'otp': otp})}');
+    final uri = Uri.parse(AppUrls.verifyOtp);
+    log('API Request: POST $uri');
 
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'mobile': mobile,
-              'otp': otp,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: jsonEncode({'mobile': mobile, 'otp': otp}),
+        ));
 
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 && jsonResponse['status'] == true) {
-        return LoginResponse.fromJson(jsonResponse);
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'OTP Verification failed');
-      }
-    } on SocketException {
-      log('API Error: SocketException (No Internet)');
-      throw Exception('No internet connection');
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
+    if (response['status'] == true) {
+      return LoginResponse.fromJson(response);
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'OTP Verification failed');
     }
   }
 
   Future<Map<String, dynamic>> resendOtp(String mobile) async {
-    try {
-      final uri = Uri.parse(AppUrls.resendOtp);
-      log('API Request: POST $uri');
-      log('Request Body: ${jsonEncode({'mobile': mobile})}');
+    final uri = Uri.parse(AppUrls.resendOtp);
+    log('API Request: POST $uri');
 
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'mobile': mobile,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return jsonResponse;
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Failed to resend OTP');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
-    }
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: jsonEncode({'mobile': mobile}),
+        ));
+    return response;
   }
 
   Future<Map<String, dynamic>> sendForgotPasswordOtp(String mobile) async {
-    try {
-      final uri = Uri.parse(AppUrls.forgotPasswordSendOtp);
-      log('API Request: POST $uri');
-      log('Request Body: ${jsonEncode({'mobile': mobile})}');
+    final uri = Uri.parse(AppUrls.forgotPasswordSendOtp);
+    log('API Request: POST $uri');
 
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'mobile': mobile,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return jsonResponse;
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Failed to send OTP');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
-    }
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: jsonEncode({'mobile': mobile}),
+        ));
+    return response;
   }
 
   Future<Map<String, dynamic>> verifyForgotPasswordOtp(
       String mobile, String otp) async {
-    try {
-      final uri = Uri.parse(AppUrls.verifyForgotPasswordOtp);
-      log('API Request: POST $uri');
-      log('Request Body: ${jsonEncode({'mobile': mobile, 'otp': otp})}');
+    final uri = Uri.parse(AppUrls.verifyForgotPasswordOtp);
+    log('API Request: POST $uri');
 
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'mobile': mobile,
-              'otp': otp,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200) {
-        return jsonResponse;
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'OTP Verification failed');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
-    }
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: jsonEncode({'mobile': mobile, 'otp': otp}),
+        ));
+    return response;
   }
 
   Future<Map<String, dynamic>> resetPassword(
       String mobile, String password) async {
-    try {
-      final uri = Uri.parse(AppUrls.resetPassword);
-      log('API Request: POST $uri');
-      // Securely log body excluding password
-      log('Request Body: ${jsonEncode({'mobile': mobile, 'password': '***'})}');
+    final uri = Uri.parse(AppUrls.resetPassword);
+    log('API Request: POST $uri');
 
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'mobile': mobile,
-              'password': password,
-              'password_confirmation': password,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: jsonEncode({
+            'mobile': mobile,
+            'password': password,
+            'password_confirmation': password,
+          }),
+        ));
 
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 && jsonResponse['status'] == true) {
-        return jsonResponse;
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Password reset failed');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
+    if (response['status'] == true) {
+      return response;
+    } else {
+      throw ValidationException(response['message'] ?? 'Password reset failed');
     }
   }
 
   Future<Map<String, dynamic>> updateAgentStatus(
       String token, bool isOnline) async {
-    try {
-      final uri =
-          Uri.parse(isOnline ? AppUrls.partnerOnline : AppUrls.partnerOffline);
-      log('API Request: POST $uri');
+    final uri =
+        Uri.parse(isOnline ? AppUrls.partnerOnline : AppUrls.partnerOffline);
+    log('API Request: POST $uri');
 
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 15));
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      } else {
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Failed to update status');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
-    }
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+    return response;
   }
 
   Future<OrderResponse> getNewOrders(String token, {int page = 1}) async {
-    try {
-      final uri = Uri.parse('${AppUrls.newOrders}?page=$page');
-      log('API Request: GET $uri');
+    final uri = Uri.parse('${AppUrls.newOrders}?page=$page');
+    log('API Request: GET $uri');
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 15));
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
 
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final dynamic jsonResponse = jsonDecode(response.body);
-        if (jsonResponse is List) {
-          return OrderResponse.fromJson({'data': jsonResponse, 'status': true});
-        }
-        return OrderResponse.fromJson(jsonResponse as Map<String, dynamic>);
-      } else {
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Failed to fetch orders');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
+    if (response is List) {
+      return OrderResponse.fromJson({'data': response, 'status': true});
     }
+    return OrderResponse.fromJson(response);
   }
 
   Future<OrderResponse> getMyOrders(String token, {int page = 1}) async {
-    try {
-      final uri = Uri.parse('${AppUrls.myOrders}?page=$page');
-      log('API Request: GET $uri');
+    final uri = Uri.parse('${AppUrls.myOrders}?page=$page');
+    log('API Request: GET $uri');
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 15));
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
 
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final dynamic jsonResponse = jsonDecode(response.body);
-        if (jsonResponse is List) {
-          return OrderResponse.fromJson({'data': jsonResponse, 'status': true});
-        }
-        return OrderResponse.fromJson(jsonResponse as Map<String, dynamic>);
-      } else {
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Failed to fetch my orders');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
+    if (response is List) {
+      return OrderResponse.fromJson({'data': response, 'status': true});
     }
+    return OrderResponse.fromJson(response);
   }
 
   Future<Map<String, dynamic>> acceptOrder(String token, int orderId) async {
-    try {
-      final uri = Uri.parse(AppUrls.acceptOrder(orderId));
-      log('API Request: POST $uri');
+    final uri = Uri.parse(AppUrls.acceptOrder(orderId));
+    log('API Request: POST $uri');
 
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 15));
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonResponse;
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Failed to accept order');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
-    }
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+    return response;
   }
 
   Future<Map<String, dynamic>> rejectOrder(String token, int orderId) async {
-    try {
-      final uri = Uri.parse(AppUrls.rejectOrder(orderId));
-      log('API Request: POST $uri');
+    final uri = Uri.parse(AppUrls.rejectOrder(orderId));
+    log('API Request: POST $uri');
 
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 15));
-
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonResponse;
-      } else {
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(jsonResponse['message'] ?? 'Failed to reject order');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
-    }
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+    return response;
   }
 
   Future<Order> getOrderDetails(String token, int orderId) async {
-    try {
-      final uri = Uri.parse(AppUrls.orderDetails(orderId));
-      log('API Request: GET $uri');
+    final uri = Uri.parse(AppUrls.orderDetails(orderId));
+    log('API Request: GET $uri');
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 15));
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
 
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
-          return Order.fromJson(jsonResponse['data']);
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to parse order');
-        }
-      } else {
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(
-            jsonResponse['message'] ?? 'Failed to fetch order details');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
+    if (response['status'] == true && response['data'] != null) {
+      return Order.fromJson(response['data']);
+    } else {
+      throw ValidationException(response['message'] ?? 'Failed to parse order');
     }
   }
 
   Future<List<OrderItem>> getOrderItems(String token, int orderId) async {
-    try {
-      final uri = Uri.parse(AppUrls.orderItems(orderId));
-      log('API Request: GET $uri');
+    final uri = Uri.parse(AppUrls.orderItems(orderId));
+    log('API Request: GET $uri');
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 15));
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
 
-      log('API Response Status: ${response.statusCode}');
-      log('API Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['status'] == true && jsonResponse['data'] is List) {
-          return (jsonResponse['data'] as List)
-              .map((e) => OrderItem.fromJson(e))
-              .toList();
-        } else {
-          throw Exception(jsonResponse['message'] ?? 'Failed to parse items');
-        }
-      } else {
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        log('API Error: ${jsonResponse['message']}');
-        throw Exception(
-            jsonResponse['message'] ?? 'Failed to fetch order items');
-      }
-    } catch (e) {
-      log('API Exception: $e');
-      if (e.toString().contains('Timeout')) {
-        throw Exception(
-            'Connection timed out. Please check your internet connection.');
-      }
-      rethrow;
+    if (response['status'] == true && response['data'] is List) {
+      return (response['data'] as List)
+          .map((e) => OrderItem.fromJson(e))
+          .toList();
+    } else {
+      throw ValidationException(response['message'] ?? 'Failed to parse items');
     }
   }
 
   Future<Map<String, dynamic>> pickupOrder(String token, int orderId) async {
-    try {
-      final response = await http.get(
-        Uri.parse(AppUrls.pickupOrder(orderId)),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+    final uri = Uri.parse(AppUrls.pickupOrder(orderId));
+    log('API Request: GET $uri'); // Note: Original was GET, keeping it as is, usually pickup actions might be POST
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      if (response.statusCode == 200 && data['status'] == true) {
-        return data;
-      } else {
-        throw Exception(data['message'] ?? 'Failed to pickup order');
-      }
-    } catch (e) {
-      log('Error picking up order: $e');
-      rethrow;
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response['status'] == true) {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to pickup order');
     }
   }
 }

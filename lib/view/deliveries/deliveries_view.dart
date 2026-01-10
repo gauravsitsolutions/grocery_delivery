@@ -1,12 +1,14 @@
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
-import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
-import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+
+import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/filter_deliveries_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
@@ -23,24 +25,22 @@ class DeliveriesView extends StatefulWidget {
 
 class _DeliveriesViewState extends State<DeliveriesView> {
   String _selectedStatus = 'Pending';
-
-  List<Order> _orders = [];
-  bool _isLoading = true;
-  String? _error;
-  String? _authToken;
-
-  // Pagination
-  int _page = 1;
-  bool _hasMore = false;
-  bool _isLoadingMore = false;
   final ScrollController _scrollController = ScrollController();
-  final ApiService _apiService = ApiService();
+
+  String? _authToken;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _fetchOrders();
+    _loadAuthToken();
+  }
+
+  Future<void> _loadAuthToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _authToken = prefs.getString('auth_token');
+    });
   }
 
   @override
@@ -52,84 +52,10 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      _loadMore();
-    }
-  }
-
-  Future<void> _fetchOrders() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      if (token == null) {
-        setState(() {
-          _isLoading = false;
-          _error = 'Not authenticated';
-        });
-        return;
-      }
-
-      // Currently mapping 'Pending' to getMyOrders (Queue)
-      // If other statuses have endpoints, we would switch here
+      final viewModel = Provider.of<OrderListViewModel>(context, listen: false);
       if (_selectedStatus == 'Pending') {
-        final response = await _apiService.getMyOrders(token, page: 1);
-        setState(() {
-          _authToken = token;
-          _orders = response.data;
-          _page = 1;
-          _hasMore = (response.currentPage ?? 1) < (response.lastPage ?? 1);
-          _isLoading = false;
-        });
-      } else {
-        // Placeholder for other statuses
-        setState(() {
-          _orders = [];
-          _hasMore = false;
-          _isLoading = false;
-        });
+        viewModel.loadMoreMyDeliveries();
       }
-    } catch (e) {
-      log('Error fetching deliveries: $e');
-      setState(() {
-        _isLoading = false;
-        _error = e.toString();
-      });
-    }
-  }
-
-  Future<void> _loadMore() async {
-    if (_isLoadingMore || !_hasMore) return;
-
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      if (token == null) return;
-
-      if (_selectedStatus == 'Pending') {
-        final nextPage = _page + 1;
-        final response = await _apiService.getMyOrders(token, page: nextPage);
-
-        setState(() {
-          _orders.addAll(response.data);
-          _page = nextPage;
-          _hasMore = (response.currentPage ?? nextPage) <
-              (response.lastPage ?? nextPage);
-          _isLoadingMore = false;
-        });
-      }
-    } catch (e) {
-      log('Error loading more deliveries: $e');
-      setState(() {
-        _isLoadingMore = false;
-      });
     }
   }
 
@@ -137,145 +63,170 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   Widget build(BuildContext context) {
     R.init(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
-      appBar: AppBar(
+    return ChangeNotifierProvider(
+      create: (_) => OrderListViewModel()..fetchMyDeliveries(refresh: true),
+      child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
-        elevation: 0,
-        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
-        title: Text(
-          'My Deliveries',
-          style: TextStyle(
-            color: AppColors.headingText,
-            fontWeight: FontWeight.w700,
-            fontSize: R.sp(18),
-          ),
-        ),
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          onRefresh: _fetchOrders,
-          color: AppColors.primaryGreen,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: R.w(16)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: R.h(16)),
-                _searchBar(context),
-                SizedBox(height: R.h(16)),
-                _filterChips(),
-                SizedBox(height: R.h(20)),
-
-                // SUMMARY
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Completed',
-                        value: '12',
-                        icon: RemixIcons.checkbox_circle_fill,
-                        bg: AppColors.summaryBlueBg,
-                        iconColor: AppColors.summaryBlueIcon,
-                        textColor: Colors.green,
-                      ),
-                    ),
-                    SizedBox(width: R.w(12)),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Distance',
-                        value: '24km',
-                        icon: RemixIcons.map_pin_fill,
-                        bg: AppColors.summaryOrangeBg,
-                        iconColor: AppColors.summaryOrangeIcon,
-                        textColor: Colors.green,
-                      ),
-                    ),
-                    SizedBox(width: R.w(12)),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Avg Time',
-                        value: '28m',
-                        icon: RemixIcons.timer_fill,
-                        bg: AppColors.summaryPurpleBg,
-                        iconColor: AppColors.summaryPurpleIcon,
-                        textColor: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: R.h(20)),
-                _statusSwitch(),
-
-                if (_error != null)
-                  Padding(
-                    padding: EdgeInsets.all(R.h(20)),
-                    child: Center(
-                        child: Text(_error!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.red))),
-                  ),
-                SizedBox(height: R.h(22)),
-                if (_isLoading && _orders.isEmpty)
-                  const ListShimmer(count: 6)
-                else if (_orders.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.all(R.h(20)),
-                    child: const Center(child: Text('No orders found')),
-                  )
-                else if (_selectedStatus == 'Pending') ...[
-                  if (_orders.isNotEmpty) ...[
-                    _sectionLabel('IN PROGRESS'),
-                    SizedBox(height: R.h(10)),
-                    _inProgressCard(_orders.first),
-                    SizedBox(height: R.h(20)),
-                  ],
-                  if (_orders.length > 1) ...[
-                    _sectionLabel('UP NEXT'),
-                    SizedBox(height: R.h(10)),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _orders.length - 1 + (_isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == _orders.length - 1 && _isLoadingMore) {
-                          return const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: OrderShimmer());
-                        }
-                        // Skip the first one as it is In Progress
-                        final order = _orders[index + 1];
-                        return _upNextCard(order);
-                      },
-                    ),
-                  ],
-                ] else ...[
-                  _sectionLabel(_selectedStatus.toUpperCase()),
-                  SizedBox(height: R.h(10)),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _orders.length + (_isLoadingMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _orders.length && _isLoadingMore) {
-                        return const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: OrderShimmer());
-                      }
-                      final order = _orders[index];
-                      return _orderCard(order);
-                    },
-                  ),
-                ],
-
-                SizedBox(height: R.h(20)),
-              ],
+        appBar: AppBar(
+          backgroundColor: AppColors.scaffoldBg,
+          elevation: 0,
+          centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
+          title: Text(
+            'My Deliveries',
+            style: TextStyle(
+              color: AppColors.headingText,
+              fontWeight: FontWeight.w700,
+              fontSize: R.sp(18),
             ),
           ),
+        ),
+        body: SafeArea(
+          bottom: false,
+          child: Consumer<OrderListViewModel>(
+              builder: (context, viewModel, child) {
+            // Simple local filter if needed, though typically API should filter.
+            // For now, assuming API returns all relevant orders for 'my deliveries'
+            // and we might filter locally for Delivered/Cancelled if they come in the same list,
+            // or we need different VM methods for different statuses.
+            // The original code only implemented 'Pending' -> 'getMyOrders'.
+            // We will stick to that behavior.
+
+            final orders = _selectedStatus == 'Pending'
+                ? viewModel.myDeliveries
+                : <Order>[];
+            final isLoading = viewModel.isMyDeliveriesLoading;
+            final isLoadingMore = viewModel.isMyDeliveriesLoadingMore;
+            final error = viewModel.myDeliveriesError;
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                if (_selectedStatus == 'Pending') {
+                  await viewModel.fetchMyDeliveries(refresh: true);
+                }
+              },
+              color: AppColors.primaryGreen,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: R.w(16)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: R.h(16)),
+                    _searchBar(context),
+                    SizedBox(height: R.h(16)),
+                    _filterChips(),
+                    SizedBox(height: R.h(20)),
+
+                    // SUMMARY
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _SummaryCard(
+                            title: 'Completed',
+                            value: '12',
+                            icon: RemixIcons.checkbox_circle_fill,
+                            bg: AppColors.summaryBlueBg,
+                            iconColor: AppColors.summaryBlueIcon,
+                            textColor: Colors.green,
+                          ),
+                        ),
+                        SizedBox(width: R.w(12)),
+                        Expanded(
+                          child: _SummaryCard(
+                            title: 'Distance',
+                            value: '24km',
+                            icon: RemixIcons.map_pin_fill,
+                            bg: AppColors.summaryOrangeBg,
+                            iconColor: AppColors.summaryOrangeIcon,
+                            textColor: Colors.green,
+                          ),
+                        ),
+                        SizedBox(width: R.w(12)),
+                        Expanded(
+                          child: _SummaryCard(
+                            title: 'Avg Time',
+                            value: '28m',
+                            icon: RemixIcons.timer_fill,
+                            bg: AppColors.summaryPurpleBg,
+                            iconColor: AppColors.summaryPurpleIcon,
+                            textColor: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: R.h(20)),
+                    _statusSwitch(),
+
+                    if (error != null)
+                      Padding(
+                        padding: EdgeInsets.all(R.h(20)),
+                        child: Center(
+                            child: Text(error,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.red))),
+                      ),
+                    SizedBox(height: R.h(22)),
+                    if (isLoading && orders.isEmpty)
+                      const ListShimmer(count: 6)
+                    else if (orders.isEmpty)
+                      Padding(
+                        padding: EdgeInsets.all(R.h(20)),
+                        child: const Center(child: Text('No orders found')),
+                      )
+                    else if (_selectedStatus == 'Pending') ...[
+                      if (orders.isNotEmpty) ...[
+                        _sectionLabel('IN PROGRESS'),
+                        SizedBox(height: R.h(10)),
+                        _inProgressCard(orders.first),
+                        SizedBox(height: R.h(20)),
+                      ],
+                      if (orders.length > 1) ...[
+                        _sectionLabel('UP NEXT'),
+                        SizedBox(height: R.h(10)),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount:
+                              orders.length - 1 + (isLoadingMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == orders.length - 1 && isLoadingMore) {
+                              return const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: OrderShimmer());
+                            }
+                            // Skip the first one as it is In Progress
+                            final order = orders[index + 1];
+                            return _upNextCard(order);
+                          },
+                        ),
+                      ],
+                    ] else ...[
+                      _sectionLabel(_selectedStatus.toUpperCase()),
+                      SizedBox(height: R.h(10)),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: orders.length + (isLoadingMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == orders.length && isLoadingMore) {
+                            return const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: OrderShimmer());
+                          }
+                          final order = orders[index];
+                          return _orderCard(order);
+                        },
+                      ),
+                    ],
+
+                    SizedBox(height: R.h(20)),
+                  ],
+                ),
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -436,6 +387,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
           screen: OrderDetailsView(
             orderId: order.id,
             orderNumber: order.orderNumber,
+            order: order,
           ),
           withNavBar: false,
           pageTransitionAnimation: PageTransitionAnimation.cupertino,

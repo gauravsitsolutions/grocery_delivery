@@ -1,14 +1,13 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/res/styles/app_text_styles.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
-import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/auth_view_model.dart';
 
 enum LoginMethod { password, otp }
 
@@ -20,244 +19,83 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  bool _obscurePassword = true;
-  LoginMethod _loginMethod = LoginMethod.password;
-  bool _isOtpSent = false;
-  bool _isLoading = false;
-  // ignore: unused_field
-  int _start = 30; 
-  Timer? _timer;
-
-
   final _emailOrIdController = TextEditingController();
   final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
   final _otpController = TextEditingController();
 
-  final ApiService _apiService = ApiService();
-
   @override
   void dispose() {
-    _timer?.cancel();
     _emailOrIdController.dispose();
     _mobileController.dispose();
     _passwordController.dispose();
     _otpController.dispose();
     super.dispose();
   }
-  
-  void _startTimer() {
-    setState(() {
-      _start = 30;
-      _timer?.cancel();
-    });
-    const oneSec = Duration(seconds: 1);
-    _timer = Timer.periodic(
-      oneSec,
-      (Timer timer) {
-        if (_start == 0) {
-          setState(() {
-            timer.cancel();
-          });
-        } else {
-          setState(() {
-            _start--;
-          });
-        }
-      },
-    );
-  }
 
-  void _switchMethod(LoginMethod method) {
-    if (_loginMethod == method) return;
-    setState(() {
-      _loginMethod = method;
-      _emailOrIdController.clear();
-      _mobileController.clear();
-      _passwordController.clear();
-      _passwordController.clear();
-      _otpController.clear();
-    });
-  }
+  void _handleLogin(BuildContext context, AuthViewModel viewModel) async {
+    FocusScope.of(context).unfocus();
 
-  Future<void> _handleLogin() async {
-    if (_loginMethod == LoginMethod.password) {
-      final username = _emailOrIdController.text.trim();
-      final password = _passwordController.text.trim();
-
-      if (username.isEmpty || password.isEmpty) {
-        _showError('Please enter ID and password');
-        return;
-      }
-
-      setState(() => _isLoading = true);
-      try {
-        final response = await _apiService.loginWithPassword(username, password);
-        
-        if (!mounted) return;
-
-        if (response.status) {
-          // Success
-          if (response.token != null) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('auth_token', response.token!);
-            debugPrint('Login: Token saved successfully: ${response.token}');
-            
-            if (response.user != null) {
-              await prefs.setInt('user_id', response.user!.id);
-              await prefs.setString('user_name', response.user!.name);
-              await prefs.setString('user_role', response.user!.role);
-            }
-          } else {
-            debugPrint('Login: Warning - No token in response!');
-          }
-
-          if (!mounted) return;
-          
-          // 1. Hide Keyboard
-          FocusScope.of(context).unfocus();
-          
-          // 2. Show Custom Success Snack
-          ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.all(R.w(16)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(12))),
-              content: Row(
-                children: [
-                  const Icon(RemixIcons.check_line, color: Colors.white),
-                  SizedBox(width: R.w(12)),
-                  Text('Login Successful',
-                      style: TextStyle(color: AppColors.white, fontSize: R.sp(14), fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          );
-          
-          // 3. Wait for user to see it
-          await Future.delayed(const Duration(seconds: 1));
-          
-          if(!mounted) return;
-          Navigator.pushNamed(context, AppRoutes.bottomNav);
-        } else {
-          // API returned success=false but no exception threw
-          _showError(response.message.isNotEmpty ? response.message : 'Login failed');
-        }
-      } catch (e) {
-        if (!mounted) return;
-        _showError(e.toString().replaceAll('Exception: ', ''));
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
-
+    final currentMethod = viewModel.loginMethod;
+    Map<String, dynamic> result;
+    if (currentMethod == LoginMethod.password) {
+      result = await viewModel.loginWithPassword(
+          _emailOrIdController.text.trim(), _passwordController.text.trim());
     } else {
-      if (_mobileController.text.length != 10) {
-        _showError('Enter valid mobile number');
-        return;
-      }
-      
-      if (!_isOtpSent) {
-        // Send OTP logic here
-        setState(() => _isLoading = true);
-        try {
-          await _apiService.sendOtp(_mobileController.text.trim());
-          if (!mounted) return;
-
-          setState(() {
-            _isOtpSent = true;
-            _startTimer();
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('OTP sent successfully')),
-          );
-        } catch (e) {
-          if (!mounted) return;
-          _showError(e.toString().replaceAll('Exception: ', ''));
-        } finally {
-          if (mounted) setState(() => _isLoading = false);
-        }
-        return;
-      }
-
-      if (_otpController.text.length < 4) {
-        _showError('Please enter valid OTP');
-        return;
-      }
-      
-      setState(() => _isLoading = true);
-
-      try {
-        // Real API Call
-        final response = await _apiService.verifyOtp(
-          _mobileController.text.trim(), 
-          _otpController.text.trim()
-        );
-
-        if (!mounted) return;
-
-        if (response.status) {
-           // Save Session Data
-          if (response.token != null) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('auth_token', response.token!);
-            
-            if (response.user != null) {
-              await prefs.setInt('user_id', response.user!.id);
-              await prefs.setString('user_name', response.user!.name);
-              await prefs.setString('user_role', response.user!.role);
-            }
-          }
-
-          if (!mounted) return;
-
-          // 1. Hide Keyboard
-          FocusScope.of(context).unfocus();
-
-          // 2. Show Success
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating, 
-              margin: EdgeInsets.all(R.w(16)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(12))),
-              content: Row(
-                children: [
-                  const Icon(RemixIcons.check_line, color: Colors.white),
-                  SizedBox(width: R.w(12)),
-                  Text('Login Successful',
-                      style: TextStyle(color: AppColors.white, fontSize: R.sp(14), fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          );
-
-          // 3. Waiting for user to see message
-          await Future.delayed(const Duration(seconds: 1));
-
-          if (!mounted) return;
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.bottomNav, (route) => false);
-          
-        } else {
-           _showError(response.message.isNotEmpty ? response.message : 'Invalid OTP');
-        }
-      } catch (e) {
-        if (!mounted) return;
-        _showError(e.toString().replaceAll('Exception: ', ''));
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
+      if (!viewModel.isOtpSent) {
+        result = await viewModel.sendOtp(_mobileController.text.trim());
+      } else {
+        result = await viewModel.verifyOtp(
+            _mobileController.text.trim(), _otpController.text.trim());
       }
     }
-  }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.error,
-        content: Text(message,
-            style: TextStyle(color: AppColors.white, fontSize: R.sp(14))),
-      ),
-    );
+    if (!context.mounted) return;
+
+    if (result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(R.w(16)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(R.r(12))),
+          content: Row(
+            children: [
+              const Icon(RemixIcons.check_line, color: Colors.white),
+              SizedBox(width: R.w(12)),
+              Text(
+                  result['message'] ??
+                      (currentMethod == LoginMethod.otp && !viewModel.isOtpSent
+                          ? 'OTP Sent Successfully'
+                          : 'Login Successful'),
+                  style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: R.sp(14),
+                      fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      );
+
+      if (currentMethod == LoginMethod.password ||
+          (currentMethod == LoginMethod.otp &&
+              viewModel.isOtpSent &&
+              result['message'] != 'OTP sent successfully')) {
+        await Future.delayed(const Duration(seconds: 1));
+        if (!context.mounted) return;
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.bottomNav, (route) => false);
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.error,
+          content: Text(result['message'] ?? 'An error occurred',
+              style: TextStyle(color: AppColors.white, fontSize: R.sp(14))),
+        ),
+      );
+    }
   }
 
   @override
@@ -265,46 +103,51 @@ class _LoginViewState extends State<LoginView> {
     R.init(context);
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.scaffoldBg,
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints:
-                  BoxConstraints(maxWidth: isMobile ? double.infinity : 520),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  isMobile ? R.w(20) : R.w(36),
-                  0,
-                  isMobile ? R.w(20) : R.w(36),
-                  MediaQuery.of(context).viewInsets.bottom + R.h(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(isMobile),
-                    SizedBox(height: R.h(32)),
-                    _buildMethodSelector(),
-                    SizedBox(height: R.h(20)),
-                    _buildPrimaryField(),
-                    SizedBox(height: R.h(20)),
-                    _buildSecondaryField(),
-                    SizedBox(height: R.h(16)),
-                    _buildActionButton(),
-                    SizedBox(height: R.h(20)),
-                    _buildSupportText(),
-                  ],
+    return ChangeNotifierProvider(
+      create: (_) => AuthViewModel(),
+      child: Consumer<AuthViewModel>(builder: (context, viewModel, child) {
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+          ),
+          child: Scaffold(
+            backgroundColor: AppColors.scaffoldBg,
+            body: SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                      maxWidth: isMobile ? double.infinity : 520),
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      isMobile ? R.w(20) : R.w(36),
+                      0,
+                      isMobile ? R.w(20) : R.w(36),
+                      MediaQuery.of(context).viewInsets.bottom + R.h(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(isMobile),
+                        SizedBox(height: R.h(32)),
+                        _buildMethodSelector(viewModel),
+                        SizedBox(height: R.h(20)),
+                        _buildPrimaryField(viewModel),
+                        SizedBox(height: R.h(20)),
+                        _buildSecondaryField(context, viewModel),
+                        SizedBox(height: R.h(16)),
+                        _buildActionButton(context, viewModel),
+                        SizedBox(height: R.h(20)),
+                        _buildSupportText(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -335,7 +178,7 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Widget _buildMethodSelector() {
+  Widget _buildMethodSelector(AuthViewModel viewModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -351,19 +194,27 @@ class _LoginViewState extends State<LoginView> {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => _switchMethod(LoginMethod.password),
+                  onTap: () {
+                    viewModel.switchMethod(LoginMethod.password);
+                    _emailOrIdController.clear();
+                    _passwordController.clear();
+                  },
                   child: _methodButton(
                     text: 'Agent ID & Password',
-                    active: _loginMethod == LoginMethod.password,
+                    active: viewModel.loginMethod == LoginMethod.password,
                   ),
                 ),
               ),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => _switchMethod(LoginMethod.otp),
+                  onTap: () {
+                    viewModel.switchMethod(LoginMethod.otp);
+                    _mobileController.clear();
+                    _otpController.clear();
+                  },
                   child: _methodButton(
                     text: 'OTP',
-                    active: _loginMethod == LoginMethod.otp,
+                    active: viewModel.loginMethod == LoginMethod.otp,
                   ),
                 ),
               ),
@@ -374,8 +225,8 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Widget _buildPrimaryField() {
-    final isOtp = _loginMethod == LoginMethod.otp;
+  Widget _buildPrimaryField(AuthViewModel viewModel) {
+    final isOtp = viewModel.loginMethod == LoginMethod.otp;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,8 +255,8 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Widget _buildSecondaryField() {
-    if (_loginMethod == LoginMethod.password) {
+  Widget _buildSecondaryField(BuildContext context, AuthViewModel viewModel) {
+    if (viewModel.loginMethod == LoginMethod.password) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -414,7 +265,7 @@ class _LoginViewState extends State<LoginView> {
           SizedBox(height: R.h(8)),
           TextField(
             controller: _passwordController,
-            obscureText: _obscurePassword,
+            obscureText: viewModel.obscurePassword,
             cursorColor: AppColors.primaryGreen,
             decoration: InputDecoration(
               hintText: '********',
@@ -425,14 +276,13 @@ class _LoginViewState extends State<LoginView> {
               ),
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscurePassword
+                  viewModel.obscurePassword
                       ? RemixIcons.eye_off_line
                       : RemixIcons.eye_line,
                   color: AppColors.inputIcon,
                   size: R.sp(18),
                 ),
-                onPressed: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
+                onPressed: () => viewModel.togglePasswordVisibility(),
               ),
             ),
           ),
@@ -460,14 +310,15 @@ class _LoginViewState extends State<LoginView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Visibility(
-          visible: _isOtpSent,
+          visible: viewModel.isOtpSent,
           maintainSize: true,
           maintainAnimation: true,
           maintainState: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('OTP', style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
+              Text('OTP',
+                  style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
               SizedBox(height: R.h(8)),
               TextField(
                 controller: _otpController,
@@ -485,9 +336,10 @@ class _LoginViewState extends State<LoginView> {
             ],
           ),
         ),
-        
         Visibility(
-          visible: _isOtpSent && _start == 0, // Show Only when OTP IS sent AND timer is 0
+          visible: viewModel.isOtpSent &&
+              viewModel.timerValue ==
+                  0, // Show Only when OTP IS sent AND timer is 0
           maintainSize: true, // Maintain size to avoid jumps
           maintainAnimation: true,
           maintainState: true,
@@ -495,25 +347,17 @@ class _LoginViewState extends State<LoginView> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () async {
-                setState(() => _isLoading = true);
-                try {
-                  await _apiService.resendOtp(_mobileController.text.trim());
-                  if (!mounted) return;
-                  
-                  _startTimer(); // Restart timer on resend
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('OTP Resent successfully'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                } catch (e) {
-                  if (!mounted) return;
-                  _showError(e.toString().replaceAll('Exception: ', ''));
-                } finally {
-                  if (mounted) setState(() => _isLoading = false);
-                }
+                final result =
+                    await viewModel.resendOtp(_mobileController.text.trim());
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(result['message']!),
+                    backgroundColor:
+                        result['success'] ? AppColors.success : AppColors.error,
+                  ),
+                );
               },
               child: Text(
                 'Resend Code',
@@ -526,13 +370,14 @@ class _LoginViewState extends State<LoginView> {
             ),
           ),
         ),
-        if(_isOtpSent && _start > 0)
-           Align(
+        if (viewModel.isOtpSent && viewModel.timerValue > 0)
+          Align(
             alignment: Alignment.centerRight,
             child: Padding(
-              padding: EdgeInsets.only(top: R.h(12), bottom: R.h(12), right: R.w(12)),
+              padding: EdgeInsets.only(
+                  top: R.h(12), bottom: R.h(12), right: R.w(12)),
               child: Text(
-                'Resend Code in $_start s',
+                'Resend Code in ${viewModel.timerValue} s',
                 style: TextStyle(
                   color: AppColors.bodyText,
                   fontWeight: FontWeight.w500,
@@ -545,13 +390,14 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Widget _buildActionButton() {
+  Widget _buildActionButton(BuildContext context, AuthViewModel viewModel) {
     return SizedBox(
       width: double.infinity,
       height: R.h(54),
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleLogin,
-        child: _isLoading
+        onPressed:
+            viewModel.isLoading ? null : () => _handleLogin(context, viewModel),
+        child: viewModel.isLoading
             ? SizedBox(
                 height: R.h(24),
                 width: R.h(24),
@@ -561,9 +407,11 @@ class _LoginViewState extends State<LoginView> {
                 ),
               )
             : Text(
-                _loginMethod == LoginMethod.password
+                viewModel.loginMethod == LoginMethod.password
                     ? 'Log In →'
-                    : (_isOtpSent ? 'Verify Mobile Number →' : 'Send OTP →'),
+                    : (viewModel.isOtpSent
+                        ? 'Verify Mobile Number →'
+                        : 'Send OTP →'),
                 style: TextStyle(fontSize: R.sp(16)),
               ),
       ),

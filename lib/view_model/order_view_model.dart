@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderViewModel extends ChangeNotifier {
@@ -18,7 +19,14 @@ class OrderViewModel extends ChangeNotifier {
   double _swipePosition = 0;
   bool _isPickupMode = false;
 
-  OrderViewModel({required this.orderId});
+  OrderViewModel({required this.orderId, Order? initialOrder}) {
+    if (initialOrder != null) {
+      _order = initialOrder;
+      final status = _order?.status.toLowerCase();
+      _isPickupMode = status == 'accepted' || status == 'pending';
+      _isLoading = false;
+    }
+  }
 
   // Getters
   Order? get order => _order;
@@ -52,7 +60,9 @@ class OrderViewModel extends ChangeNotifier {
   }
 
   Future<void> fetchOrderDetails() async {
-    _isLoading = true;
+    if (_order == null) {
+      _isLoading = true;
+    }
     _error = null;
     notifyListeners();
 
@@ -89,8 +99,10 @@ class OrderViewModel extends ChangeNotifier {
       _isLoading = false;
       _isItemsLoading = false;
       notifyListeners();
+      _isItemsLoading = false;
+      notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      _error = e is AppException ? e.message : e.toString();
       _isLoading = false;
       _isItemsLoading = false;
       notifyListeners();
@@ -105,10 +117,11 @@ class OrderViewModel extends ChangeNotifier {
     try {
       if (_authToken == null) return false;
       await _apiService.pickupOrder(_authToken!, orderId);
+      await _apiService.pickupOrder(_authToken!, orderId);
       await fetchOrderDetails(); // Refresh to update status
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = e is AppException ? e.message : e.toString();
       notifyListeners();
       return false;
     }

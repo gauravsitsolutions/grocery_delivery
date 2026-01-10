@@ -445,6 +445,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             screen: OrderDetailsView(
               orderId: order.id,
               orderNumber: order.orderNumber,
+              order: order,
             ),
             withNavBar: false,
             pageTransitionAnimation: PageTransitionAnimation.cupertino,

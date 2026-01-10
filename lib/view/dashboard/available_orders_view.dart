@@ -1,5 +1,5 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lottie/lottie.dart';
@@ -10,6 +10,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
@@ -23,23 +24,24 @@ class AvailableOrdersView extends StatefulWidget {
 }
 
 class _AvailableOrdersViewState extends State<AvailableOrdersView> {
-  final ApiService _apiService = ApiService();
-  List<Order> _orders = [];
-  bool _isLoading = true;
-  String? _error;
-  String? _authToken;
-
-  // Pagination
-  int _page = 1;
-  bool _hasMore = false;
-  bool _isLoadingMore = false;
   final ScrollController _scrollController = ScrollController();
+  final ApiService _apiService =
+      ApiService(); // Still needed for acceptOrder locally for now
+  String?
+      _authToken; // Still needed for image headers if we don't move that to VM
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _fetchOrders();
+    _loadAuthToken();
+  }
+
+  Future<void> _loadAuthToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _authToken = prefs.getString('auth_token');
+    });
   }
 
   @override
@@ -51,75 +53,13 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      _loadMore();
+      // Access VM via context to load more
+      final viewModel = Provider.of<OrderListViewModel>(context, listen: false);
+      viewModel.loadMoreNewOrders();
     }
   }
 
-  Future<void> _fetchOrders() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      if (token == null) {
-        setState(() {
-          _isLoading = false;
-          _error = 'Not authenticated';
-        });
-        return;
-      }
-
-      final response = await _apiService.getNewOrders(token, page: 1);
-      setState(() {
-        _authToken = token;
-        _orders = response.data;
-        _page = 1;
-        _hasMore = (response.currentPage ?? 1) < (response.lastPage ?? 1);
-        _isLoading = false;
-      });
-    } catch (e) {
-      log('Error fetching available orders: $e');
-      setState(() {
-        _isLoading = false;
-        _error = e.toString();
-      });
-    }
-  }
-
-  Future<void> _loadMore() async {
-    if (_isLoadingMore || !_hasMore) return;
-
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      if (token == null) return;
-
-      final nextPage = _page + 1;
-      final response = await _apiService.getNewOrders(token, page: nextPage);
-
-      setState(() {
-        _orders.addAll(response.data);
-        _page = nextPage;
-        _hasMore = (response.currentPage ?? nextPage) <
-            (response.lastPage ?? nextPage);
-        _isLoadingMore = false;
-      });
-    } catch (e) {
-      log('Error loading more available orders: $e');
-      setState(() {
-        _isLoadingMore = false;
-      });
-    }
-  }
-
-  Future<void> _acceptOrder(int orderId) async {
+  Future<void> _acceptOrder(int orderId, List<Order> orders) async {
     if (!mounted) return;
 
     try {
@@ -142,7 +82,7 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
       if (!context.mounted) return;
 
       // Find the order object to pass its details
-      final acceptedOrder = _orders.firstWhere((o) => o.id == orderId);
+      final acceptedOrder = orders.firstWhere((o) => o.id == orderId);
       _showAcceptSuccessDialog(acceptedOrder);
     } catch (e) {
       if (mounted) {
@@ -215,55 +155,61 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
-      appBar: AppBar(
-        title: const Text('Available Orders',
-            style: TextStyle(
-                fontWeight: FontWeight.bold, color: AppColors.headingText)),
+    return ChangeNotifierProvider(
+      create: (_) => OrderListViewModel()..fetchNewOrders(refresh: true),
+      child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.bodyText),
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _fetchOrders,
-          color: AppColors.primaryGreen,
-          child: _isLoading
-              ? const ListShimmer(count: 6)
-              : _error != null
-                  ? Center(
-                      child: Text(_error!,
-                          style: const TextStyle(color: Colors.red)))
-                  : _orders.isEmpty
-                      ? const Center(child: Text('No available orders'))
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: EdgeInsets.all(R.w(16)),
-                          itemCount: _orders.length + (_isLoadingMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == _orders.length) {
-                              return const Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: OrderShimmer());
-                            }
-                            final order = _orders[index];
-                            return AnimatedOrderCard(
-                              key: ValueKey(order.id),
-                              child: _orderCard(order),
-                            );
-                          },
-                        ),
+        appBar: AppBar(
+          title: const Text('Available Orders',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, color: AppColors.headingText)),
+          backgroundColor: AppColors.scaffoldBg,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: AppColors.bodyText),
+        ),
+        body: SafeArea(
+          child: Consumer<OrderListViewModel>(
+            builder: (context, viewModel, child) {
+              return RefreshIndicator(
+                onRefresh: () async =>
+                    await viewModel.fetchNewOrders(refresh: true),
+                color: AppColors.primaryGreen,
+                child: viewModel.isNewOrdersLoading
+                    ? const ListShimmer(count: 6)
+                    : viewModel.newOrdersError != null
+                        ? Center(
+                            child: Text(viewModel.newOrdersError!,
+                                style: const TextStyle(color: Colors.red)))
+                        : viewModel.newOrders.isEmpty
+                            ? const Center(child: Text('No available orders'))
+                            : ListView.builder(
+                                controller: _scrollController,
+                                padding: EdgeInsets.all(R.w(16)),
+                                itemCount: viewModel.newOrders.length +
+                                    (viewModel.isNewOrdersLoadingMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  if (index == viewModel.newOrders.length) {
+                                    return const Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: OrderShimmer());
+                                  }
+                                  final order = viewModel.newOrders[index];
+                                  return AnimatedOrderCard(
+                                    key: ValueKey(order.id),
+                                    child:
+                                        _orderCard(order, viewModel.newOrders),
+                                  );
+                                },
+                              ),
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
-  // Reuse _orderCard from AgentDashboardView but simplified or duplicated
-  // Since we don't have a shared widget yet, I'll duplicate the logic for now or needs a shared widget.
-  // For simplicity and speed, I will duplicate the card UI structure for now, but ideally it should be a shared widget.
-
-  Widget _orderCard(Order order) {
+  Widget _orderCard(Order order, List<Order> orders) {
     return GestureDetector(
       onTap: () {
         PersistentNavBarNavigator.pushNewScreen(
@@ -271,6 +217,7 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
           screen: OrderDetailsView(
             orderId: order.id,
             orderNumber: order.orderNumber,
+            order: order,
           ),
           withNavBar: false,
           pageTransitionAnimation: PageTransitionAnimation.cupertino,
@@ -428,7 +375,7 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => _acceptOrder(order.id),
+                          onTap: () => _acceptOrder(order.id, orders),
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: R.h(12)),
                             decoration: BoxDecoration(
