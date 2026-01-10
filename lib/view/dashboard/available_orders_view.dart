@@ -9,6 +9,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
@@ -71,11 +72,8 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
       if (!mounted) return;
 
       // Show loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Accepting order...'),
-            duration: Duration(seconds: 1)),
-      );
+      // Show loading
+      CustomSnackBar.showSuccess(context, 'Accepting order...');
 
       await _apiService.acceptOrder(token, orderId);
 
@@ -88,9 +86,7 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
       _showAcceptSuccessDialog(acceptedOrder);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        CustomSnackBar.showError(context, 'Error: ${e.toString()}');
       }
     }
   }

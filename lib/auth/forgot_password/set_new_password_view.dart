@@ -5,6 +5,7 @@ import 'package:samrudhi_delivery_agent_app/res/styles/app_text_styles.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
 class SetNewPasswordView extends StatefulWidget {
   const SetNewPasswordView({super.key});
@@ -31,15 +32,7 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(R.w(16)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(8))),
-      ),
-    );
+    CustomSnackBar.showError(context, message);
   }
 
   Future<void> _handleSetPassword() async {
@@ -53,7 +46,7 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
       _showError("Passwords do not match");
       return;
     }
-    
+
     // 2. Get Mobile from Arguments
     final mobileArgs = ModalRoute.of(context)?.settings.arguments;
     if (mobileArgs == null || mobileArgs is! String) {
@@ -66,40 +59,37 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
     try {
       // 3. Call API
       final response = await _apiService.resetPassword(
-        mobileArgs, 
-        _newPasswordController.text
-      );
-      
+          mobileArgs, _newPasswordController.text);
+
       if (!mounted) return;
 
       if (response['status'] == true) {
-         // Success -> Navigate to Success Screen
-         // Wait for 2 seconds as requested, to show any success state if needed
-         // (However, since we are navigating to a 'Success Screen', the user likely means 
-         // show the success screen/message itself. But given we are navigating TO the success screen,
-         // the delay might be better placed ON the success screen or BEFORE navigating if we want to show a toast here first.
-         // Assuming user wants to see the result of "Set Password" action momentarily.)
-         
-         // Actually, typically "show that" refers to a success feedback. 
-         // But the destination IS PasswordResetSuccessView.
-         // If the user means "show the success screen for 2 seconds then navigate to LOGIN", 
-         // that logic belongs in PasswordResetSuccessView. 
-         
-         // Let's check if PasswordResetSuccessView auto-navigates.
-         // Retreading the request: "also after password restet show that for 2 second and navigate"
-         // This most likely implies: The "Success View" should be shown for 2 seconds, then go to Login.
-         
-         // SO I should check PasswordResetSuccessView.dart. 
-         
-         Navigator.pushNamedAndRemoveUntil(
-           context, 
-           AppRoutes.passwordResetSuccess,
-           (route) => false, 
-         );
+        // Success -> Navigate to Success Screen
+        // Wait for 2 seconds as requested, to show any success state if needed
+        // (However, since we are navigating to a 'Success Screen', the user likely means
+        // show the success screen/message itself. But given we are navigating TO the success screen,
+        // the delay might be better placed ON the success screen or BEFORE navigating if we want to show a toast here first.
+        // Assuming user wants to see the result of "Set Password" action momentarily.)
+
+        // Actually, typically "show that" refers to a success feedback.
+        // But the destination IS PasswordResetSuccessView.
+        // If the user means "show the success screen for 2 seconds then navigate to LOGIN",
+        // that logic belongs in PasswordResetSuccessView.
+
+        // Let's check if PasswordResetSuccessView auto-navigates.
+        // Retreading the request: "also after password restet show that for 2 second and navigate"
+        // This most likely implies: The "Success View" should be shown for 2 seconds, then go to Login.
+
+        // SO I should check PasswordResetSuccessView.dart.
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.passwordResetSuccess,
+          (route) => false,
+        );
       } else {
         _showError(response['message'] ?? 'Failed to reset password');
       }
-
     } catch (e) {
       _showError(e.toString().replaceAll('Exception: ', ''));
     } finally {
@@ -119,7 +109,7 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
       padding: EdgeInsets.only(bottom: R.h(8)),
       child: Row(
         children: [
-           Icon(
+          Icon(
             isValid ? Icons.check_circle : Icons.radio_button_unchecked,
             color: isValid ? AppColors.primaryGreen : AppColors.hintText,
             size: R.sp(20),
@@ -172,8 +162,8 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
                 ),
               ),
               SizedBox(height: R.h(30)),
-
-              Text('New Password', style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
+              Text('New Password',
+                  style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
               SizedBox(height: R.h(8)),
               TextField(
                 controller: _newPasswordController,
@@ -183,10 +173,13 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
                   hintText: '••••••••••••',
                   filled: true,
                   fillColor: AppColors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(R.r(12))),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(R.r(12))),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureNew ? RemixIcons.eye_off_line : RemixIcons.eye_line,
+                      _obscureNew
+                          ? RemixIcons.eye_off_line
+                          : RemixIcons.eye_line,
                       size: R.sp(20),
                       color: AppColors.hintText,
                     ),
@@ -195,14 +188,13 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
                 ),
               ),
               SizedBox(height: R.h(20)),
-
               _buildCheckItem('At least 8 characters', _hasMinLength),
               _buildCheckItem('One uppercase letter', _hasUpperCase),
               _buildCheckItem('One number', _hasNumber),
               _buildCheckItem('One special character', _hasSpecialChar),
-
               SizedBox(height: R.h(20)),
-              Text('Confirm New Password', style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
+              Text('Confirm New Password',
+                  style: AppTextStyles.label.copyWith(fontSize: R.sp(14))),
               SizedBox(height: R.h(8)),
               TextField(
                 controller: _confirmPasswordController,
@@ -211,18 +203,21 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
                   hintText: 'Confirm new password',
                   filled: true,
                   fillColor: AppColors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(R.r(12))),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(R.r(12))),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirm ? RemixIcons.eye_off_line : RemixIcons.eye_line,
+                      _obscureConfirm
+                          ? RemixIcons.eye_off_line
+                          : RemixIcons.eye_line,
                       size: R.sp(20),
                       color: AppColors.hintText,
                     ),
-                    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    onPressed: () =>
+                        setState(() => _obscureConfirm = !_obscureConfirm),
                   ),
                 ),
               ),
-
               SizedBox(height: R.h(40)),
               SizedBox(
                 width: double.infinity,
@@ -235,16 +230,20 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
                       borderRadius: BorderRadius.circular(R.r(8)),
                     ),
                   ),
-                  child: _isLoading 
-                    ? SizedBox(height: R.sp(20), width: R.sp(20), child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text(
-                    'Set Password',
-                    style: TextStyle(
-                      fontSize: R.sp(16),
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.black,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? SizedBox(
+                          height: R.sp(20),
+                          width: R.sp(20),
+                          child: const CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : Text(
+                          'Set Password',
+                          style: TextStyle(
+                            fontSize: R.sp(16),
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.black,
+                          ),
+                        ),
                 ),
               ),
             ],

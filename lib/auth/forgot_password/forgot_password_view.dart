@@ -4,6 +4,7 @@ import 'package:samrudhi_delivery_agent_app/res/styles/app_text_styles.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
 class ForgotPasswordView extends StatefulWidget {
   const ForgotPasswordView({super.key});
@@ -22,18 +23,11 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     _controller.dispose();
     super.dispose();
   }
- 
+
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(R.w(16)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(8))),
-      ),
-    );
+    if (!mounted) return;
+    CustomSnackBar.showError(context, message);
   }
 
   Future<void> _handleSendOtp() async {
@@ -42,10 +36,10 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
       _showError("Please enter your Agent ID or phone number");
       return;
     }
-    
+
     // Basic validation (optional, can depend on requirements)
     if (mobile.length < 10) {
-       _showError("Please enter a valid phone number");
+      _showError("Please enter a valid phone number");
       return;
     }
 
@@ -53,23 +47,16 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
     try {
       final response = await _apiService.sendForgotPasswordOtp(mobile);
-      
+
       if (!mounted) return;
-      
+
       if (response['status'] == true) {
         // Success
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('OTP sent successfully'),
-            backgroundColor: AppColors.success,
-             behavior: SnackBarBehavior.floating,
-             margin: EdgeInsets.all(R.w(16)),
-             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(8))),
-          ),
-        );
-        
+        // Success
+        CustomSnackBar.showSuccess(context, 'OTP sent successfully');
+
         Navigator.pushNamed(
-          context, 
+          context,
           AppRoutes.forgotPasswordOtp,
           arguments: mobile, // Pass mobile number to OTP screen
         );
@@ -126,10 +113,12 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               TextField(
                 controller: _controller,
                 cursorColor: AppColors.primaryGreen,
-                keyboardType: TextInputType.phone, // Recommended for phone numbers
+                keyboardType:
+                    TextInputType.phone, // Recommended for phone numbers
                 decoration: InputDecoration(
                   hintText: 'Enter your Agent ID or phone number',
-                  hintStyle: TextStyle(color: AppColors.hintText, fontSize: R.sp(14)),
+                  hintStyle:
+                      TextStyle(color: AppColors.hintText, fontSize: R.sp(14)),
                   filled: true,
                   fillColor: AppColors.white,
                   border: OutlineInputBorder(
@@ -162,16 +151,20 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                       borderRadius: BorderRadius.circular(R.r(8)),
                     ),
                   ),
-                  child: _isLoading 
-                    ? SizedBox(height: R.sp(20), width: R.sp(20), child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text(
-                    'Send Reset Code',
-                    style: TextStyle(
-                      fontSize: R.sp(16),
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.black,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? SizedBox(
+                          height: R.sp(20),
+                          width: R.sp(20),
+                          child: const CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : Text(
+                          'Send Reset Code',
+                          style: TextStyle(
+                            fontSize: R.sp(16),
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.black,
+                          ),
+                        ),
                 ),
               ),
               SizedBox(height: R.h(16)),

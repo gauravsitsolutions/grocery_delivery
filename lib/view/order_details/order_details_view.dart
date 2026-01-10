@@ -1,12 +1,17 @@
+import 'package:image_picker/image_picker.dart';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_pickup_screen.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivery_screen.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 
 class OrderDetailsView extends StatelessWidget {
   final int orderId;
@@ -24,7 +29,22 @@ class OrderDetailsView extends StatelessWidget {
         ..fetchOrderDetails(),
       child: Consumer<OrderViewModel>(
         builder: (context, viewModel, child) {
+          if (viewModel.isUnauthenticated) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              if (context.mounted) {
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+              }
+            });
+            return const Scaffold(
+                body: Center(child: CircularProgressIndicator()));
+          }
+
           // If in Delivery Mode (and order is loaded), show full-screen Delivery Screen
+          log('OrderDetailsView Rebuild. Status: ${viewModel.order?.status}, IsPickup: ${viewModel.isPickupMode}');
+
           if (!viewModel.isPickupMode && viewModel.order != null) {
             return const OrderDeliveryScreen();
           }
@@ -63,6 +83,24 @@ class OrderDetailsView extends StatelessWidget {
         icon: const Icon(Remix.arrow_left_line),
         onPressed: () => Navigator.pop(context),
       ),
+      actions: [
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'cancel') {
+              _showCancellationDialog(context, viewModel);
+            }
+          },
+          itemBuilder: (BuildContext context) {
+            return [
+              const PopupMenuItem<String>(
+                value: 'cancel',
+                child:
+                    Text('Cancel Order', style: TextStyle(color: Colors.red)),
+              ),
+            ];
+          },
+        ),
+      ],
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -81,12 +119,6 @@ class OrderDetailsView extends StatelessWidget {
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Remix.more_2_fill, size: 20),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 
@@ -128,40 +160,35 @@ class OrderDetailsView extends StatelessWidget {
   }
 
   Widget _buildLoadingShimmer() {
-    return Scaffold(
-        appBar: AppBar(
-            title: const Text("Loading..."),
-            backgroundColor: Colors.white,
-            elevation: 0),
-        body: Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: ListView.builder(
-            itemCount: 5,
-            itemBuilder: (_, __) => Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: 150,
-                    height: 20,
-                    color: Colors.white,
-                  ),
-                ],
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+        itemCount: 5,
+        itemBuilder: (_, __) => Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
+              const SizedBox(height: 16),
+              Container(
+                width: 150,
+                height: 20,
+                color: Colors.white,
+              ),
+            ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget? _buildBottomAction(BuildContext context, OrderViewModel viewModel) {
@@ -177,74 +204,93 @@ class OrderDetailsView extends StatelessWidget {
     final allChecked =
         viewModel.checkedItems.length == viewModel.orderItems.length;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildSupportLink(),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () async {
-                if (!allChecked) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text("Please verify all items before confirming"),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                  return;
-                }
-                final success = await viewModel.pickupOrder();
-                if (!context.mounted) return;
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Order picked up successfully!"),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    allChecked ? AppColors.primaryGreen : Colors.grey[400],
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (allChecked) const Icon(Remix.check_double_line, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    "Confirm Pickup",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildSupportLink(),
+            const SizedBox(height: 12),
+            _buildProofSection(context, viewModel),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: viewModel.isPickupLoading
+                    ? null
+                    : () async {
+                        if (!allChecked) {
+                          CustomSnackBar.showError(
+                            context,
+                            "Please verify all items before confirming",
+                          );
+                          return;
+                        }
+                        if (viewModel.pickupProofImage == null) {
+                          CustomSnackBar.showError(
+                            context,
+                            "Please upload pickup proof image",
+                          );
+                          return;
+                        }
+                        final success = await viewModel.pickupOrder();
+                        if (!context.mounted) return;
+                        if (success) {
+                          CustomSnackBar.showSuccess(
+                            context,
+                            "Order picked up successfully!",
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: allChecked && !viewModel.isPickupLoading
+                      ? AppColors.primaryGreen
+                      : Colors.grey[400],
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: viewModel.isPickupLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (allChecked)
+                            const Icon(Remix.check_double_line, size: 20),
+                          const SizedBox(width: 8),
+                          const Text(
+                            "Confirm Pickup",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -265,6 +311,139 @@ class OrderDetailsView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProofSection(BuildContext context, OrderViewModel viewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Pickup Proof",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _showImageSourceSheet(context, viewModel),
+          child: Container(
+            height: 150,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.grey[300]!,
+                style: BorderStyle.none,
+              ),
+            ),
+            child: viewModel.pickupProofImage != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      viewModel.pickupProofImage!,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Remix.camera_line,
+                          size: 32, color: Colors.grey[400]),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Tap to upload proof",
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showImageSourceSheet(BuildContext context, OrderViewModel viewModel) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () {
+                Navigator.pop(ctx);
+                viewModel.pickProofImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                viewModel.pickProofImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCancellationDialog(BuildContext context, OrderViewModel viewModel) {
+    final TextEditingController reasonController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cancel Order'),
+          content: TextField(
+            controller: reasonController,
+            decoration: const InputDecoration(
+              hintText: 'Enter cancellation reason',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Back'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                final reason = reasonController.text.trim();
+                if (reason.isEmpty) {
+                  CustomSnackBar.showError(context, 'Reason is required');
+                  return;
+                }
+                Navigator.pop(context); // Close dialog
+
+                final success = await viewModel.cancelOrder(reason);
+                if (context.mounted) {
+                  if (success) {
+                    CustomSnackBar.showSuccess(
+                        context, 'Order cancelled successfully');
+                    Navigator.pop(context); // Exit Order Details screen
+                  } else {
+                    CustomSnackBar.showError(
+                        context, viewModel.error ?? 'Cancellation failed');
+                  }
+                }
+              },
+              child: const Text('Confirm Cancel',
+                  style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

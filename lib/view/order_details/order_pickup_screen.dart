@@ -282,81 +282,329 @@ class OrderPickupScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        leading: Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: item.product?.productImages != null &&
-                  item.product!.productImages.isNotEmpty
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: item.product!.productImages[0],
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
-                      child: Container(color: Colors.white),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Product Image
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: item.product?.productImages != null &&
+                    item.product!.productImages.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: item.product!.productImages[0],
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Container(color: Colors.white),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.image_not_supported_outlined),
                     ),
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.image_not_supported_outlined),
-                  ),
-                )
-              : const Icon(Icons.shopping_basket_outlined, color: Colors.grey),
-        ),
-        title: Text(
-          item.product?.name ?? "Unknown Item",
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.2,
+                  )
+                : const Icon(Icons.shopping_basket_outlined,
+                    color: Colors.grey),
           ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 6),
-            Row(
+          const SizedBox(width: 12),
+          // Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE6F7ED),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    "QTY: ${item.quantity}",
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF00A355),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.product?.name ?? "Unknown Item",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  "Shelf: A4-12",
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
-                  ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE6F7ED),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        "QTY: ${item.quantity}",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF00A355),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Shelf: A4-12",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const Spacer(),
+                    // Report Issue Icon (Subtle)
+                    InkWell(
+                      onTap: () =>
+                          _showReportIssueDialog(context, viewModel, item),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(Remix.error_warning_line,
+                            size: 18, color: Colors.grey[400]),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
+          const SizedBox(width: 8),
+          // Checkbox / Loading
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: viewModel.isItemVerifying(item.id)
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primaryGreen,
+                    ),
+                  )
+                : Checkbox(
+                    value: isChecked,
+                    activeColor: AppColors.primaryGreen,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4)),
+                    side: BorderSide(color: Colors.grey[300]!, width: 2),
+                    onChanged: (value) => viewModel.toggleItem(item.id),
+                  ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showReportIssueDialog(
+      BuildContext context, OrderViewModel viewModel, dynamic item) {
+    String selectedIssue = 'out_of_stock';
+    final TextEditingController descriptionController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Report Issue',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(dialogContext),
+                          child: const Icon(Remix.close_line, size: 24),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Issue Type Section
+                    const Text(
+                      "What's the issue?",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 10,
+                      children: [
+                        _buildIssueChip(
+                            'Item Out of Stock',
+                            'out_of_stock',
+                            selectedIssue,
+                            (val) => setState(() => selectedIssue = val)),
+                        _buildIssueChip(
+                            'Damaged Item',
+                            'damaged',
+                            selectedIssue,
+                            (val) => setState(() => selectedIssue = val)),
+                        _buildIssueChip(
+                            'Incorrect Quantity',
+                            'incorrect_quantity',
+                            selectedIssue,
+                            (val) => setState(() => selectedIssue = val)),
+                        _buildIssueChip(
+                            'Wrong Item on Shelf',
+                            'wrong_item',
+                            selectedIssue,
+                            (val) => setState(() => selectedIssue = val)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Description Input
+                    Container(
+                      height: 120,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFA6E9C4)),
+                        color: Colors.white,
+                      ),
+                      child: TextField(
+                        controller: descriptionController,
+                        maxLines: null,
+                        expands: true,
+                        style: const TextStyle(
+                            fontSize: 14, color: Color(0xFF00A355)),
+                        decoration: const InputDecoration(
+                          hintText: 'Describe the issue',
+                          hintStyle: TextStyle(color: Color(0xFF00A355)),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Action Buttons
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final success = await viewModel.reportItemIssue(
+                            item.id,
+                            selectedIssue,
+                            descriptionController.text,
+                          );
+                          Navigator.pop(dialogContext);
+                          if (context.mounted && success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Issue reported successfully'),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00C853),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Submit Report',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFE8F5E9),
+                          foregroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildIssueChip(String label, String value, String groupValue,
+      Function(String) onSelected) {
+    final isSelected = value == groupValue;
+    return InkWell(
+      onTap: () => onSelected(value),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5E9),
+          borderRadius: BorderRadius.circular(8),
+          border:
+              isSelected ? Border.all(color: const Color(0xFF00C853)) : null,
         ),
-        trailing: Checkbox(
-          value: isChecked,
-          activeColor: AppColors.primaryGreen,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          onChanged: (value) => viewModel.toggleItem(item.id),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );

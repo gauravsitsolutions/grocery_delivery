@@ -8,6 +8,7 @@ import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -46,7 +47,7 @@ class _ProfileViewState extends State<ProfileView> {
             final name = snapshot.data?['name'] ?? 'Agent';
             final id = snapshot.data?['id']?.toString() ?? '---';
             final role = snapshot.data?['role'] ?? 'Partner';
-            
+
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 R.w(16),
@@ -57,7 +58,7 @@ class _ProfileViewState extends State<ProfileView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _profileHeader(name, id, role),
+                  _profileHeader(name, id, role),
 
                   SizedBox(height: R.h(28)), // spacing preserved
 
@@ -65,71 +66,71 @@ class _ProfileViewState extends State<ProfileView> {
                   SizedBox(height: R.h(32)),
 
                   _infoSection(
-                title: 'Personal Information',
-                children: [
-                  _infoRow(RemixIcons.phone_line, 'Phone Number',
-                      '+1 (555) 019-2834',
-                      edit: true),
-                  _infoRow(RemixIcons.mail_line, 'Email Address',
-                      'm.scott@dunder.com',
-                      edit: true),
-                  _infoRow(RemixIcons.map_pin_line, 'Delivery Region',
-                      'Scranton Downtown'),
-                ],
-              ),
+                    title: 'Personal Information',
+                    children: [
+                      _infoRow(RemixIcons.phone_line, 'Phone Number',
+                          '+1 (555) 019-2834',
+                          edit: true),
+                      _infoRow(RemixIcons.mail_line, 'Email Address',
+                          'm.scott@dunder.com',
+                          edit: true),
+                      _infoRow(RemixIcons.map_pin_line, 'Delivery Region',
+                          'Scranton Downtown'),
+                    ],
+                  ),
 
-              SizedBox(height: R.h(28)),
+                  SizedBox(height: R.h(28)),
 
-              _infoSection(
-                title: 'Vehicle Details',
-                children: [
-                  _infoRow(RemixIcons.motorbike_line, 'Vehicle Type',
-                      'Scooter - Yamaha NMAX',
-                      edit: true),
-                  _infoRow(
-                      Icons.confirmation_number, 'License Plate', '8X-9921'),
-                  _infoRow(RemixIcons.verified_badge_line, 'Documents',
-                      'Verified & Active',
-                      highlight: true),
-                ],
-              ),
+                  _infoSection(
+                    title: 'Vehicle Details',
+                    children: [
+                      _infoRow(RemixIcons.motorbike_line, 'Vehicle Type',
+                          'Scooter - Yamaha NMAX',
+                          edit: true),
+                      _infoRow(Icons.confirmation_number, 'License Plate',
+                          '8X-9921'),
+                      _infoRow(RemixIcons.verified_badge_line, 'Documents',
+                          'Verified & Active',
+                          highlight: true),
+                    ],
+                  ),
 
-              SizedBox(height: R.h(32)),
-              _logoutButton(),
+                  SizedBox(height: R.h(32)),
+                  _logoutButton(),
 
-              SizedBox(height: R.h(16)),
-              FutureBuilder<PackageInfo>(
-                future: PackageInfo.fromPlatform(),
-                builder: (context, snapshot) {
-                  String text = '';
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    text = 'Verifying version...';
-                  } else if (snapshot.hasError) {
-                    text = 'Version info unavailable (Restart App)'; 
-                  } else if (snapshot.hasData) {
-                    text = 'Version ${snapshot.data!.version}';
-                  }
+                  SizedBox(height: R.h(16)),
+                  FutureBuilder<PackageInfo>(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, snapshot) {
+                      String text = '';
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        text = 'Verifying version...';
+                      } else if (snapshot.hasError) {
+                        text = 'Version info unavailable (Restart App)';
+                      } else if (snapshot.hasData) {
+                        text = 'Version ${snapshot.data!.version}';
+                      }
 
-                  if (text.isEmpty) return const SizedBox();
+                      if (text.isEmpty) return const SizedBox();
 
-                  return Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: R.h(20)),
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: R.sp(12),
-                          color: AppColors.bodyText,
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: R.h(20)),
+                          child: Text(
+                            text,
+                            style: TextStyle(
+                              fontSize: R.sp(12),
+                              color: AppColors.bodyText,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      },
+            );
+          },
         ), // FutureBuilder
       ), // SafeArea
     ); // Scaffold
@@ -141,7 +142,7 @@ class _ProfileViewState extends State<ProfileView> {
     final name = prefs.getString('user_name');
     final id = prefs.getInt('user_id');
     final role = prefs.getString('user_role');
-    
+
     // Debug print to check what's stored
     debugPrint('Profile Fetch - Name: $name, ID: $id, Role: $role');
 
@@ -223,7 +224,6 @@ class _ProfileViewState extends State<ProfileView> {
       ),
     );
   }
-
 
   // ================= PERFORMANCE =================
 
@@ -468,7 +468,7 @@ class _ProfileViewState extends State<ProfileView> {
   // ================= LOGOUT =================
   Future<void> _handleLogout() async {
     if (_isLoggingOut) return;
-    
+
     setState(() => _isLoggingOut = true);
 
     try {
@@ -492,7 +492,7 @@ class _ProfileViewState extends State<ProfileView> {
       log('Clearing SharedPreferences...');
       await prefs.clear();
       log('SharedPreferences cleared.');
-      
+
       if (!mounted) {
         log('Context not mounted, skipping navigation');
         return;
@@ -500,29 +500,14 @@ class _ProfileViewState extends State<ProfileView> {
 
       // Show Logout Success
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(R.w(16)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(R.r(12))),
-            content: Row(
-              children: [
-                const Icon(RemixIcons.logout_circle_r_line, color: Colors.white),
-                SizedBox(width: R.w(12)),
-                Text('Logout Successful',
-                    style: TextStyle(color: AppColors.white, fontSize: R.sp(14), fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        );
+        CustomSnackBar.showSuccess(context, 'Logout Successful');
       }
 
       // Wait a moment
       await Future.delayed(const Duration(seconds: 1));
 
       if (!mounted) return;
-      
+
       log('Navigating to Login Screen...');
       Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
         AppRoutes.login,
@@ -530,20 +515,21 @@ class _ProfileViewState extends State<ProfileView> {
       );
     } catch (e) {
       log('Critical Error during logout: $e');
-      setState(() => _isLoggingOut = false); // Re-enable button if something crashes
+      setState(
+          () => _isLoggingOut = false); // Re-enable button if something crashes
     }
   }
 
   Widget _logoutButton() {
     return OutlinedButton.icon(
       onPressed: _isLoggingOut ? null : _handleLogout,
-      icon: _isLoggingOut 
-        ? SizedBox(
-            width: R.sp(20), 
-            height: R.sp(20), 
-            child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.error)
-          )
-        : const Icon(RemixIcons.logout_circle_r_line, color: AppColors.error),
+      icon: _isLoggingOut
+          ? SizedBox(
+              width: R.sp(20),
+              height: R.sp(20),
+              child: const CircularProgressIndicator(
+                  strokeWidth: 2, color: AppColors.error))
+          : const Icon(RemixIcons.logout_circle_r_line, color: AppColors.error),
       label: Text(
         _isLoggingOut ? 'Logging Out...' : 'Log Out',
         style: TextStyle(fontSize: R.sp(16), color: AppColors.error),

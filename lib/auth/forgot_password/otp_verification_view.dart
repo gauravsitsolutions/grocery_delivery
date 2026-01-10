@@ -5,6 +5,7 @@ import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'dart:async';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
 class ForgotPasswordOTPView extends StatefulWidget {
   const ForgotPasswordOTPView({super.key});
@@ -16,7 +17,8 @@ class ForgotPasswordOTPView extends StatefulWidget {
 class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
   final List<TextEditingController> _controllers =
       List.generate(6, (index) => TextEditingController()); // Changed to 6
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode()); // Changed to 6
+  final List<FocusNode> _focusNodes =
+      List.generate(6, (index) => FocusNode()); // Changed to 6
 
   final ApiService _apiService = ApiService();
   Timer? _timer;
@@ -50,8 +52,6 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
     });
   }
 
-
-
   @override
   void dispose() {
     _timer?.cancel();
@@ -66,7 +66,8 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
 // ... (skipping unchanged code)
 
   void _onChanged(String value, int index) {
-    if (value.length == 1 && index < 5) { // Changed to index < 5
+    if (value.length == 1 && index < 5) {
+      // Changed to index < 5
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
@@ -143,10 +144,11 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                     counterText: '',
                                     filled: true,
                                     fillColor: AppColors.white,
-                                    contentPadding: EdgeInsets.zero, // Centered text better
+                                    contentPadding:
+                                        EdgeInsets.zero, // Centered text better
                                     border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(R.r(8)), // Slightly smaller radius
+                                      borderRadius: BorderRadius.circular(
+                                          R.r(8)), // Slightly smaller radius
                                       borderSide: BorderSide(
                                           color: AppColors.borderLight),
                                     ),
@@ -179,55 +181,59 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                     color: AppColors.bodyText,
                                     fontSize: R.sp(14)),
                               ),
-                                TextButton(
-                                onPressed: (_isTimerRunning || _isLoading) 
-                                ? null 
-                                : () async {
-                                    final mobileArgs = ModalRoute.of(context)?.settings.arguments;
-                                    if (mobileArgs == null || mobileArgs is! String) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Error: Mobile number missing')),
-                                      );
-                                      return;
-                                    }
+                              TextButton(
+                                onPressed: (_isTimerRunning || _isLoading)
+                                    ? null
+                                    : () async {
+                                        final mobileArgs =
+                                            ModalRoute.of(context)
+                                                ?.settings
+                                                .arguments;
+                                        if (mobileArgs == null ||
+                                            mobileArgs is! String) {
+                                          CustomSnackBar.showError(context,
+                                              'Error: Mobile number missing');
+                                          return;
+                                        }
 
-                                    final scaffoldMessenger = ScaffoldMessenger.of(context);
-                                    setState(() => _isLoading = true);
-                                    try {
-                                      await _apiService.sendForgotPasswordOtp(mobileArgs);
-                                      if (!mounted) return;
-                                      
-                                      scaffoldMessenger.showSnackBar(
-                                        const SnackBar(
-                                          content: Text('OTP Resent Successfully'),
-                                          backgroundColor: AppColors.success,
-                                        ),
-                                      );
-                                      _startTimer();
-                                    } catch (e) {
-                                      if (!mounted) return;
-                                      scaffoldMessenger.showSnackBar(
-                                        SnackBar(
-                                          content: Text(e.toString().replaceAll('Exception: ', '')),
-                                          backgroundColor: AppColors.error,
-                                        ),
-                                      );
-                                    } finally {
-                                      if (mounted) setState(() => _isLoading = false);
-                                    }
-                                  },
+                                        setState(() => _isLoading = true);
+                                        try {
+                                          await _apiService
+                                              .sendForgotPasswordOtp(
+                                                  mobileArgs);
+                                          if (!mounted) return;
+
+                                          CustomSnackBar.showSuccess(context,
+                                              'OTP Resent Successfully');
+                                          _startTimer();
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          CustomSnackBar.showError(
+                                              context,
+                                              e.toString().replaceAll(
+                                                  'Exception: ', ''));
+                                        } finally {
+                                          if (mounted)
+                                            setState(() => _isLoading = false);
+                                        }
+                                      },
                                 child: _isLoading
-                                ? SizedBox(height: R.sp(14), width: R.sp(14), child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryGreen))
-                                : Text(
-                                  _isTimerRunning 
-                                    ? 'Resend Code (0:${_start.toString().padLeft(2, '0')})'
-                                    : 'Resend Code',
-                                  style: TextStyle(
-                                    color: AppColors.primaryGreen,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: R.sp(14),
-                                  ),
-                                ),
+                                    ? SizedBox(
+                                        height: R.sp(14),
+                                        width: R.sp(14),
+                                        child: const CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.primaryGreen))
+                                    : Text(
+                                        _isTimerRunning
+                                            ? 'Resend Code (0:${_start.toString().padLeft(2, '0')})'
+                                            : 'Resend Code',
+                                        style: TextStyle(
+                                          color: AppColors.primaryGreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: R.sp(14),
+                                        ),
+                                      ),
                               ),
                             ],
                           ),
@@ -243,48 +249,49 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                 // Validate and go next
                                 bool isFilled = _controllers
                                     .every((c) => c.text.isNotEmpty);
-                                
+
                                 if (!isFilled) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Please enter full 6-digit OTP')),
-                                  );
+                                  CustomSnackBar.showError(
+                                      context, 'Please enter full 6-digit OTP');
                                   return;
                                 }
 
                                 if (mobileArgs == null) {
-                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Error: Mobile number missing')),
-                                  );
+                                  CustomSnackBar.showError(
+                                      context, 'Error: Mobile number missing');
                                   return;
                                 }
 
                                 setState(() => _isLoading = true);
 
                                 try {
-                                  final otp = _controllers.map((c) => c.text).join();
+                                  final otp =
+                                      _controllers.map((c) => c.text).join();
                                   final mobile = mobileArgs.toString();
-                                  
+
                                   // Call API
-                                  await _apiService.verifyForgotPasswordOtp(mobile, otp);
+                                  await _apiService.verifyForgotPasswordOtp(
+                                      mobile, otp);
 
                                   if (!context.mounted) return;
 
                                   // Pass the mobile number to the next screen
                                   Navigator.pushNamed(
-                                      context, 
-                                      AppRoutes.setNewPassword,
-                                      arguments: mobile,
+                                    context,
+                                    AppRoutes.setNewPassword,
+                                    arguments: mobile,
                                   );
                                 } catch (e) {
                                   if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(e.toString().replaceAll('Exception: ', '')),
-                                      backgroundColor: AppColors.error,
-                                    ),
-                                  );
+
+                                  CustomSnackBar.showError(
+                                      context,
+                                      e
+                                          .toString()
+                                          .replaceAll('Exception: ', ''));
                                 } finally {
-                                  if (mounted) setState(() => _isLoading = false);
+                                  if (mounted)
+                                    setState(() => _isLoading = false);
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -293,20 +300,21 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                   borderRadius: BorderRadius.circular(R.r(8)),
                                 ),
                               ),
-                              child: _isLoading 
-                                ? SizedBox(
-                                    height: R.sp(20),
-                                    width: R.sp(20),
-                                    child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : Text(
-                                'Verify Code',
-                                style: TextStyle(
-                                  fontSize: R.sp(16),
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.black,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? SizedBox(
+                                      height: R.sp(20),
+                                      width: R.sp(20),
+                                      child: const CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : Text(
+                                      'Verify Code',
+                                      style: TextStyle(
+                                        fontSize: R.sp(16),
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.black,
+                                      ),
+                                    ),
                             ),
                           ),
                           SizedBox(height: R.h(16)),

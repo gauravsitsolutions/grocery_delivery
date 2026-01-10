@@ -8,6 +8,7 @@ import 'package:samrudhi_delivery_agent_app/view/profile/profile_view.dart';
 import '../../constant/app_color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
 class AgentBottomNavView extends StatefulWidget {
   const AgentBottomNavView({super.key});
@@ -27,17 +28,15 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
     required String label,
   }) {
     return PersistentBottomNavBarItem(
-      icon: Icon(activeIcon, size: R.sp(22)),
-      inactiveIcon: Icon(icon, size: R.sp(22)),
+      icon: Icon(activeIcon, size: R.sp(24)),
+      inactiveIcon: Icon(icon, size: R.sp(24)),
       title: label,
-
-      // colors handled by library
       activeColorPrimary: AppColors.primaryGreen,
-      inactiveColorPrimary: AppColors.hintText,
-
+      inactiveColorPrimary: AppColors.grey,
+      activeColorSecondary: AppColors.primaryGreen,
       textStyle: TextStyle(
         fontSize: R.sp(12),
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -46,8 +45,8 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
   Widget build(BuildContext context) {
     R.init(context);
 
-    // Calculate nav bar height + bottom padding
-    final double navHeight = R.h(70) + MediaQuery.of(context).padding.bottom;
+    // Calculate nav bar height + bottom padding for the lock layer
+    // Style15/Floating usually has a higher visual height due to logic
 
     return Stack(
       children: [
@@ -64,11 +63,8 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
 
                   if (token == null) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content:
-                              Text('Error: Authentication token not found')),
-                    );
+                    CustomSnackBar.showError(
+                        context, 'Error: Authentication token not found');
                     return;
                   }
 
@@ -78,44 +74,15 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   if (!context.mounted) return;
                   setState(() => isOnline = val);
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          Icon(
-                            val
-                                ? RemixIcons.checkbox_circle_line
-                                : RemixIcons.close_circle_line,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: R.w(12)),
-                          Text(
-                            val ? 'You are now Online' : 'You are now Offline',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: R.sp(14),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      backgroundColor:
-                          val ? AppColors.primaryGreen : AppColors.error,
-                      behavior: SnackBarBehavior.floating,
-                      margin: EdgeInsets.all(R.w(16)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(12)),
-                      ),
-                    ),
-                  );
+                  if (val) {
+                    CustomSnackBar.showSuccess(context, 'You are now Online');
+                  } else {
+                    CustomSnackBar.showError(context, 'You are now Offline');
+                  }
                 } catch (e) {
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.toString().replaceAll('Exception: ', '')),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
+                  CustomSnackBar.showError(
+                      context, e.toString().replaceAll('Exception: ', ''));
                 }
               },
               onViewDeliveries: () {
@@ -127,40 +94,61 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
           ],
           items: [
             _navItem(
-              icon: Remix.home_line,
-              activeIcon: RemixIcons.home_fill,
+              icon: Remix.home_5_line,
+              activeIcon: Remix.home_5_fill,
               label: 'Home',
             ),
             _navItem(
               icon: Remix.truck_line,
-              activeIcon: RemixIcons.truck_fill,
+              activeIcon: Remix.truck_fill,
               label: 'Deliveries',
             ),
             _navItem(
-              icon: RemixIcons.user_line,
-              activeIcon: Remix.user_fill,
+              icon: Remix.user_3_line,
+              activeIcon: Remix.user_3_fill,
               label: 'Profile',
             ),
           ],
-          navBarHeight: R.h(70),
-          navBarStyle: NavBarStyle.style1,
-          backgroundColor: AppColors.white,
+
           handleAndroidBackButtonPress: true,
           resizeToAvoidBottomInset: true,
           stateManagement: true,
           hideNavigationBarWhenKeyboardAppears: true,
+          margin: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(12)),
+
+          // BEAUTIFICATION PROPERTIES
+          decoration: NavBarDecoration(
+            borderRadius: BorderRadius.circular(R.r(24)),
+            colorBehindNavBar: Colors.transparent,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 5),
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          navBarStyle: NavBarStyle
+              .style1, // Reverting to standard style but keeping decoration
         ),
 
-        // Lock Layer for Bottom Navigation
+        // Lock Layer for Bottom Navigation (When Offline)
         if (!isOnline)
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: navHeight,
+            left: R.w(16),
+            right: R.w(16),
+            bottom: R.h(12),
+            height: R.h(60) +
+                MediaQuery.of(context)
+                    .padding
+                    .bottom, // Approximate height of the floating bar
             child: AbsorbPointer(
               child: Container(
-                color: Colors.white.withValues(alpha: 0.5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(R.r(24)),
+                ),
               ),
             ),
           ),

@@ -20,7 +20,15 @@ class AppUrls {
       '$baseUrl/api/delivery/orders/$id/accept';
   static String rejectOrder(int id) =>
       '$baseUrl/api/delivery/orders/$id/reject';
+  static String cancelOrder(int id) => '$baseUrl/api/orders/$id/cancel';
   static String orderDetails(int id) => '$baseUrl/api/orders/$id';
+  static const String currentOrder = '$baseUrl/api/orders/current';
   static String orderItems(int id) => '$baseUrl/api/orders/$id/items';
-  static String pickupOrder(int id) => '$baseUrl/api/orders/$id/pickup';
+  static String pickupOrder(int id) =>
+      '$baseUrl/api/orders/$id/pickup/complete';
+  static String pickupProof(int id) => '$baseUrl/api/orders/$id/pickup-proof';
+  static String verifyOrderItem(int orderId, int itemId) =>
+      '$baseUrl/api/orders/$orderId/items/$itemId/verify';
+  static String reportItemIssue(int orderId, int itemId) =>
+      '$baseUrl/api/orders/$orderId/items/$itemId/issue';
 }

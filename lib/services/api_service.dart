@@ -324,11 +324,57 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> uploadPickupProof(
+      String token, int orderId, File imageFile) async {
+    final uri = Uri.parse(AppUrls.pickupProof(orderId));
+    log('API Request: POST Multipart $uri');
+
+    final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll({
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json',
+    });
+
+    try {
+      final multipartFile = await http.MultipartFile.fromPath(
+        'pickup_proof',
+        imageFile.path,
+      );
+      request.files.add(multipartFile);
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      log('Response Status: ${response.statusCode}');
+      log('Response Body: ${response.body}');
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (body['status'] == true) {
+          return body;
+        } else {
+          throw ValidationException(
+              body['message'] ?? 'Failed to upload proof');
+        }
+      } else {
+        if (body['errors'] != null) {
+          // Handle validation errors specifically
+          throw ValidationException(body['message'] ?? 'Validation Error');
+        }
+        throw ValidationException(body['message'] ?? 'Failed to upload proof');
+      }
+    } catch (e) {
+      log('Error uploading proof: $e');
+      rethrow;
+    }
+  }
+
   Future<Map<String, dynamic>> pickupOrder(String token, int orderId) async {
     final uri = Uri.parse(AppUrls.pickupOrder(orderId));
-    log('API Request: GET $uri'); // Note: Original was GET, keeping it as is, usually pickup actions might be POST
+    log('API Request: POST $uri');
 
-    final response = await _processRequest(() => http.get(
+    final response = await _processRequest(() => http.post(
           uri,
           headers: {
             'Content-Type': 'application/json',
@@ -341,7 +387,103 @@ class ApiService {
       return response;
     } else {
       throw ValidationException(
-          response['message'] ?? 'Failed to pickup order');
+          response['message'] ?? 'Failed to complete pickup');
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyOrderItem(
+      String token, int orderId, int itemId) async {
+    final uri = Uri.parse(AppUrls.verifyOrderItem(orderId, itemId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response['status'] == true) {
+      return response;
+    } else {
+      throw ValidationException(response['message'] ?? 'Failed to verify item');
+    }
+  }
+
+  Future<Map<String, dynamic>> reportItemIssue(String token, int orderId,
+      int itemId, String issueType, String? description) async {
+    final uri = Uri.parse(AppUrls.reportItemIssue(orderId, itemId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'issueType': issueType,
+            'description': description,
+          }),
+        ));
+
+    if (response['status'] == true || response['message'] != null) {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to report issue');
+    }
+  }
+
+  Future<Map<String, dynamic>> cancelOrder(
+      String token, int orderId, String reason) async {
+    final uri = Uri.parse(AppUrls.cancelOrder(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'cancel_reason': reason,
+          }),
+        ));
+
+    return response;
+  }
+
+  Future<Map<String, dynamic>?> getCurrentOrder(String token) async {
+    final uri = Uri.parse(AppUrls.currentOrder);
+    log('API Request: GET $uri');
+
+    try {
+      final response = await _processRequest(() => http.get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ));
+
+      if (response['status'] == true && response['data'] != null) {
+        return response['data'];
+      }
+      return null;
+    } catch (e) {
+      log('Current Order Check Failed: $e');
+      // If 404/validation error (order not found), return null gracefully
+      if (e is ValidationException ||
+          e.toString().contains('Order not found')) {
+        return null;
+      }
+      rethrow; // Rethrow other errors (auth, server)
     }
   }
 }

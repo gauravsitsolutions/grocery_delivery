@@ -10,6 +10,9 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
+import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
+import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
@@ -111,11 +114,21 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     } catch (e) {
       log('Error fetching orders: $e');
       if (mounted) {
-        setState(() {
-          // Keep existing data on error if possible, or show error
-          _error = e.toString();
-          _isLoading = false;
-        });
+        if (e is UnauthorisedException) {
+          // Handle 401: Clear session and logout
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
+          if (mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+                context, AppRoutes.login, (route) => false);
+          }
+        } else {
+          setState(() {
+            // Keep existing data on error if possible, or show error
+            _error = e.toString();
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -200,11 +213,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       if (!mounted) return;
 
       // Show loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Accepting order...'),
-            duration: Duration(seconds: 1)),
-      );
+      // Show loading
+      CustomSnackBar.showSuccess(context, 'Accepting order...');
 
       await _apiService.acceptOrder(token, orderId);
 
@@ -215,9 +225,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       _showAcceptSuccessDialog();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        CustomSnackBar.showError(context, 'Error: ${e.toString()}');
       }
     }
   }
@@ -233,11 +241,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
       // Show loading
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Rejecting order...'),
-              duration: Duration(seconds: 1)),
-        );
+        CustomSnackBar.showError(context, 'Rejecting order...');
       }
 
       await _apiService.rejectOrder(token, orderId);
@@ -249,9 +253,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       _showRejectSuccessDialog();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        CustomSnackBar.showError(context, 'Error: ${e.toString()}');
       }
     }
   }
@@ -603,9 +605,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     // Phone Button
                     _iconButton(
                       icon: RemixIcons.phone_fill,
-                      onTap: () {
-                        
-                      },
+                      onTap: () {},
                     ),
                   ],
                 ),

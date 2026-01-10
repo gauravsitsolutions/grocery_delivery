@@ -7,6 +7,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/res/styles/app_text_styles.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/auth_view_model.dart';
 
 enum LoginMethod { password, otp }
@@ -53,29 +54,12 @@ class _LoginViewState extends State<LoginView> {
     if (!context.mounted) return;
 
     if (result['success']) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(R.w(16)),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(R.r(12))),
-          content: Row(
-            children: [
-              const Icon(RemixIcons.check_line, color: Colors.white),
-              SizedBox(width: R.w(12)),
-              Text(
-                  result['message'] ??
-                      (currentMethod == LoginMethod.otp && !viewModel.isOtpSent
-                          ? 'OTP Sent Successfully'
-                          : 'Login Successful'),
-                  style: TextStyle(
-                      color: AppColors.white,
-                      fontSize: R.sp(14),
-                      fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
+      CustomSnackBar.showSuccess(
+        context,
+        result['message'] ??
+            (currentMethod == LoginMethod.otp && !viewModel.isOtpSent
+                ? 'OTP Sent Successfully'
+                : 'Login Successful'),
       );
 
       if (currentMethod == LoginMethod.password ||
@@ -88,12 +72,9 @@ class _LoginViewState extends State<LoginView> {
             context, AppRoutes.bottomNav, (route) => false);
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.error,
-          content: Text(result['message'] ?? 'An error occurred',
-              style: TextStyle(color: AppColors.white, fontSize: R.sp(14))),
-        ),
+      CustomSnackBar.showError(
+        context,
+        result['message'] ?? 'An error occurred',
       );
     }
   }
@@ -351,13 +332,11 @@ class _LoginViewState extends State<LoginView> {
                     await viewModel.resendOtp(_mobileController.text.trim());
                 if (!context.mounted) return;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(result['message']!),
-                    backgroundColor:
-                        result['success'] ? AppColors.success : AppColors.error,
-                  ),
-                );
+                if (result['success']) {
+                  CustomSnackBar.showSuccess(context, result['message']!);
+                } else {
+                  CustomSnackBar.showError(context, result['message']!);
+                }
               },
               child: Text(
                 'Resend Code',
