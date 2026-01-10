@@ -17,4 +17,5 @@ class AppRoutes {
   static const deliverySummary = '/delivery-summary';
   static const navigationView = '/navigation-view';
   static const verificationView = '/verification-view';
+  static const orderDetails = '/order-details';
 }

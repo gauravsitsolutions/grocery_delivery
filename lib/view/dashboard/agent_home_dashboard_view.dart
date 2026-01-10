@@ -82,6 +82,31 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         return;
       }
 
+      // 1. Check for active order first
+      try {
+        final activeOrderData = await _apiService.getCurrentOrder(token);
+        if (activeOrderData != null && mounted) {
+          final activeOrder = Order.fromJson(activeOrderData);
+          log('Found active order: ${activeOrder.id}');
+          if (mounted) {
+            Navigator.pushNamed(
+              context,
+              AppRoutes.orderDetails,
+              arguments: activeOrder,
+            );
+          }
+          // We can still fetch background lists or just return?
+          // If we navigate away, we might not want to show the list yet.
+          // But let's let the code flow to fetch lists so state is consistent if they return.
+        }
+      } catch (e) {
+        log('Check current order failed: $e');
+        if (e is UnauthorisedException) {
+          // Let the error handling below catch this if rethrown, or handle explicitly here.
+          // The fetchNewOrders calls below will likely also fail with 401 and trigger logout.
+        }
+      }
+
       // Fetch new orders
       final availableResponse = await _apiService.getNewOrders(token, page: 1);
 
@@ -690,31 +715,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  Widget _timerWidget() {
-    // Placeholder for a timer widget
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
-      decoration: BoxDecoration(
-        color: AppColors.primaryGreen.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(R.r(8)),
-      ),
-      child: Row(
-        children: [
-          Icon(RemixIcons.time_line, size: R.sp(14), color: AppColors.black),
-          SizedBox(width: R.w(4)),
-          Text(
-            '00:59', // Example time
-            style: TextStyle(
-              fontSize: R.sp(12),
-              fontWeight: FontWeight.w600,
-              color: AppColors.black,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     R.init(context);
@@ -838,7 +838,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       children: [
                         _sectionHeader(
                           title: 'New Order Request',
-                          action: _timerWidget(),
                         ),
                         SizedBox(height: R.h(12)),
                         AnimatedSwitcher(

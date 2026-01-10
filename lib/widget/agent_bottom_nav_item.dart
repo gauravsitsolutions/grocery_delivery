@@ -109,46 +109,28 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
               label: 'Profile',
             ),
           ],
-
           handleAndroidBackButtonPress: true,
           resizeToAvoidBottomInset: true,
           stateManagement: true,
           hideNavigationBarWhenKeyboardAppears: true,
-          margin: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(12)),
-
-          // BEAUTIFICATION PROPERTIES
+          margin: EdgeInsets.zero,
           decoration: NavBarDecoration(
-            borderRadius: BorderRadius.circular(R.r(24)),
-            colorBehindNavBar: Colors.transparent,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 5),
-                spreadRadius: 2,
-              ),
-            ],
+            colorBehindNavBar: Colors.white,
           ),
-          navBarStyle: NavBarStyle
-              .style1, // Reverting to standard style but keeping decoration
+          navBarStyle: NavBarStyle.style1,
         ),
 
         // Lock Layer for Bottom Navigation (When Offline)
         if (!isOnline)
           Positioned(
-            left: R.w(16),
-            right: R.w(16),
-            bottom: R.h(12),
-            height: R.h(60) +
-                MediaQuery.of(context)
-                    .padding
-                    .bottom, // Approximate height of the floating bar
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: kBottomNavigationBarHeight +
+                MediaQuery.of(context).padding.bottom,
             child: AbsorbPointer(
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(R.r(24)),
-                ),
+                color: Colors.white.withValues(alpha: 0.6),
               ),
             ),
           ),

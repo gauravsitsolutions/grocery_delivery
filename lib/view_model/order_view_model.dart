@@ -17,7 +17,6 @@ class OrderViewModel extends ChangeNotifier {
   bool _isLoading = true;
   bool _isItemsLoading = true;
   String? _error;
-  String? _authToken;
   bool _hasReadInstructions = false;
   final Set<int> _checkedItems = {};
   double _swipePosition = 0;
@@ -39,8 +38,8 @@ class OrderViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isItemsLoading => _isItemsLoading;
   String? get error => _error;
-  String? get authToken => _authToken;
   bool get hasReadInstructions => _hasReadInstructions;
+
   Set<int> get checkedItems => _checkedItems;
   double get swipePosition => _swipePosition;
   bool get isPickupMode => _isPickupMode;
@@ -60,9 +59,12 @@ class OrderViewModel extends ChangeNotifier {
 
   bool isItemVerifying(int itemId) => _verifyingItems.contains(itemId);
 
+  Future<String?> get _getToken async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token');
+  }
+
   Future<void> toggleItem(int itemId) async {
-    // If already checked or currently verifying, do nothing or handle uncheck if needed.
-    // Assuming uncheck doesn't require API or we just allow local uncheck.
     if (_checkedItems.contains(itemId)) {
       _checkedItems.remove(itemId);
       notifyListeners();
@@ -75,15 +77,14 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (_authToken == null) throw Exception('Not authenticated');
+      final token = await _getToken;
+      if (token == null) throw Exception('Not authenticated');
 
-      await _apiService.verifyOrderItem(_authToken!, orderId, itemId);
+      await _apiService.verifyOrderItem(token, orderId, itemId);
 
       _checkedItems.add(itemId);
     } catch (e) {
       _error = e is AppException ? e.message : e.toString();
-      // Optionally show a momentary error snackbar via a callback or just state
-      // For now, we set error state which shows in UI
     } finally {
       _verifyingItems.remove(itemId);
       notifyListeners();
@@ -98,15 +99,13 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await _getToken;
       if (token == null) {
         _error = 'Not authenticated';
         _isLoading = false;
         notifyListeners();
         return;
       }
-      _authToken = token;
 
       final results = await Future.wait([
         _apiService.getOrderDetails(token, orderId),
@@ -128,8 +127,6 @@ class OrderViewModel extends ChangeNotifier {
       }
 
       _isLoading = false;
-      _isItemsLoading = false;
-      notifyListeners();
       _isItemsLoading = false;
       notifyListeners();
     } catch (e) {
@@ -184,13 +181,13 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (_authToken == null) return false;
+      final token = await _getToken;
+      if (token == null) return false;
 
       // 1. Upload Proof
       log('Uploading pickup proof...');
       try {
-        await _apiService.uploadPickupProof(
-            _authToken!, orderId, _pickupProofImage!);
+        await _apiService.uploadPickupProof(token, orderId, _pickupProofImage!);
         log('Pickup proof uploaded successfully');
       } catch (e) {
         log('Error uploading proof: $e');
@@ -202,7 +199,7 @@ class OrderViewModel extends ChangeNotifier {
       }
 
       // 2. Confirm Pickup
-      final response = await _apiService.pickupOrder(_authToken!, orderId);
+      final response = await _apiService.pickupOrder(token, orderId);
 
       // If the API returns the updated order object in 'data', we can update it directly
       if (response['data'] != null) {
@@ -264,10 +261,11 @@ class OrderViewModel extends ChangeNotifier {
   Future<bool> reportItemIssue(
       int itemId, String issueType, String description) async {
     try {
-      if (_authToken == null) throw Exception('Not authenticated');
+      final token = await _getToken;
+      if (token == null) throw Exception('Not authenticated');
 
       await _apiService.reportItemIssue(
-          _authToken!, orderId, itemId, issueType, description);
+          token, orderId, itemId, issueType, description);
 
       // Optionally mark item as "issue reported" locally if needed?
       // For now just return true so UI can show success message
@@ -284,10 +282,10 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (_authToken == null) throw Exception('Not authenticated');
+      final token = await _getToken;
+      if (token == null) throw Exception('Not authenticated');
 
-      final response =
-          await _apiService.cancelOrder(_authToken!, orderId, reason);
+      final response = await _apiService.cancelOrder(token, orderId, reason);
 
       if (response['status'] == true || response['message'] != null) {
         // Assume cancellation successful
