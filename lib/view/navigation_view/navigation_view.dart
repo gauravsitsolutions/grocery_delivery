@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-import 'package:samrudhi_delivery_agent_app/view/verfication/verification_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
 import '../../utils/responsive.dart';
 
 class NavigationView extends StatelessWidget {

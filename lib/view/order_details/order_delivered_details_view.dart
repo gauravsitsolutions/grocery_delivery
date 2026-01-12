@@ -110,14 +110,16 @@ class OrderDeliveredDetailsView extends StatelessWidget {
               color: Colors.white.withOpacity(0.2),
             ),
             child: Icon(
-              Remix.check_double_fill,
+              order.status.toLowerCase() == 'cancelled'
+                  ? Remix.close_circle_fill
+                  : Remix.check_double_fill,
               color: Colors.white,
               size: R.sp(24),
             ),
           ),
           SizedBox(height: R.h(12)),
           Text(
-            'DELIVERED',
+            order.status.toUpperCase(),
             style: TextStyle(
               color: Colors.white,
               fontSize: R.sp(24),
@@ -127,7 +129,9 @@ class OrderDeliveredDetailsView extends StatelessWidget {
           ),
           SizedBox(height: R.h(6)),
           Text(
-            'Successfully completed',
+            order.status.toLowerCase() == 'cancelled'
+                ? 'Order was cancelled'
+                : 'Successfully completed',
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: R.sp(13),
@@ -288,7 +292,11 @@ class OrderDeliveredDetailsView extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(R.r(12)),
             child: CachedNetworkImage(
-              imageUrl: AppUrls.getFullUrl(order.pickupProof!),
+              imageUrl: order.pickupProof!.startsWith('http')
+                  ? order.pickupProof!
+                  : (order.pickupProof!.startsWith('/')
+                      ? '${AppUrls.baseUrl}/storage${order.pickupProof}'
+                      : '${AppUrls.baseUrl}/storage/${order.pickupProof}'),
               height: R.h(150),
               width: double.infinity,
               fit: BoxFit.cover,
@@ -327,36 +335,66 @@ class OrderDeliveredDetailsView extends StatelessWidget {
             ),
           ),
           SizedBox(height: R.h(16)),
-          ...order.orderItems.map((item) => Padding(
-                padding: EdgeInsets.only(bottom: R.h(12)),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(R.w(8)),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(R.r(8)),
-                      ),
-                      child: Text(
-                        '${item.quantity}x',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: R.sp(12)),
+          ...order.orderItems.map((item) {
+            String? productImage;
+            if (item.product != null &&
+                item.product!.productImages.isNotEmpty) {
+              productImage = item.product!.productImages.first;
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: R.h(12)),
+              child: Row(
+                children: [
+                  Container(
+                    width: R.w(48),
+                    height: R.w(48),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(R.r(8)),
+                      image: productImage != null
+                          ? DecorationImage(
+                              image: NetworkImage(productImage
+                                      .startsWith('http')
+                                  ? productImage
+                                  : '${AppUrls.productImages}$productImage'),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: productImage == null
+                        ? Icon(Remix.image_line,
+                            size: R.sp(20), color: Colors.grey)
+                        : null,
+                  ),
+                  SizedBox(width: R.w(12)),
+                  Container(
+                    padding: EdgeInsets.all(R.w(8)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(R.r(8)),
+                    ),
+                    child: Text(
+                      '${item.quantity}x',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: R.sp(12)),
+                    ),
+                  ),
+                  SizedBox(width: R.w(12)),
+                  Expanded(
+                    child: Text(
+                      item.product?.name ?? 'Item',
+                      style: TextStyle(
+                        color: const Color(0xFF1F2937),
+                        fontSize: R.sp(14),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(width: R.w(12)),
-                    Expanded(
-                      child: Text(
-                        item.product?.name ?? 'Item',
-                        style: TextStyle(
-                          color: const Color(0xFF1F2937),
-                          fontSize: R.sp(14),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

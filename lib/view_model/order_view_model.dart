@@ -152,7 +152,48 @@ class OrderViewModel extends ChangeNotifier {
       final token = await _getToken;
       if (token == null) throw Exception('Not authenticated');
 
+      // 1. Complete Delivery
       await _apiService.completeDelivery(token, orderId, otp);
+
+      // 2. Fetch Summary
+      final summaryData = await _apiService.getOrderSummary(token, orderId);
+
+      // Merge summary data into existing order
+      if (_order != null) {
+        _order = _order!.copyWith(
+          status: summaryData['status'],
+          subtotal: summaryData['subtotal']?.toString(),
+          deliveryCharge: summaryData['delivery_charge']?.toString(),
+          discount: summaryData['discount']?.toString(),
+          totalAmount: summaryData['total_amount']?.toString(),
+          deliveredAt: DateTime.now(), // Since status is delivered/cancelled
+        );
+      } else {
+        // Fallback if order was somehow null (unlikely in this flow)
+        _order = Order.fromJson(summaryData);
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e is AppException ? e.message : e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> sendDeliveryOtp() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await _getToken;
+      if (token == null) throw Exception('Not authenticated');
+
+      await _apiService.sendDeliveryOtp(token, orderId);
 
       _isLoading = false;
       notifyListeners();
@@ -326,6 +367,27 @@ class OrderViewModel extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<bool> rateCustomer(double rating, {String? comment}) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final token = await _getToken;
+      if (token == null) throw Exception('Not authenticated');
+
+      await _apiService.rateCustomer(token, orderId, rating, comment);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e is AppException ? e.message : e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
   }
 }

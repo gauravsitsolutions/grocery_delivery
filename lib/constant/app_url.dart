@@ -28,11 +28,21 @@ class AppUrls {
   static String orderItems(int id) => '$baseUrl/api/orders/$id/items';
   static String pickupOrder(int id) =>
       '$baseUrl/api/orders/$id/pickup/complete';
+  static String getSummary(int id) => '$baseUrl/api/orders/$id/summary';
   static String pickupProof(int id) => '$baseUrl/api/orders/$id/pickup-proof';
   static String verifyOrderItem(int orderId, int itemId) =>
       '$baseUrl/api/orders/$orderId/items/$itemId/verify';
   static String reportItemIssue(int orderId, int itemId) =>
       '$baseUrl/api/orders/$orderId/items/$itemId/issue';
+  static String sendDeliveryOtp(int id) =>
+      '$baseUrl/api/orders/$id/delivery/otp';
+  static String completeDelivery(int id) =>
+      '$baseUrl/api/delivery/orders/$id/complete';
+  static String rateCustomer(int id) =>
+      '$baseUrl/api/delivery/orders/$id/rate-customer';
+  static const String notifications = '$baseUrl/api/notifications';
+  static String markNotificationAsRead(String id) =>
+      '$baseUrl/api/notifications/$id/read';
 
   static String getFullUrl(String path) {
     if (path.startsWith('http')) return path;

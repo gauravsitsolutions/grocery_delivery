@@ -22,7 +22,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
 
   final ApiService _apiService = ApiService();
   Timer? _timer;
-  int _start = 30;
+  int _start = 300;
   bool _isTimerRunning = false;
   bool _isLoading = false;
 
@@ -34,7 +34,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
 
   void _startTimer() {
     setState(() {
-      _start = 30;
+      _start = 300;
       _isTimerRunning = true;
     });
     _timer?.cancel();

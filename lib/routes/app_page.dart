@@ -10,7 +10,7 @@ import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_compl
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification_settings/notification_settings_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/verfication/verification_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/widget/agent_bottom_nav_item.dart';
 

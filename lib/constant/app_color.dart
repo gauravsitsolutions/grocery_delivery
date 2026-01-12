@@ -78,7 +78,10 @@ class AppColors {
   static const Color green = Colors.green;
 
   // Grey Variants
+  static Color? grey100 = Colors.grey[100];
   static Color? grey200 = Colors.grey[200];
+  static Color? grey300 = Colors.grey[300];
+  static Color? grey400 = Colors.grey[400];
   static Color? grey500 = Colors.grey[500];
   static Color? grey600 = Colors.grey[600];
 }

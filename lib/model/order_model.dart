@@ -173,6 +173,58 @@ class Order {
       deliveredAt: _parseDate(json['delivered_at']),
     );
   }
+
+  Order copyWith({
+    int? id,
+    int? userId,
+    int? deliveryAgentId,
+    int? offerId,
+    String? couponCode,
+    String? orderNumber,
+    String? subtotal,
+    String? deliveryCharge,
+    String? discount,
+    String? couponDiscount,
+    String? totalAmount,
+    String? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<OrderItem>? orderItems,
+    DeliveryAddress? deliveryAddress,
+    Customer? user,
+    Vendor? vendor,
+    String? pickupProof,
+    String? cancelReason,
+    String? cancelComment,
+    DateTime? cancelledAt,
+    DateTime? deliveredAt,
+  }) {
+    return Order(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      deliveryAgentId: deliveryAgentId ?? this.deliveryAgentId,
+      offerId: offerId ?? this.offerId,
+      couponCode: couponCode ?? this.couponCode,
+      orderNumber: orderNumber ?? this.orderNumber,
+      subtotal: subtotal ?? this.subtotal,
+      deliveryCharge: deliveryCharge ?? this.deliveryCharge,
+      discount: discount ?? this.discount,
+      couponDiscount: couponDiscount ?? this.couponDiscount,
+      totalAmount: totalAmount ?? this.totalAmount,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      orderItems: orderItems ?? this.orderItems,
+      deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      user: user ?? this.user,
+      vendor: vendor ?? this.vendor,
+      pickupProof: pickupProof ?? this.pickupProof,
+      cancelReason: cancelReason ?? this.cancelReason,
+      cancelComment: cancelComment ?? this.cancelComment,
+      cancelledAt: cancelledAt ?? this.cancelledAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+    );
+  }
 }
 
 class DeliveryAddress {

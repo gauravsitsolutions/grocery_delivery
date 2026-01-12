@@ -21,7 +21,7 @@ class _VerificationViewState extends State<VerificationView> {
   bool _isOtpComplete = false;
 
   Timer? _timer;
-  int _seconds = 24;
+  int _seconds = 300;
 
   @override
   void initState() {
@@ -34,7 +34,7 @@ class _VerificationViewState extends State<VerificationView> {
 
   void _startTimer() {
     _timer?.cancel();
-    _seconds = 24;
+    _seconds = 300;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_seconds == 0) {
         t.cancel();

@@ -115,7 +115,15 @@ class OrderPickupScreen extends StatelessWidget {
                 child: _buildSecondaryButton(
                   icon: Remix.map_pin_2_line,
                   label: "Show on Map",
-                  onTap: () {},
+                  onTap: () async {
+                    if (viewModel.order?.vendor?.address != null) {
+                      final address = viewModel.order!.vendor!.address!;
+                      final Uri googleMapsUrl = Uri.parse(
+                          "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}");
+                      await launchUrl(googleMapsUrl,
+                          mode: LaunchMode.externalApplication);
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 12),

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivered_details_view.dart';
 
 class DeliveryVerificationView extends StatefulWidget {
   final int orderId;
@@ -15,14 +17,43 @@ class DeliveryVerificationView extends StatefulWidget {
 
 class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   final List<TextEditingController> _controllers =
-      List.generate(4, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
+      List.generate(6, (index) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+  Timer? _timer;
+  int _secondsRemaining = 300;
+  bool _canResend = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OrderViewModel>().sendDeliveryOtp();
+    });
+  }
+
+  void _startTimer() {
+    _secondsRemaining = 300;
+    _canResend = false;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_secondsRemaining > 0) {
+          _secondsRemaining--;
+        } else {
+          _canResend = true;
+          timer.cancel();
+        }
+      });
+    });
+  }
 
   @override
   void dispose() {
     for (var controller in _controllers) {
       controller.dispose();
     }
+    _timer?.cancel();
     for (var node in _focusNodes) {
       node.dispose();
     }
@@ -30,7 +61,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   }
 
   void _onOtpChanged(String value, int index) {
-    if (value.length == 1 && index < 3) {
+    if (value.length == 1 && index < 5) {
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
@@ -66,7 +97,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
             ),
             const SizedBox(height: 8),
             Text(
-              "Ask the customer for the 4-digit code sent to their mobile number.",
+              "Ask the customer for the 6-digit code sent to ${viewModel.order?.user?.mobile != null ? viewModel.order!.user!.mobile.replaceRange(viewModel.order!.user!.mobile.length - 10 < 0 ? 0 : viewModel.order!.user!.mobile.length - 10, viewModel.order!.user!.mobile.length - 4, '******') : 'their mobile number'}.",
               style: TextStyle(
                 fontSize: 16,
                 color: AppColors.grey600,
@@ -76,10 +107,10 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
             const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(4, (index) {
+              children: List.generate(6, (index) {
                 return SizedBox(
-                  width: 64,
-                  height: 64,
+                  width: 48,
+                  height: 48,
                   child: TextField(
                     controller: _controllers[index],
                     focusNode: _focusNodes[index],
@@ -87,7 +118,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                     textAlign: TextAlign.center,
                     maxLength: 1,
                     style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
+                        fontSize: 20, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       counterText: "",
                       border: OutlineInputBorder(
@@ -105,6 +136,36 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                 );
               }),
             ),
+            const SizedBox(height: 24),
+            Center(
+              child: _canResend
+                  ? TextButton(
+                      onPressed: () async {
+                        final success = await context
+                            .read<OrderViewModel>()
+                            .sendDeliveryOtp();
+                        if (success && mounted) {
+                          _startTimer();
+                          CustomSnackBar.showSuccess(
+                              context, "OTP Sent Successfully");
+                        }
+                      },
+                      child: const Text(
+                        "Resend OTP",
+                        style: TextStyle(
+                            color: AppColors.primaryGreen,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16),
+                      ),
+                    )
+                  : Text(
+                      "Resend OTP in ${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}",
+                      style: TextStyle(
+                        color: AppColors.grey600,
+                        fontSize: 16,
+                      ),
+                    ),
+            ),
             const Spacer(),
             SizedBox(
               width: double.infinity,
@@ -114,9 +175,9 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                     ? null
                     : () async {
                         final otp = _otpCode;
-                        if (otp.length != 4) {
+                        if (otp.length != 6) {
                           CustomSnackBar.showError(
-                              context, "Please enter a valid 4-digit code");
+                              context, "Please enter a valid 6-digit code");
                           return;
                         }
 
@@ -129,8 +190,16 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                         if (success) {
                           CustomSnackBar.showSuccess(
                               context, "Delivery Verified Successfully!");
-                          // Navigate to Success / Home
-                          Navigator.popUntil(context, (route) => route.isFirst);
+
+                          // Navigate to Delivered Details View
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OrderDeliveredDetailsView(
+                                order: viewModel.order!,
+                              ),
+                            ),
+                          );
                         } else {
                           CustomSnackBar.showError(context,
                               viewModel.error ?? "Verification Failed");

@@ -1,4 +1,5 @@
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
@@ -637,8 +638,19 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Start navigation logic
+                  onPressed: () async {
+                    if (order.deliveryAddress != null) {
+                      final address = order.deliveryAddress!;
+                      final fullAddress =
+                          "${address.addressLine1}, ${address.city}, ${address.state} ${address.postcode}";
+                      final Uri googleMapsUrl = Uri.parse(
+                          "https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(fullAddress)}");
+                      await launchUrl(googleMapsUrl,
+                          mode: LaunchMode.externalApplication);
+                    } else {
+                      CustomSnackBar.showError(
+                          context, "Delivery coordinates missing");
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
@@ -1141,11 +1153,22 @@ class _AnimationDialogState extends State<_AnimationDialog>
     _controller = AnimationController(vsync: this);
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        if (mounted) {
-          Navigator.of(context).pop();
-        }
+        _closeDialog();
       }
     });
+
+    // Fallback timer to ensure dialog closes
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        _closeDialog();
+      }
+    });
+  }
+
+  void _closeDialog() {
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

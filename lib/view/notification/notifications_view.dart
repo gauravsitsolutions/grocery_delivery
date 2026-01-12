@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification_settings/notification_settings_view.dart';
+import 'package:intl/intl.dart';
 import '../../../constant/app_color.dart';
 import '../../../utils/responsive.dart';
 
@@ -13,8 +17,30 @@ class NotificationsView extends StatefulWidget {
 
 class _NotificationsViewState extends State<NotificationsView> {
   int selectedTab = 0;
-
   final tabs = ['All', 'Orders', 'Updates', 'System'];
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationsViewModel>().fetchNotifications(refresh: true);
+    });
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<NotificationsViewModel>().loadMore();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,68 +49,151 @@ class _NotificationsViewState extends State<NotificationsView> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: _appBar(),
-      body: Column(
+      body: Consumer<NotificationsViewModel>(
+        builder: (context, viewModel, child) {
+          return Column(
+            children: [
+              _tabs(),
+              const Divider(height: 1),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => viewModel.fetchNotifications(refresh: true),
+                  color: AppColors.primaryGreen,
+                  child: _buildContent(viewModel),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildContent(NotificationsViewModel viewModel) {
+    if (viewModel.isLoading && viewModel.notifications.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (viewModel.error != null && viewModel.notifications.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: ${viewModel.error}'),
+            ElevatedButton(
+              onPressed: () => viewModel.fetchNotifications(refresh: true),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final notifications = viewModel.getNotificationsByType(tabs[selectedTab]);
+
+    if (notifications.isEmpty) {
+      return ListView(
         children: [
-          _tabs(),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(R.w(16)),
+          SizedBox(height: R.h(100)),
+          Center(
+            child: Column(
               children: [
-                _sectionHeader('NEW & UNREAD', action: 'Clear all'),
-                SizedBox(height: R.h(12)),
-                _newOrderCard(),
-                SizedBox(height: R.h(12)),
-                _notificationCard(
-                  icon: Icons.map,
-                  iconBg: AppColors.iconBgBlue,
-                  iconColor: AppColors.blue,
-                  title: 'Route Updated',
-                  time: '10m ago',
-                  message:
-                      'Customer added a note: "Gate code is 4455, please leave at front door."',
-                  unread: true,
+                Icon(RemixIcons.notification_off_line,
+                    size: R.sp(60), color: AppColors.grey),
+                SizedBox(height: R.h(16)),
+                Text(
+                  'No notifications found',
+                  style: TextStyle(
+                    fontSize: R.sp(16),
+                    color: AppColors.bodyText,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                SizedBox(height: R.h(12)),
-                _notificationCard(
-                  icon: Icons.attach_money,
-                  iconBg: AppColors.iconBgOrange,
-                  iconColor: AppColors.orange,
-                  title: 'Peak Pay Active 🔥',
-                  time: '2h ago',
-                  message:
-                      'Earn an extra ₹2.00 per delivery in Downtown zone between 5 PM and 8 PM tonight.',
-                  unread: true,
-                ),
-                SizedBox(height: R.h(24)),
-                _sectionHeader('EARLIER'),
-                SizedBox(height: R.h(12)),
-                _notificationCard(
-                  icon: Icons.check_circle,
-                  iconBg: AppColors.iconBgGrey,
-                  iconColor: AppColors.grey,
-                  title: 'Order #8829 Completed',
-                  time: 'Yesterday',
-                  message:
-                      'Successfully delivered to 123 Main St. Total payout: ₹18.25',
-                ),
-                SizedBox(height: R.h(12)),
-                _notificationCard(
-                  icon: Icons.info,
-                  iconBg: AppColors.iconBgGrey,
-                  iconColor: AppColors.grey,
-                  title: 'App Update v2.4',
-                  time: '2d ago',
-                  message:
-                      'New features for improved GPS tracking are now live. Check the help center for details.',
-                ),
-                SizedBox(height: R.h(40)),
               ],
             ),
           ),
         ],
-      ),
+      );
+    }
+
+    // Split into New and Earlier
+    final unread = notifications.where((n) => !n.isRead).toList();
+    final read = notifications.where((n) => n.isRead).toList();
+
+    return ListView(
+      controller: _scrollController,
+      padding: EdgeInsets.all(R.w(16)),
+      children: [
+        if (unread.isNotEmpty) ...[
+          _sectionHeader('NEW & UNREAD', action: 'Clear all'),
+          SizedBox(height: R.h(12)),
+          ...unread.map((n) => Padding(
+                padding: EdgeInsets.only(bottom: R.h(12)),
+                child: _mapNotificationToCard(n),
+              )),
+          SizedBox(height: R.h(12)),
+        ],
+        if (read.isNotEmpty) ...[
+          _sectionHeader('EARLIER'),
+          SizedBox(height: R.h(12)),
+          ...read.map((n) => Padding(
+                padding: EdgeInsets.only(bottom: R.h(12)),
+                child: _mapNotificationToCard(n),
+              )),
+        ],
+        if (viewModel.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        SizedBox(height: R.h(40)),
+      ],
     );
+  }
+
+  Widget _mapNotificationToCard(NotificationModel notification) {
+    // Determine icon and colors based on type
+    IconData icon = Icons.notifications;
+    Color iconColor = AppColors.primaryGreen;
+    Color iconBg = AppColors.primaryGreen.withValues(alpha: .15);
+
+    if (notification.type?.toLowerCase().contains('order') ?? false) {
+      icon = Icons.shopping_bag;
+      iconColor = AppColors.primaryGreen;
+      iconBg = AppColors.primaryGreen.withValues(alpha: .15);
+    } else if (notification.type?.toLowerCase().contains('system') ?? false) {
+      icon = Icons.info;
+      iconColor = AppColors.blue;
+      iconBg = AppColors.iconBgBlue;
+    } else if (notification.type?.toLowerCase().contains('update') ?? false) {
+      icon = Icons.map;
+      iconColor = AppColors.orange;
+      iconBg = AppColors.iconBgOrange;
+    }
+
+    return _notificationCard(
+      icon: icon,
+      iconBg: iconBg,
+      iconColor: iconColor,
+      title: notification.title,
+      time: _formatTime(notification.createdAt),
+      message: notification.message,
+      unread: !notification.isRead,
+      onTap: () {
+        context.read<NotificationsViewModel>().markAsRead(notification.id);
+      },
+    );
+  }
+
+  String _formatTime(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    return DateFormat('MMM d').format(date);
   }
 
   // ================= APP BAR =================
@@ -133,30 +242,9 @@ class _NotificationsViewState extends State<NotificationsView> {
           return Padding(
             padding: EdgeInsets.only(right: R.w(10)),
             child: ChoiceChip(
-              label: Row(
-                children: [
-                  Text(
-                    tabs[i],
-                    style: TextStyle(fontSize: R.sp(14)),
-                  ),
-                  if (i == 1)
-                    Container(
-                      margin: EdgeInsets.only(left: R.w(6)),
-                      padding: EdgeInsets.all(R.w(6)),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '3',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: R.sp(12),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                ],
+              label: Text(
+                tabs[i],
+                style: TextStyle(fontSize: R.sp(14)),
               ),
               selected: selected,
               onSelected: (_) => setState(() => selectedTab = i),
@@ -206,91 +294,6 @@ class _NotificationsViewState extends State<NotificationsView> {
     );
   }
 
-  // ================= NEW ORDER CARD =================
-
-  Widget _newOrderCard() {
-    return Container(
-      padding: EdgeInsets.all(R.w(16)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(R.r(20)),
-        border: Border.all(color: AppColors.primaryGreen),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryGreen.withValues(alpha: .15),
-            blurRadius: R.r(12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _icon(Icons.shopping_bag, AppColors.primaryGreen),
-              SizedBox(width: R.w(12)),
-              Expanded(
-                child: Text(
-                  'New Order Request',
-                  style: TextStyle(
-                    fontSize: R.sp(18),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Text(
-                'Just now',
-                style: TextStyle(
-                  color: AppColors.bodyText,
-                  fontSize: R.sp(13),
-                ),
-              ),
-              SizedBox(width: R.w(8)),
-              const CircleAvatar(radius: 5, backgroundColor: AppColors.green),
-            ],
-          ),
-          SizedBox(height: R.h(8)),
-          Text(
-            '₹15.50 • 5.2 mi',
-            style: TextStyle(
-              color: AppColors.primaryGreen,
-              fontWeight: FontWeight.w700,
-              fontSize: R.sp(14),
-            ),
-          ),
-          SizedBox(height: R.h(8)),
-          Text(
-            'Pickup at Whole Foods Market. Large order including frozen items.',
-            style: TextStyle(
-              color: AppColors.bodyText,
-              fontSize: R.sp(14),
-            ),
-          ),
-          SizedBox(height: R.h(16)),
-          Row(
-            children: [
-              Expanded(
-                child: _actionButton(
-                  'Accept',
-                  AppColors.primaryGreen,
-                  AppColors.white,
-                ),
-              ),
-              SizedBox(width: R.w(12)),
-              Expanded(
-                child: _actionButton(
-                  'Decline',
-                  AppColors.borderLight,
-                  AppColors.headingText,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   // ================= NORMAL NOTIFICATION =================
 
   Widget _notificationCard({
@@ -301,71 +304,75 @@ class _NotificationsViewState extends State<NotificationsView> {
     required String time,
     required String message,
     bool unread = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: EdgeInsets.all(R.w(16)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(20)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: .04),
-            blurRadius: R.r(12),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _icon(icon, iconColor, bg: iconBg),
-          SizedBox(width: R.w(12)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: R.sp(15),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        color: AppColors.bodyText,
-                        fontSize: R.sp(12),
-                      ),
-                    ),
-                    if (unread)
-                      Container(
-                        margin: EdgeInsets.only(left: R.w(8)),
-                        width: R.w(10),
-                        height: R.w(10),
-                        decoration: const BoxDecoration(
-                          color: AppColors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
-                ),
-                SizedBox(height: R.h(6)),
-                Text(
-                  message,
-                  style: TextStyle(
-                    color: AppColors.bodyText,
-                    fontSize: R.sp(14),
-                  ),
-                ),
-              ],
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(R.w(16)),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(R.r(20)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.black.withValues(alpha: .04),
+              blurRadius: R.r(12),
             ),
-          ),
-          Icon(Icons.chevron_right, size: R.sp(20)),
-        ],
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _icon(icon, iconColor, bg: iconBg),
+            SizedBox(width: R.w(12)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: R.sp(15),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        time,
+                        style: TextStyle(
+                          color: AppColors.bodyText,
+                          fontSize: R.sp(12),
+                        ),
+                      ),
+                      if (unread)
+                        Container(
+                          margin: EdgeInsets.only(left: R.w(8)),
+                          width: R.w(10),
+                          height: R.w(10),
+                          decoration: const BoxDecoration(
+                            color: AppColors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: R.h(6)),
+                  Text(
+                    message,
+                    style: TextStyle(
+                      color: AppColors.bodyText,
+                      fontSize: R.sp(14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: R.sp(20)),
+          ],
+        ),
       ),
     );
   }
@@ -377,30 +384,6 @@ class _NotificationsViewState extends State<NotificationsView> {
       radius: R.r(26),
       backgroundColor: bg ?? color.withValues(alpha: .15),
       child: Icon(icon, color: color, size: R.sp(20)),
-    );
-  }
-
-  Widget _actionButton(String text, Color bg, Color color) {
-    return SizedBox(
-      height: R.h(48),
-      child: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: bg,
-          foregroundColor: color,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(R.r(14)),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: R.sp(16),
-          ),
-        ),
-      ),
     );
   }
 }

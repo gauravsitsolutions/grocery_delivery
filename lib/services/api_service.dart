@@ -6,6 +6,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/user_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 
 class ApiService {
@@ -524,20 +525,20 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      log('Current Order Check Failed: $e');
       // If 404/validation error (order not found), return null gracefully
       if (e is ValidationException ||
           e.toString().contains('Order not found')) {
+        log('No active current order found (Normal state if idle)');
         return null;
       }
+      log('Current Order Check Failed: $e');
       rethrow; // Rethrow other errors (auth, server)
     }
   }
 
   Future<Map<String, dynamic>> completeDelivery(
       String token, int orderId, String otp) async {
-    final uri = Uri.parse(
-        '${AppUrls.baseUrl}/api/orders/$orderId/complete'); // Using base URL assuming standard pattern
+    final uri = Uri.parse(AppUrls.completeDelivery(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() => http.post(
@@ -557,6 +558,110 @@ class ApiService {
     } else {
       throw ValidationException(
           response['message'] ?? 'Failed to complete delivery');
+    }
+  }
+
+  Future<void> sendDeliveryOtp(String token, int orderId) async {
+    final uri = Uri.parse(AppUrls.sendDeliveryOtp(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response['status'] != true) {
+      throw ValidationException(
+          response['message'] ?? 'Failed to send delivery OTP');
+    }
+  }
+
+  Future<Map<String, dynamic>> getOrderSummary(
+      String token, int orderId) async {
+    final uri = Uri.parse(AppUrls.getSummary(orderId));
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response['status'] == true && response['data'] != null) {
+      return response['data'];
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to fetch order summary');
+    }
+  }
+
+  Future<Map<String, dynamic>> rateCustomer(
+      String token, int orderId, double rating, String? comment) async {
+    final uri = Uri.parse(AppUrls.rateCustomer(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'rating': rating,
+            'comment': comment,
+          }),
+        ));
+
+    if (response['status'] == true || response['message'] != null) {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to rate customer');
+    }
+  }
+
+  Future<NotificationResponse> getNotifications(String token,
+      {int page = 1}) async {
+    final uri = Uri.parse('${AppUrls.notifications}?page=$page');
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    return NotificationResponse.fromJson(response);
+  }
+
+  Future<void> markNotificationAsRead(
+      String token, String notificationId) async {
+    final uri = Uri.parse(AppUrls.markNotificationAsRead(notificationId));
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response['status'] != true) {
+      throw ValidationException(
+          response['message'] ?? 'Failed to mark notification as read');
     }
   }
 }
