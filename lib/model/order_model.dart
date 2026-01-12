@@ -105,10 +105,19 @@ class Order {
   final List<OrderItem> orderItems;
   final DeliveryAddress? deliveryAddress;
   final Customer? user;
+  final Vendor? vendor;
+
+  final int? deliveryAgentId;
+  final String? pickupProof;
+  final String? cancelReason;
+  final String? cancelComment;
+  final DateTime? cancelledAt;
+  final DateTime? deliveredAt;
 
   Order({
     required this.id,
     required this.userId,
+    this.deliveryAgentId,
     this.offerId,
     this.couponCode,
     required this.orderNumber,
@@ -123,12 +132,19 @@ class Order {
     required this.orderItems,
     this.deliveryAddress,
     this.user,
+    this.vendor,
+    this.pickupProof,
+    this.cancelReason,
+    this.cancelComment,
+    this.cancelledAt,
+    this.deliveredAt,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['id'] ?? 0,
       userId: json['user_id'] ?? 0,
+      deliveryAgentId: json['delivery_agent_id'],
       offerId: json['offer_id'],
       couponCode: json['coupon_code'],
       orderNumber: json['order_number'] ?? '',
@@ -149,6 +165,12 @@ class Order {
           ? DeliveryAddress.fromJson(json['delivery_address'])
           : null,
       user: json['user'] != null ? Customer.fromJson(json['user']) : null,
+      vendor: json['vendor'] != null ? Vendor.fromJson(json['vendor']) : null,
+      pickupProof: json['pickup_proof'],
+      cancelReason: json['cancel_reason'],
+      cancelComment: json['cancel_comment'],
+      cancelledAt: _parseDate(json['cancelled_at']),
+      deliveredAt: _parseDate(json['delivered_at']),
     );
   }
 }
@@ -178,6 +200,32 @@ class DeliveryAddress {
       city: json['city'] ?? '',
       state: json['state'] ?? '',
       postcode: json['postcode'] ?? '',
+    );
+  }
+}
+
+/// =======================
+/// Vendor Model
+/// =======================
+class Vendor {
+  final int id;
+  final String storeName;
+  final String? address;
+  final String? mobile;
+
+  Vendor({
+    required this.id,
+    required this.storeName,
+    this.address,
+    this.mobile,
+  });
+
+  factory Vendor.fromJson(Map<String, dynamic> json) {
+    return Vendor(
+      id: json['id'] ?? 0,
+      storeName: json['store_name'] ?? '',
+      address: json['address'],
+      mobile: json['mobile'],
     );
   }
 }

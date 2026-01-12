@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/view/verification/delivery_verification_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DeliveryBottomCard extends StatelessWidget {
@@ -130,7 +131,14 @@ class DeliveryBottomCard extends StatelessWidget {
             height: 56,
             child: ElevatedButton(
               onPressed: () {
-                // Implement "Arrived" logic
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DeliveryVerificationView(
+                      orderId: order.id,
+                    ),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen,

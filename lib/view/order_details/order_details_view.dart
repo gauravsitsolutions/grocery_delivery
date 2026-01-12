@@ -8,6 +8,7 @@ import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_pickup_screen.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivery_screen.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivered_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,6 +47,9 @@ class OrderDetailsView extends StatelessWidget {
           log('OrderDetailsView Rebuild. Status: ${viewModel.order?.status}, IsPickup: ${viewModel.isPickupMode}');
 
           if (!viewModel.isPickupMode && viewModel.order != null) {
+            if (viewModel.order!.status.toLowerCase() == 'delivered') {
+              return OrderDeliveredDetailsView(order: viewModel.order!);
+            }
             return const OrderDeliveryScreen();
           }
 

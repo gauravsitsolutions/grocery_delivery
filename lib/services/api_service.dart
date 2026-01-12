@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
+import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/user_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
@@ -233,6 +234,27 @@ class ApiService {
     return OrderResponse.fromJson(response);
   }
 
+  Future<Map<String, dynamic>> confirmPickup(String token, int orderId) async {
+    final uri = Uri.parse(AppUrls.pickupOrder(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to complete pickup');
+    }
+  }
+
   Future<OrderResponse> getMyOrders(String token, {int page = 1}) async {
     final uri = Uri.parse('${AppUrls.myOrders}?page=$page');
     log('API Request: GET $uri');
@@ -250,6 +272,62 @@ class ApiService {
       return OrderResponse.fromJson({'data': response, 'status': true});
     }
     return OrderResponse.fromJson(response);
+  }
+
+  Future<OrderResponse> getDeliveries(String token, {int page = 1}) async {
+    final uri = Uri.parse('${AppUrls.deliveries}?page=$page');
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response is List) {
+      return OrderResponse.fromJson({'data': response, 'status': true});
+    }
+    return OrderResponse.fromJson(response);
+  }
+
+  Future<OrderResponse> searchDeliveries(String token, String query,
+      {int page = 1}) async {
+    final uri =
+        Uri.parse('${AppUrls.searchDeliveries}?query=$query&page=$page');
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response is List) {
+      return OrderResponse.fromJson({'data': response, 'status': true});
+    }
+    return OrderResponse.fromJson(response);
+  }
+
+  Future<DeliveryStatusResponse> getDeliveryStatus(String token) async {
+    final uri = Uri.parse(AppUrls.deliveryStatus);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    return DeliveryStatusResponse.fromJson(response);
   }
 
   Future<Map<String, dynamic>> acceptOrder(String token, int orderId) async {
@@ -324,7 +402,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> uploadPickupProof(
+  Future<bool> uploadPickupProof(
       String token, int orderId, File imageFile) async {
     final uri = Uri.parse(AppUrls.pickupProof(orderId));
     log('API Request: POST Multipart $uri');
@@ -348,46 +426,15 @@ class ApiService {
       log('Response Status: ${response.statusCode}');
       log('Response Body: ${response.body}');
 
-      final body = jsonDecode(response.body);
-
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (body['status'] == true) {
-          return body;
-        } else {
-          throw ValidationException(
-              body['message'] ?? 'Failed to upload proof');
-        }
+        return true;
       } else {
-        if (body['errors'] != null) {
-          // Handle validation errors specifically
-          throw ValidationException(body['message'] ?? 'Validation Error');
-        }
+        final body = jsonDecode(response.body);
         throw ValidationException(body['message'] ?? 'Failed to upload proof');
       }
     } catch (e) {
       log('Error uploading proof: $e');
       rethrow;
-    }
-  }
-
-  Future<Map<String, dynamic>> pickupOrder(String token, int orderId) async {
-    final uri = Uri.parse(AppUrls.pickupOrder(orderId));
-    log('API Request: POST $uri');
-
-    final response = await _processRequest(() => http.post(
-          uri,
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-        ));
-
-    if (response['status'] == true) {
-      return response;
-    } else {
-      throw ValidationException(
-          response['message'] ?? 'Failed to complete pickup');
     }
   }
 
@@ -484,6 +531,32 @@ class ApiService {
         return null;
       }
       rethrow; // Rethrow other errors (auth, server)
+    }
+  }
+
+  Future<Map<String, dynamic>> completeDelivery(
+      String token, int orderId, String otp) async {
+    final uri = Uri.parse(
+        '${AppUrls.baseUrl}/api/orders/$orderId/complete'); // Using base URL assuming standard pattern
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'otp': otp,
+          }),
+        ));
+
+    if (response['status'] == true) {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to complete delivery');
     }
   }
 }

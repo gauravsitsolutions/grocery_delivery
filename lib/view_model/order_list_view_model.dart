@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
@@ -109,7 +110,12 @@ class OrderListViewModel extends ChangeNotifier {
       }
 
       final response =
-          await _apiService.getMyOrders(token, page: _myDeliveriesPage);
+          await _apiService.getDeliveries(token, page: _myDeliveriesPage);
+
+      // Also fetch status if this is the first page or a refresh
+      if (refresh || _myDeliveriesPage == 1) {
+        fetchDeliveryStatus();
+      }
 
       if (refresh) {
         _myDeliveries = response.data;
@@ -142,6 +148,120 @@ class OrderListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await fetchMyDeliveries();
+  }
+
+  // Search State
+  List<Order> _searchResults = [];
+  bool _isSearching = false;
+  bool _isSearchLoading = false;
+  String? _searchError;
+  String _currentQuery = '';
+  int _searchPage = 1;
+  bool _searchHasMore = false;
+  bool _isSearchLoadingMore = false;
+
+  List<Order> get searchResults => _searchResults;
+  bool get isSearching => _isSearching;
+  bool get isSearchLoading => _isSearchLoading;
+  String? get searchError => _searchError;
+  bool get isSearchLoadingMore => _isSearchLoadingMore;
+
+  void clearSearch() {
+    _isSearching = false;
+    _searchResults = [];
+    _currentQuery = '';
+    _searchError = null;
+    notifyListeners();
+  }
+
+  Future<void> searchDeliveries(String query, {bool refresh = false}) async {
+    if (query.isEmpty) {
+      clearSearch();
+      return;
+    }
+
+    if (refresh) {
+      _searchPage = 1;
+      _searchHasMore = false;
+      _searchError = null;
+      _isSearchLoading = true;
+      _currentQuery = query;
+      _isSearching = true;
+      notifyListeners();
+    }
+
+    try {
+      final token = await _authToken;
+      if (token == null) {
+        _searchError = 'Not authenticated';
+        _isSearchLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final response =
+          await _apiService.searchDeliveries(token, query, page: _searchPage);
+
+      if (refresh) {
+        _searchResults = response.data;
+      } else {
+        _searchResults.addAll(response.data);
+      }
+
+      _searchHasMore = (response.currentPage ?? _searchPage) <
+          (response.lastPage ?? _searchPage);
+      _isSearchLoading = false;
+      _isSearchLoadingMore = false;
+      notifyListeners();
+    } catch (e) {
+      _searchError = e is AppException ? e.message : e.toString();
+      _isSearchLoading = false;
+      _isSearchLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMoreSearchResults() async {
+    if (_isSearchLoadingMore || _isSearchLoading || !_searchHasMore) {
+      return;
+    }
+
+    _isSearchLoadingMore = true;
+    _searchPage++;
+    notifyListeners();
+
+    await searchDeliveries(_currentQuery);
+  }
+
+  // Delivery Status
+  DeliveryStatus? _deliveryStatus;
+  bool _isStatusLoading = false;
+
+  DeliveryStatus? get deliveryStatus => _deliveryStatus;
+  bool get isStatusLoading => _isStatusLoading;
+
+  Future<void> fetchDeliveryStatus() async {
+    _isStatusLoading = true;
+    notifyListeners();
+
+    try {
+      final token = await _authToken;
+      if (token == null) {
+        _isStatusLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final response = await _apiService.getDeliveryStatus(token);
+      if (response.status && response.data != null) {
+        _deliveryStatus = response.data;
+      }
+    } catch (e) {
+      debugPrint('Error fetching delivery status: $e');
+    } finally {
+      _isStatusLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<String?> get _authToken async {

@@ -1,5 +1,6 @@
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
@@ -14,6 +15,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/order_cancelled_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import '../../utils/responsive.dart';
 
 class DeliveriesView extends StatefulWidget {
@@ -28,6 +31,8 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   final ScrollController _scrollController = ScrollController();
 
   String? _authToken;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -46,6 +51,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -53,7 +59,9 @@ class _DeliveriesViewState extends State<DeliveriesView> {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
       final viewModel = Provider.of<OrderListViewModel>(context, listen: false);
-      if (_selectedStatus == 'Pending') {
+      if (viewModel.isSearching) {
+        viewModel.loadMoreSearchResults();
+      } else {
         viewModel.loadMoreMyDeliveries();
       }
     }
@@ -91,16 +99,34 @@ class _DeliveriesViewState extends State<DeliveriesView> {
             // The original code only implemented 'Pending' -> 'getMyOrders'.
             // We will stick to that behavior.
 
-            final orders = _selectedStatus == 'Pending'
-                ? viewModel.myDeliveries
-                : <Order>[];
-            final isLoading = viewModel.isMyDeliveriesLoading;
-            final isLoadingMore = viewModel.isMyDeliveriesLoadingMore;
-            final error = viewModel.myDeliveriesError;
+            final statusFilter = _selectedStatus.toLowerCase();
+            final orders = viewModel.isSearching
+                ? viewModel.searchResults
+                : viewModel.myDeliveries.where((o) {
+                    if (_selectedStatus == 'Pending') {
+                      return o.status == 'pending' ||
+                          o.status == 'assigned' ||
+                          o.status == 'picked_up';
+                    }
+                    return o.status == statusFilter;
+                  }).toList();
+
+            final isLoading = viewModel.isSearching
+                ? viewModel.isSearchLoading
+                : viewModel.isMyDeliveriesLoading;
+            final isLoadingMore = viewModel.isSearching
+                ? viewModel.isSearchLoadingMore
+                : viewModel.isMyDeliveriesLoadingMore;
+            final error = viewModel.isSearching
+                ? viewModel.searchError
+                : viewModel.myDeliveriesError;
 
             return RefreshIndicator(
               onRefresh: () async {
-                if (_selectedStatus == 'Pending') {
+                if (viewModel.isSearching) {
+                  await viewModel.searchDeliveries(_searchController.text,
+                      refresh: true);
+                } else {
                   await viewModel.fetchMyDeliveries(refresh: true);
                 }
               },
@@ -113,52 +139,57 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: R.h(16)),
-                    _searchBar(context),
+                    _searchHeader(context),
                     SizedBox(height: R.h(16)),
-                    _filterChips(),
-                    SizedBox(height: R.h(20)),
+                    if (!viewModel.isSearching) ...[
+                      _filterChips(),
+                      SizedBox(height: R.h(20)),
 
-                    // SUMMARY
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _SummaryCard(
-                            title: 'Completed',
-                            value: '12',
-                            icon: RemixIcons.checkbox_circle_fill,
-                            bg: AppColors.summaryBlueBg,
-                            iconColor: AppColors.summaryBlueIcon,
-                            textColor: Colors.green,
-                          ),
+                      // SUMMARY
+                      if (viewModel.deliveryStatus != null)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SummaryCard(
+                                title: 'Delivered',
+                                value:
+                                    '${viewModel.deliveryStatus!.deliveredOrders}',
+                                icon: RemixIcons.checkbox_circle_fill,
+                                bg: AppColors.summaryBlueBg,
+                                iconColor: AppColors.summaryBlueIcon,
+                                textColor: Colors.green,
+                              ),
+                            ),
+                            SizedBox(width: R.w(12)),
+                            Expanded(
+                              child: _SummaryCard(
+                                title: 'Pending',
+                                value:
+                                    '${viewModel.deliveryStatus!.pendingOrders}',
+                                icon: RemixIcons.time_fill,
+                                bg: AppColors.summaryOrangeBg,
+                                iconColor: AppColors.summaryOrangeIcon,
+                                textColor: Colors.orange,
+                              ),
+                            ),
+                            SizedBox(width: R.w(12)),
+                            Expanded(
+                              child: _SummaryCard(
+                                title: 'Cancelled',
+                                value:
+                                    '${viewModel.deliveryStatus!.cancelledOrders}',
+                                icon: RemixIcons.close_circle_fill,
+                                bg: AppColors.summaryPurpleBg,
+                                iconColor: AppColors.summaryPurpleIcon,
+                                textColor: Colors.red,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: R.w(12)),
-                        Expanded(
-                          child: _SummaryCard(
-                            title: 'Distance',
-                            value: '24km',
-                            icon: RemixIcons.map_pin_fill,
-                            bg: AppColors.summaryOrangeBg,
-                            iconColor: AppColors.summaryOrangeIcon,
-                            textColor: Colors.green,
-                          ),
-                        ),
-                        SizedBox(width: R.w(12)),
-                        Expanded(
-                          child: _SummaryCard(
-                            title: 'Avg Time',
-                            value: '28m',
-                            icon: RemixIcons.timer_fill,
-                            bg: AppColors.summaryPurpleBg,
-                            iconColor: AppColors.summaryPurpleIcon,
-                            textColor: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
 
-                    SizedBox(height: R.h(20)),
-                    _statusSwitch(),
-
+                      SizedBox(height: R.h(20)),
+                      _statusSwitch(),
+                    ],
                     if (error != null)
                       Padding(
                         padding: EdgeInsets.all(R.h(20)),
@@ -173,9 +204,13 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                     else if (orders.isEmpty)
                       Padding(
                         padding: EdgeInsets.all(R.h(20)),
-                        child: const Center(child: Text('No orders found')),
+                        child: Center(
+                            child: Text(viewModel.isSearching
+                                ? 'No results found'
+                                : 'No orders found')),
                       )
-                    else if (_selectedStatus == 'Pending') ...[
+                    else if (_selectedStatus == 'Pending' &&
+                        !viewModel.isSearching) ...[
                       if (orders.isNotEmpty) ...[
                         _sectionLabel('IN PROGRESS'),
                         SizedBox(height: R.h(10)),
@@ -203,7 +238,9 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                         ),
                       ],
                     ] else ...[
-                      _sectionLabel(_selectedStatus.toUpperCase()),
+                      _sectionLabel(viewModel.isSearching
+                          ? 'SEARCH RESULTS'
+                          : _selectedStatus.toUpperCase()),
                       SizedBox(height: R.h(10)),
                       ListView.builder(
                         shrinkWrap: true,
@@ -220,7 +257,6 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                         },
                       ),
                     ],
-
                     SizedBox(height: R.h(20)),
                   ],
                 ),
@@ -235,6 +271,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   // ================= SEARCH =================
 
   Widget _searchBar(BuildContext context) {
+    final viewModel = Provider.of<OrderListViewModel>(context);
     return Container(
       height: R.h(54),
       padding: EdgeInsets.symmetric(horizontal: R.w(16)),
@@ -248,19 +285,74 @@ class _DeliveriesViewState extends State<DeliveriesView> {
               color: AppColors.bodyText, size: R.sp(20)),
           SizedBox(width: R.w(10)),
           Expanded(
-            child: Text(
-              'Search Order ID, name...',
+            child: TextField(
+              controller: _searchController,
               style: TextStyle(
-                color: AppColors.bodyText,
-                fontSize: R.sp(15),
+                fontSize: R.sp(14),
+                color: Colors.black,
               ),
+              decoration: InputDecoration(
+                hintText: 'Search Order ID, Name',
+                hintStyle: TextStyle(
+                  fontSize: R.sp(14),
+                  color: Colors.grey,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (value) {
+                if (_debounce?.isActive ?? false) _debounce!.cancel();
+                _debounce = Timer(const Duration(milliseconds: 500), () {
+                  if (value.isNotEmpty) {
+                    viewModel.searchDeliveries(value);
+                  } else {
+                    viewModel.clearSearch();
+                  }
+                });
+              },
+              onSubmitted: (value) {
+                if (value.isNotEmpty) {
+                  viewModel.searchDeliveries(value);
+                } else {
+                  viewModel.clearSearch();
+                }
+              },
             ),
           ),
-          Container(
-            width: 1,
-            height: R.h(24),
-            color: AppColors.divider,
-          ),
+          if (viewModel.isSearching && viewModel.isStatusLoading)
+            SizedBox(
+              width: R.w(20),
+              height: R.w(20),
+              child: const CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+              ),
+            )
+          else if (viewModel.isSearching)
+            InkWell(
+              onTap: () {
+                _searchController.clear();
+                viewModel.clearSearch();
+              },
+              child: Icon(
+                Icons.close,
+                color: Colors.grey,
+                size: R.w(20),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _searchHeader(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: R.w(16)),
+      child: Row(
+        children: [
+          Expanded(child: _searchBar(context)),
           SizedBox(width: R.w(12)),
           IconButton(
             icon: Icon(
@@ -272,7 +364,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
-                backgroundColor: AppColors.transparent,
+                backgroundColor: Colors.transparent,
                 builder: (_) => const FilterDeliveriesSheet(),
               );
             },
@@ -382,16 +474,33 @@ class _DeliveriesViewState extends State<DeliveriesView> {
 
     return GestureDetector(
       onTap: () {
-        PersistentNavBarNavigator.pushNewScreen(
-          context,
-          screen: OrderDetailsView(
-            orderId: order.id,
-            orderNumber: order.orderNumber,
-            order: order,
-          ),
-          withNavBar: false,
-          pageTransitionAnimation: PageTransitionAnimation.cupertino,
-        );
+        if (order.status == 'cancelled') {
+          PersistentNavBarNavigator.pushNewScreen(
+            context,
+            screen: OrderCancelledDetailsView(order: order),
+            withNavBar: false,
+            pageTransitionAnimation: PageTransitionAnimation.cupertino,
+          );
+        } else if (order.pickupProof == null && order.status != 'delivered') {
+          // Navigate to Pickup Task if not picked up yet (and not delivered)
+          PersistentNavBarNavigator.pushNewScreen(
+            context,
+            screen: PickupTaskView(order: order),
+            withNavBar: false,
+            pageTransitionAnimation: PageTransitionAnimation.cupertino,
+          );
+        } else {
+          PersistentNavBarNavigator.pushNewScreen(
+            context,
+            screen: OrderDetailsView(
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              order: order,
+            ),
+            withNavBar: false,
+            pageTransitionAnimation: PageTransitionAnimation.cupertino,
+          );
+        }
       },
       child: Container(
         margin: EdgeInsets.only(bottom: R.h(16)),

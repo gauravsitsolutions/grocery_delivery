@@ -61,12 +61,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _fetchOrders();
   }
 
-  Future<void> _fetchOrders() async {
+  Future<void> _fetchOrders({bool refresh = true}) async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    if (refresh) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -95,15 +97,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               arguments: activeOrder,
             );
           }
-          // We can still fetch background lists or just return?
-          // If we navigate away, we might not want to show the list yet.
-          // But let's let the code flow to fetch lists so state is consistent if they return.
         }
       } catch (e) {
         log('Check current order failed: $e');
         if (e is UnauthorisedException) {
-          // Let the error handling below catch this if rethrown, or handle explicitly here.
-          // The fetchNewOrders calls below will likely also fail with 401 and trigger logout.
+          // Handle unauthorized
         }
       }
 
@@ -140,7 +138,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       log('Error fetching orders: $e');
       if (mounted) {
         if (e is UnauthorisedException) {
-          // Handle 401: Clear session and logout
           final prefs = await SharedPreferences.getInstance();
           await prefs.clear();
           if (mounted) {
@@ -149,7 +146,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           }
         } else {
           setState(() {
-            // Keep existing data on error if possible, or show error
             _error = e.toString();
             _isLoading = false;
           });
@@ -1090,110 +1086,125 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  void _showAcceptSuccessDialog() {
-    showDialog(
+  Future<void> _showAcceptSuccessDialog() async {
+    await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          elevation: 10,
-          insetPadding: EdgeInsets.symmetric(horizontal: R.w(40)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(R.r(20)),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(R.w(30)),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Lottie.asset(
-                  'assets/lottie/accept_order.json',
-                  width: R.w(150),
-                  height: R.w(150),
-                  fit: BoxFit.contain,
-                  repeat: false,
-                ),
-                SizedBox(height: R.h(20)),
-                Text(
-                  'Order Accepted!',
-                  style: TextStyle(
-                    fontSize: R.sp(22),
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                SizedBox(height: R.h(8)),
-                Text(
-                  'Order moved to delivery queue.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: R.sp(14),
-                    color: AppColors.bodyText,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (context) => _AnimationDialog(
+        lottieAsset: 'assets/lottie/accept_order.json',
+        title: 'Order Accepted!',
+        subtitle: 'Order moved to delivery queue.',
+        titleColor: AppColors.primaryGreen,
+      ),
     );
+    _fetchOrders(refresh: false);
+  }
 
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
-        _fetchOrders(); // Refresh dashboard
+  Future<void> _showRejectSuccessDialog() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _AnimationDialog(
+        lottieAsset: 'assets/lottie/reject_order.json',
+        title: 'Order Rejected!',
+        titleColor: AppColors.error,
+      ),
+    );
+    _fetchOrders(refresh: false);
+  }
+}
+
+class _AnimationDialog extends StatefulWidget {
+  final String lottieAsset;
+  final String title;
+  final String? subtitle;
+  final Color titleColor;
+
+  const _AnimationDialog({
+    required this.lottieAsset,
+    required this.title,
+    this.subtitle,
+    required this.titleColor,
+  });
+
+  @override
+  State<_AnimationDialog> createState() => _AnimationDialogState();
+}
+
+class _AnimationDialogState extends State<_AnimationDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       }
     });
   }
 
-  void _showRejectSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          elevation: 10,
-          insetPadding: EdgeInsets.symmetric(horizontal: R.w(40)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(R.r(20)),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(R.w(30)),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Lottie.asset(
-                  'assets/lottie/reject_order.json',
-                  width: R.w(150),
-                  height: R.w(150),
-                  fit: BoxFit.contain,
-                  repeat: false,
-                ),
-                SizedBox(height: R.h(20)),
-                Text(
-                  'Order Rejected!',
-                  style: TextStyle(
-                    fontSize: R.sp(22),
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.error,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
-        _fetchOrders();
-      }
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      elevation: 10,
+      insetPadding: EdgeInsets.symmetric(horizontal: R.w(40)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(R.r(20)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(R.w(30)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Lottie.asset(
+              widget.lottieAsset,
+              width: R.w(150),
+              height: R.w(150),
+              fit: BoxFit.contain,
+              repeat: false,
+              controller: _controller,
+              onLoaded: (composition) {
+                _controller
+                  ..duration = composition.duration
+                  ..forward();
+              },
+            ),
+            SizedBox(height: R.h(20)),
+            Text(
+              widget.title,
+              style: TextStyle(
+                fontSize: R.sp(22),
+                fontWeight: FontWeight.w700,
+                color: widget.titleColor,
+              ),
+            ),
+            if (widget.subtitle != null) ...[
+              SizedBox(height: R.h(8)),
+              Text(
+                widget.subtitle!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: R.sp(14),
+                  color: AppColors.bodyText,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }

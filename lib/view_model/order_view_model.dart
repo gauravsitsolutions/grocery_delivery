@@ -143,6 +143,28 @@ class OrderViewModel extends ChangeNotifier {
   File? _pickupProofImage;
   File? get pickupProofImage => _pickupProofImage;
 
+  Future<bool> verifyDeliveryOtp(String otp) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await _getToken;
+      if (token == null) throw Exception('Not authenticated');
+
+      await _apiService.completeDelivery(token, orderId, otp);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e is AppException ? e.message : e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   final ImagePicker _picker = ImagePicker();
 
   Future<void> pickProofImage(ImageSource source) async {
@@ -199,7 +221,7 @@ class OrderViewModel extends ChangeNotifier {
       }
 
       // 2. Confirm Pickup
-      final response = await _apiService.pickupOrder(token, orderId);
+      final response = await _apiService.confirmPickup(token, orderId);
 
       // If the API returns the updated order object in 'data', we can update it directly
       if (response['data'] != null) {

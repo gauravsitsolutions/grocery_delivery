@@ -13,8 +13,10 @@ class AppUrls {
   static const String partnerOffline = '$baseUrl/api/partner/status/offline';
   static const String partnerOnline = '$baseUrl/api/partner/status/online';
   static const String newOrders = '$baseUrl/api/delivery/orders/new';
-
   static const String myOrders = '$baseUrl/api/delivery/orders/queue';
+  static const String deliveries = '$baseUrl/api/deliveries';
+  static const String searchDeliveries = '$baseUrl/api/deliveries/search';
+  static const String deliveryStatus = '$baseUrl/api/deliveries/status';
   static const String productImages = '$baseUrl/storage/product_images/';
   static String acceptOrder(int id) =>
       '$baseUrl/api/delivery/orders/$id/accept';
@@ -31,4 +33,10 @@ class AppUrls {
       '$baseUrl/api/orders/$orderId/items/$itemId/verify';
   static String reportItemIssue(int orderId, int itemId) =>
       '$baseUrl/api/orders/$orderId/items/$itemId/issue';
+
+  static String getFullUrl(String path) {
+    if (path.startsWith('http')) return path;
+    if (path.startsWith('/')) return '$baseUrl$path';
+    return '$baseUrl/$path';
+  }
 }
