@@ -578,31 +578,33 @@ class ApiService {
 
   Future<Map<String, dynamic>?> getCurrentOrder(String token) async {
     final uri = Uri.parse(AppUrls.currentOrder);
-    log('API Request: GET $uri');
+    // log('API Request: GET $uri');
 
     try {
-      final response = await _processRequest(() => http.get(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          ));
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
 
-      if (response['status'] == true && response['data'] != null) {
-        return response['data'];
+      log('Check Current Order Status: ${response.statusCode}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
+          return jsonResponse['data'];
+        }
+      } else if (response.statusCode == 404) {
+        // Expected case: No active order. Return null to indicate no order.
+        return null;
       }
       return null;
     } catch (e) {
-      // If 404/validation error (order not found), return null gracefully
-      if (e is ValidationException ||
-          e.toString().contains('Order not found')) {
-        log('No active current order found (Normal state if idle)');
-        return null;
-      }
-      log('Current Order Check Failed: $e');
-      rethrow; // Rethrow other errors (auth, server)
+      log('Check Current Order Error (SILENT): $e');
+      return null;
     }
   }
 

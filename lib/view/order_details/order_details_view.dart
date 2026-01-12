@@ -331,7 +331,7 @@ class OrderDetailsView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: () => _showImageSourceSheet(context, viewModel),
+          onTap: () => viewModel.pickProofImage(ImageSource.camera),
           child: Container(
             height: 150,
             width: double.infinity,
@@ -358,7 +358,7 @@ class OrderDetailsView extends StatelessWidget {
                           size: 32, color: Colors.grey[400]),
                       const SizedBox(height: 8),
                       Text(
-                        "Tap to upload proof",
+                        "Tap to take photo",
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
@@ -369,34 +369,6 @@ class OrderDetailsView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _showImageSourceSheet(BuildContext context, OrderViewModel viewModel) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
-              onTap: () {
-                Navigator.pop(ctx);
-                viewModel.pickProofImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
-              onTap: () {
-                Navigator.pop(ctx);
-                viewModel.pickProofImage(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 

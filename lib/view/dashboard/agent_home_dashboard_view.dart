@@ -93,23 +93,16 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       }
 
       // 1. Check for active order first
-      try {
-        final activeOrderData = await _apiService.getCurrentOrder(token);
-        if (activeOrderData != null && mounted) {
-          final activeOrder = Order.fromJson(activeOrderData);
-          log('Found active order: ${activeOrder.id}');
-          if (mounted) {
-            Navigator.pushNamed(
-              context,
-              AppRoutes.orderDetails,
-              arguments: activeOrder,
-            );
-          }
-        }
-      } catch (e) {
-        log('Check current order failed: $e');
-        if (e is UnauthorisedException) {
-          // Handle unauthorized
+      final activeOrderData = await _apiService.getCurrentOrder(token);
+      if (activeOrderData != null && mounted) {
+        final activeOrder = Order.fromJson(activeOrderData);
+        log('Found active order: ${activeOrder.id}');
+        if (mounted) {
+          Navigator.pushNamed(
+            context,
+            AppRoutes.orderDetails,
+            arguments: activeOrder,
+          );
         }
       }
 
@@ -1253,6 +1246,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       builder: (context) => _AnimationDialog(
         lottieAsset: 'assets/lottie/reject_order.json',
         title: 'Order Rejected!',
+        subtitle: 'Order removed from available list.',
         titleColor: AppColors.error,
       ),
     );
