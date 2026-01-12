@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AnimatedOrderCard extends StatefulWidget {
+  final bool visible;
   final Widget child;
   final Duration duration;
   final VoidCallback? onRemove;
@@ -9,6 +10,7 @@ class AnimatedOrderCard extends StatefulWidget {
   const AnimatedOrderCard({
     super.key,
     required this.child,
+    this.visible = true,
     this.duration = const Duration(milliseconds: 300),
     this.onRemove,
     this.animateOnMount = true,
@@ -49,6 +51,22 @@ class _AnimatedOrderCardState extends State<AnimatedOrderCard>
   }
 
   @override
+  void didUpdateWidget(covariant AnimatedOrderCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.visible != oldWidget.visible) {
+      if (widget.visible) {
+        _controller.forward();
+      } else {
+        _controller.reverse().then((_) {
+          if (mounted && widget.onRemove != null) {
+            widget.onRemove!();
+          }
+        });
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -56,7 +74,7 @@ class _AnimatedOrderCardState extends State<AnimatedOrderCard>
 
   Future<void> animateOut() async {
     await _controller.reverse();
-    if (widget.onRemove != null) {
+    if (mounted && widget.onRemove != null) {
       widget.onRemove!();
     }
   }
@@ -71,9 +89,13 @@ class _AnimatedOrderCardState extends State<AnimatedOrderCard>
         // To truly collapse, we'd need SizeTransition on the parent or here.
         return FadeTransition(
           opacity: _opacityAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: widget.child,
+          child: SizeTransition(
+            sizeFactor: _opacityAnimation,
+            axisAlignment: 0.0,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: widget.child,
+            ),
           ),
         );
       },

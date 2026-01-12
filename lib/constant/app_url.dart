@@ -10,8 +10,17 @@ class AppUrls {
       '$baseUrl/api/auth/mobile/verify-otp/forgot';
   static const String resetPassword = '$baseUrl/api/auth/reset-password';
   static const String logout = '$baseUrl/api/auth/logout';
-  static const String partnerOffline = '$baseUrl/api/partner/status/offline';
-  static const String partnerOnline = '$baseUrl/api/partner/status/online';
+  static const String partnerOffline =
+      '$baseUrl/api/delivery/partner/status/offline';
+  static const String partnerOnline =
+      '$baseUrl/api/delivery/partner/status/online';
+  static const String profile = '$baseUrl/api/delivery_boy/profile';
+  static const String updateProfilePhone =
+      '$baseUrl/api/delivery_boy/profile/phone';
+  static const String updateProfileVehicle =
+      '$baseUrl/api/delivery_boy/profile/vehicle';
+  static const String updateProfileEmail =
+      '$baseUrl/api/delivery_boy/profile/email';
   static const String newOrders = '$baseUrl/api/delivery/orders/new';
   static const String myOrders = '$baseUrl/api/delivery/orders/queue';
   static const String deliveries = '$baseUrl/api/deliveries';
@@ -41,6 +50,8 @@ class AppUrls {
   static String rateCustomer(int id) =>
       '$baseUrl/api/delivery/orders/$id/rate-customer';
   static const String notifications = '$baseUrl/api/notifications';
+  static const String notificationSettings =
+      '$baseUrl/api/notifications/settings';
   static String markNotificationAsRead(String id) =>
       '$baseUrl/api/notifications/$id/read';
 

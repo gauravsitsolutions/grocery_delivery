@@ -21,6 +21,9 @@ import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/dashboard_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/available_orders_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
+import 'package:provider/provider.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -55,11 +58,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   bool _isMyOrdersLoadingMore = false;
 
   String? _authToken;
+  final Set<int> _removingOrderIds = {};
 
   @override
   void initState() {
     super.initState();
     _fetchOrders();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationsViewModel>().fetchNotifications(refresh: true);
+    });
   }
 
   Future<void> _fetchOrders({bool refresh = true}) async {
@@ -132,6 +139,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             _currentOrder = null;
           }
 
+          _removingOrderIds.clear();
           _isLoading = false;
         });
       }
@@ -226,6 +234,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   Future<void> _acceptOrder(int orderId) async {
     if (!mounted) return;
 
+    setState(() {
+      _removingOrderIds.add(orderId);
+    });
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
@@ -254,6 +266,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Future<void> _rejectOrder(int orderId) async {
     if (!mounted) return;
+
+    setState(() {
+      _removingOrderIds.add(orderId);
+    });
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -292,6 +308,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   }) {
     return AnimatedOrderCard(
       key: key,
+      visible: !_removingOrderIds.contains(orderId),
       child: GestureDetector(
         onTap: () {
           PersistentNavBarNavigator.pushNewScreen(
@@ -464,6 +481,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         : null;
 
     return AnimatedOrderCard(
+      key: ValueKey(order.id),
+      visible: !_removingOrderIds.contains(order.id),
       child: GestureDetector(
         onTap: () {
           PersistentNavBarNavigator.pushNewScreen(
@@ -748,7 +767,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Status
+                // Top Bar: Avatar, Status Label, Notification Icon
                 Row(
                   children: [
                     Stack(
@@ -761,11 +780,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         Positioned(
                           bottom: 0,
                           right: 0,
-                          child: CircleAvatar(
-                            radius: R.r(6),
-                            backgroundColor: isOnline
-                                ? AppColors.primaryGreen
-                                : AppColors.grey,
+                          child: Container(
+                            width: R.r(12),
+                            height: R.r(12),
+                            decoration: BoxDecoration(
+                              color: isOnline
+                                  ? AppColors.primaryGreen
+                                  : AppColors.grey,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: AppColors.white, width: 1.5),
+                            ),
                           ),
                         ),
                       ],
@@ -778,7 +803,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           'STATUS',
                           style: TextStyle(
                             fontSize: R.sp(12),
-                            color: AppColors.bodyText,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.grey,
                           ),
                         ),
                         Row(
@@ -788,9 +814,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                               style: TextStyle(
                                 fontSize: R.sp(18),
                                 fontWeight: FontWeight.w700,
-                                color: isOnline
-                                    ? AppColors.black
-                                    : AppColors.bodyText,
+                                color: AppColors.headingText,
                               ),
                             ),
                             SizedBox(width: R.w(6)),
@@ -806,11 +830,121 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       ],
                     ),
                     const Spacer(),
-                    RemixIconToggle(
-                      value: isOnline,
-                      onChanged: widget.onStatusChanged,
+                    Consumer<NotificationsViewModel>(
+                      builder: (context, viewModel, child) {
+                        final unreadCount = viewModel.notifications
+                            .where((n) => !n.isRead)
+                            .length;
+                        return Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.scaffoldBg,
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                onPressed: () {
+                                  PersistentNavBarNavigator.pushNewScreen(
+                                    context,
+                                    screen: const NotificationsView(),
+                                    withNavBar: false,
+                                    pageTransitionAnimation:
+                                        PageTransitionAnimation.cupertino,
+                                  );
+                                },
+                                icon: Icon(
+                                  RemixIcons.notification_4_line,
+                                  size: R.sp(24),
+                                  color: AppColors.headingText,
+                                ),
+                              ),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: AppColors.white, width: 1.5),
+                                  ),
+                                  constraints: BoxConstraints(
+                                    minWidth: R.w(10),
+                                    minHeight: R.w(10),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ],
+                ),
+                SizedBox(height: R.h(20)),
+
+                // Dedicated Status Card
+                Container(
+                  padding: EdgeInsets.all(R.w(12)),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(R.r(16)),
+                    border: Border.all(
+                        color: AppColors.borderLight.withValues(alpha: 0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadow.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: R.w(44),
+                        height: R.w(44),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          RemixIcons.flashlight_fill,
+                          color: AppColors.primaryGreen,
+                          size: R.sp(22),
+                        ),
+                      ),
+                      SizedBox(width: R.w(12)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isOnline ? 'You are Online' : 'Go Online',
+                              style: TextStyle(
+                                fontSize: R.sp(16),
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.headingText,
+                              ),
+                            ),
+                            Text(
+                              'Start receiving orders',
+                              style: TextStyle(
+                                fontSize: R.sp(13),
+                                color: AppColors.bodyText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      RemixIconToggle(
+                        value: isOnline,
+                        onChanged: widget.onStatusChanged,
+                      ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: R.h(24)),
 

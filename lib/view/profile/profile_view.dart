@@ -6,8 +6,11 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/profile_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/widget/profile_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
 class ProfileView extends StatefulWidget {
@@ -19,6 +22,27 @@ class ProfileView extends StatefulWidget {
 
 class _ProfileViewState extends State<ProfileView> {
   bool _isLoggingOut = false;
+  String? _userName;
+  String? _userId;
+  String? _userRole;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSPData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileViewModel>().fetchProfile();
+    });
+  }
+
+  Future<void> _loadSPData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('user_name');
+      _userId = prefs.getInt('user_id')?.toString();
+      _userRole = prefs.getString('user_role');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,117 +65,123 @@ class _ProfileViewState extends State<ProfileView> {
       ),
       body: SafeArea(
         bottom: false,
-        child: FutureBuilder<Map<String, dynamic>>(
-          future: _getUserDetails(),
-          builder: (context, snapshot) {
-            final name = snapshot.data?['name'] ?? 'Agent';
-            final id = snapshot.data?['id']?.toString() ?? '---';
-            final role = snapshot.data?['role'] ?? 'Partner';
+        child: Consumer<ProfileViewModel>(
+          builder: (context, viewModel, child) {
+            if (viewModel.isLoading && viewModel.profile == null) {
+              return const ProfileShimmer();
+            }
 
-            return SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                R.w(16),
-                R.h(16),
-                R.w(16),
-                R.h(24),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _profileHeader(name, id, role),
+            if (viewModel.error != null && viewModel.profile == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(viewModel.error!),
+                    ElevatedButton(
+                      onPressed: () => viewModel.fetchProfile(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-                  SizedBox(height: R.h(28)), // spacing preserved
+            final profile = viewModel.profile;
+            final name = _userName ?? profile?.name ?? 'Agent';
+            final id = _userId ?? profile?.id?.toString() ?? '---';
+            final role = _userRole ?? 'Delivery Partner';
 
-                  _performanceSection(),
-                  SizedBox(height: R.h(32)),
+            return RefreshIndicator(
+              onRefresh: () => viewModel.fetchProfile(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  R.w(16),
+                  R.h(16),
+                  R.w(16),
+                  R.h(24),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _profileHeader(name, id, role),
+                    SizedBox(height: R.h(28)),
+                    _performanceSection(),
+                    SizedBox(height: R.h(32)),
+                    _infoSection(
+                      title: 'Personal Information',
+                      children: [
+                        _infoRow(RemixIcons.phone_line, 'Phone Number',
+                            profile?.mobile ?? '---',
+                            edit: true, onTap: _showEditPhoneDialog),
+                        _infoRow(RemixIcons.mail_line, 'Email Address',
+                            profile?.email ?? '---',
+                            edit: true, onTap: _showEditEmailDialog),
+                        _infoRow(RemixIcons.map_pin_line, 'Address',
+                            profile?.address ?? '---'),
+                      ],
+                    ),
+                    SizedBox(height: R.h(28)),
+                    _infoSection(
+                      title: 'Vehicle Details',
+                      children: [
+                        _infoRow(RemixIcons.motorbike_line, 'Vehicle Type',
+                            profile?.vehicleType ?? '---',
+                            edit: true, onTap: _showEditVehicleDialog),
+                        _infoRow(Icons.confirmation_number, 'License Number',
+                            profile?.vehicleNumber ?? '---'),
+                        _infoRow(
+                            RemixIcons.verified_badge_line,
+                            'Documents',
+                            profile?.status == 1
+                                ? 'Verified & Active'
+                                : 'Inactive',
+                            highlight: profile?.status == 1),
+                      ],
+                    ),
+                    SizedBox(height: R.h(32)),
+                    _logoutButton(),
+                    SizedBox(height: R.h(16)),
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        String text = '';
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          text = 'Verifying version...';
+                        } else if (snapshot.hasError) {
+                          text = 'Version info unavailable (Restart App)';
+                        } else if (snapshot.hasData) {
+                          text = 'Version ${snapshot.data!.version}';
+                        }
 
-                  _infoSection(
-                    title: 'Personal Information',
-                    children: [
-                      _infoRow(RemixIcons.phone_line, 'Phone Number',
-                          '+1 (555) 019-2834',
-                          edit: true),
-                      _infoRow(RemixIcons.mail_line, 'Email Address',
-                          'm.scott@dunder.com',
-                          edit: true),
-                      _infoRow(RemixIcons.map_pin_line, 'Delivery Region',
-                          'Scranton Downtown'),
-                    ],
-                  ),
+                        if (text.isEmpty) return const SizedBox();
 
-                  SizedBox(height: R.h(28)),
-
-                  _infoSection(
-                    title: 'Vehicle Details',
-                    children: [
-                      _infoRow(RemixIcons.motorbike_line, 'Vehicle Type',
-                          'Scooter - Yamaha NMAX',
-                          edit: true),
-                      _infoRow(Icons.confirmation_number, 'License Plate',
-                          '8X-9921'),
-                      _infoRow(RemixIcons.verified_badge_line, 'Documents',
-                          'Verified & Active',
-                          highlight: true),
-                    ],
-                  ),
-
-                  SizedBox(height: R.h(32)),
-                  _logoutButton(),
-
-                  SizedBox(height: R.h(16)),
-                  FutureBuilder<PackageInfo>(
-                    future: PackageInfo.fromPlatform(),
-                    builder: (context, snapshot) {
-                      String text = '';
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        text = 'Verifying version...';
-                      } else if (snapshot.hasError) {
-                        text = 'Version info unavailable (Restart App)';
-                      } else if (snapshot.hasData) {
-                        text = 'Version ${snapshot.data!.version}';
-                      }
-
-                      if (text.isEmpty) return const SizedBox();
-
-                      return Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(bottom: R.h(20)),
-                          child: Text(
-                            text,
-                            style: TextStyle(
-                              fontSize: R.sp(12),
-                              color: AppColors.bodyText,
+                        return Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(bottom: R.h(20)),
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                fontSize: R.sp(12),
+                                color: AppColors.bodyText,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             );
           },
-        ), // FutureBuilder
-      ), // SafeArea
+        ),
+      ),
+      // SafeArea
     ); // Scaffold
   }
   // ================= HEADER =================
-
-  Future<Map<String, dynamic>> _getUserDetails() async {
-    final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('user_name');
-    final id = prefs.getInt('user_id');
-    final role = prefs.getString('user_role');
-
-    // Debug print to check what's stored
-    debugPrint('Profile Fetch - Name: $name, ID: $id, Role: $role');
-
-    return {
-      'name': name,
-      'id': id,
-      'role': role,
-    };
-  }
 
   Widget _profileHeader(String name, String id, String role) {
     return Center(
@@ -418,53 +448,201 @@ class _ProfileViewState extends State<ProfileView> {
     String value, {
     bool edit = false,
     bool highlight = false,
+    VoidCallback? onTap,
   }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: R.w(16),
-        vertical: R.h(14),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: R.w(40),
-            height: R.w(40),
-            decoration: BoxDecoration(
-              color: AppColors.scaffoldBg,
-              borderRadius: BorderRadius.circular(R.r(12)),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: R.w(16),
+          vertical: R.h(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: R.w(40),
+              height: R.w(40),
+              decoration: BoxDecoration(
+                color: AppColors.scaffoldBg,
+                borderRadius: BorderRadius.circular(R.r(12)),
+              ),
+              child: Icon(icon, color: AppColors.headingText),
             ),
-            child: Icon(icon, color: AppColors.headingText),
-          ),
-          SizedBox(width: R.w(12)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
+            SizedBox(width: R.w(12)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: R.sp(14), fontWeight: FontWeight.w600)),
+                  SizedBox(height: R.h(2)),
+                  Text(
+                    value,
                     style: TextStyle(
-                        fontSize: R.sp(14), fontWeight: FontWeight.w600)),
-                SizedBox(height: R.h(2)),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: R.sp(13),
-                    color:
-                        highlight ? AppColors.primaryGreen : AppColors.bodyText,
+                      fontSize: R.sp(13),
+                      color: highlight
+                          ? AppColors.primaryGreen
+                          : AppColors.bodyText,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            Icon(
+              edit ? RemixIcons.pencil_line : Icons.chevron_right,
+              color: AppColors.bodyText,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditPhoneDialog() {
+    final viewModel = context.read<ProfileViewModel>();
+    final controller = TextEditingController(text: viewModel.profile?.mobile);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Phone Number'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(
+            labelText: 'Phone Number',
+            hintText: 'Enter new phone number',
           ),
-          Icon(
-            edit ? RemixIcons.pencil_line : Icons.chevron_right,
-            color: AppColors.bodyText,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final success = await viewModel.updatePhone(controller.text);
+              if (mounted) {
+                Navigator.pop(context);
+                if (success) {
+                  CustomSnackBar.showSuccess(
+                      context, 'Phone updated successfully');
+                } else {
+                  CustomSnackBar.showError(
+                      context, viewModel.error ?? 'Failed to update phone');
+                }
+              }
+            },
+            child: const Text('Update'),
           ),
         ],
       ),
     );
   }
 
-  // ================= LOGOUT =================
+  void _showEditEmailDialog() {
+    final viewModel = context.read<ProfileViewModel>();
+    final controller = TextEditingController(text: viewModel.profile?.email);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Email Address'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: 'Email Address',
+            hintText: 'Enter new email address',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final success = await viewModel.updateEmail(controller.text);
+              if (mounted) {
+                Navigator.pop(context);
+                if (success) {
+                  CustomSnackBar.showSuccess(
+                      context, 'Email updated successfully');
+                } else {
+                  CustomSnackBar.showError(
+                      context, viewModel.error ?? 'Failed to update email');
+                }
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditVehicleDialog() {
+    final viewModel = context.read<ProfileViewModel>();
+    final typeController =
+        TextEditingController(text: viewModel.profile?.vehicleType);
+    final numberController =
+        TextEditingController(text: viewModel.profile?.vehicleNumber);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Vehicle Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: typeController,
+              decoration: const InputDecoration(
+                labelText: 'Vehicle Type',
+                hintText: 'e.g. Scooter, Bike',
+              ),
+            ),
+            SizedBox(height: R.h(12)),
+            TextField(
+              controller: numberController,
+              decoration: const InputDecoration(
+                labelText: 'Vehicle Number',
+                hintText: 'e.g. MH-12-AB-1234',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final success = await viewModel.updateVehicle(
+                typeController.text,
+                numberController.text,
+              );
+              if (mounted) {
+                Navigator.pop(context);
+                if (success) {
+                  CustomSnackBar.showSuccess(
+                      context, 'Vehicle details updated successfully');
+                } else {
+                  CustomSnackBar.showError(
+                      context, viewModel.error ?? 'Failed to update vehicle');
+                }
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ================= LOGOUT =================
   Future<void> _handleLogout() async {
     if (_isLoggingOut) return;

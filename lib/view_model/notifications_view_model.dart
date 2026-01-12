@@ -13,6 +13,13 @@ class NotificationsViewModel extends ChangeNotifier {
   int _currentPage = 1;
   bool _hasMore = false;
   String? _error;
+  Map<String, bool> _settings = {
+    'new_order_alerts': true,
+    'delivery_updates': true,
+    'chat_messages': true,
+    'promotional_offers': false,
+    'app_updates': true,
+  };
 
   // Getters
   List<NotificationModel> get notifications => _notifications;
@@ -20,6 +27,7 @@ class NotificationsViewModel extends ChangeNotifier {
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
   String? get error => _error;
+  Map<String, bool> get settings => _settings;
 
   Future<String?> get _authToken async {
     final prefs = await SharedPreferences.getInstance();
@@ -109,6 +117,45 @@ class NotificationsViewModel extends ChangeNotifier {
       await _apiService.markNotificationAsRead(token, notificationId);
     } catch (e) {
       debugPrint('Error marking as read: $e');
+    }
+  }
+
+  Future<void> fetchSettings() async {
+    try {
+      final token = await _authToken;
+      if (token == null) return;
+
+      final response = await _apiService.getNotificationSettings(token);
+      if (response['status'] == true && response['data'] != null) {
+        final data = response['data'] as Map<String, dynamic>;
+        _settings = {
+          'new_order_alerts': data['new_order_alerts'] ?? true,
+          'delivery_updates': data['delivery_updates'] ?? true,
+          'chat_messages': data['chat_messages'] ?? true,
+          'promotional_offers': data['promotional_offers'] ?? false,
+          'app_updates': data['app_updates'] ?? true,
+        };
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error fetching settings: $e');
+    }
+  }
+
+  Future<void> updateSetting(String key, bool value) async {
+    final originalValue = _settings[key];
+    _settings[key] = value;
+    notifyListeners();
+
+    try {
+      final token = await _authToken;
+      if (token == null) return;
+
+      await _apiService.updateNotificationSettings(token, {key: value});
+    } catch (e) {
+      _settings[key] = originalValue ?? true;
+      notifyListeners();
+      debugPrint('Error updating setting: $e');
     }
   }
 }

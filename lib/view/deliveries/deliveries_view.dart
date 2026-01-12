@@ -198,16 +198,47 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(color: Colors.red))),
                       ),
-                    SizedBox(height: R.h(22)),
+                    SizedBox(height: R.h(12)),
                     if (isLoading && orders.isEmpty)
                       const ListShimmer(count: 6)
                     else if (orders.isEmpty)
-                      Padding(
-                        padding: EdgeInsets.all(R.h(20)),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.4,
                         child: Center(
-                            child: Text(viewModel.isSearching
-                                ? 'No results found'
-                                : 'No orders found')),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                viewModel.isSearching
+                                    ? RemixIcons.search_line
+                                    : RemixIcons.inbox_line,
+                                size: R.sp(60),
+                                color: AppColors.grey.withValues(alpha: 0.3),
+                              ),
+                              SizedBox(height: R.h(16)),
+                              Text(
+                                viewModel.isSearching
+                                    ? 'No results found'
+                                    : 'No orders found',
+                                style: TextStyle(
+                                  fontSize: R.sp(16),
+                                  color: AppColors.bodyText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (viewModel.isSearching) ...[
+                                SizedBox(height: R.h(8)),
+                                Text(
+                                  'Try a different order ID or customer name',
+                                  style: TextStyle(
+                                    fontSize: R.sp(14),
+                                    color: AppColors.grey,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       )
                     else if (_selectedStatus == 'Pending' &&
                         !viewModel.isSearching) ...[
@@ -277,29 +308,43 @@ class _DeliveriesViewState extends State<DeliveriesView> {
       padding: EdgeInsets.symmetric(horizontal: R.w(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(28)),
+        borderRadius: BorderRadius.circular(R.r(16)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(RemixIcons.search_line,
-              color: AppColors.bodyText, size: R.sp(20)),
-          SizedBox(width: R.w(10)),
+          Icon(RemixIcons.search_2_line,
+              color: AppColors.grey.withValues(alpha: 0.6), size: R.sp(22)),
+          SizedBox(width: R.w(12)),
           Expanded(
             child: TextField(
               controller: _searchController,
+              cursorColor: AppColors.primaryGreen,
               style: TextStyle(
-                fontSize: R.sp(14),
-                color: Colors.black,
+                fontSize: R.sp(15),
+                color: AppColors.headingText,
+                fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
                 hintText: 'Search Order ID, Name',
                 hintStyle: TextStyle(
-                  fontSize: R.sp(14),
-                  color: Colors.grey,
+                  fontSize: R.sp(15),
+                  color: AppColors.grey.withValues(alpha: 0.5),
+                  fontWeight: FontWeight.w400,
                 ),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.symmetric(vertical: R.h(12)),
               ),
               onChanged: (value) {
                 if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -348,13 +393,25 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   }
 
   Widget _searchHeader(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: R.w(16)),
-      child: Row(
-        children: [
-          Expanded(child: _searchBar(context)),
-          SizedBox(width: R.w(12)),
-          IconButton(
+    return Row(
+      children: [
+        Expanded(child: _searchBar(context)),
+        SizedBox(width: R.w(12)),
+        Container(
+          height: R.h(54),
+          width: R.h(54),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(R.r(16)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: IconButton(
             icon: Icon(
               RemixIcons.equalizer_line,
               color: AppColors.headingText,
@@ -369,8 +426,8 @@ class _DeliveriesViewState extends State<DeliveriesView> {
               );
             },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1006,7 +1063,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(R.w(14)),
+      padding: EdgeInsets.all(R.w(12)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(22)),
@@ -1021,35 +1078,31 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                height: R.w(32),
-                width: R.w(32),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(R.r(8)),
-                ),
-                child: Icon(icon, color: iconColor, size: R.sp(16)),
-              ),
-              SizedBox(width: R.w(8)),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: const Color(0xff16a34a),
-                    fontSize: R.sp(11),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          Container(
+            height: R.w(32),
+            width: R.w(32),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(R.r(8)),
+            ),
+            child: Icon(icon, color: iconColor, size: R.sp(16)),
           ),
-          SizedBox(height: R.h(16)),
+          SizedBox(height: R.h(10)),
+          Text(
+            title,
+            style: TextStyle(
+              color: textColor,
+              fontSize: R.sp(11),
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: R.h(8)),
           Text(
             value,
             style: TextStyle(
-              fontSize: R.sp(24),
+              fontSize: R.sp(22),
               fontWeight: FontWeight.w900,
               color: AppColors.headingText,
             ),

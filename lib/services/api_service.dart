@@ -7,6 +7,7 @@ import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/user_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 
 class ApiService {
@@ -212,6 +213,75 @@ class ApiService {
             'Accept': 'application/json',
             'Authorization': 'Bearer $token',
           },
+        ));
+    return response;
+  }
+
+  Future<ProfileResponse> getProfile(String token) async {
+    final uri = Uri.parse(AppUrls.profile);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+    return ProfileResponse.fromJson(response);
+  }
+
+  Future<Map<String, dynamic>> updateProfilePhone(
+      String token, String phone) async {
+    final uri = Uri.parse(AppUrls.updateProfilePhone);
+    log('API Request: PUT $uri');
+
+    final response = await _processRequest(() => http.put(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'phone': phone}),
+        ));
+    return response;
+  }
+
+  Future<Map<String, dynamic>> updateProfileEmail(
+      String token, String email) async {
+    final uri = Uri.parse(AppUrls.updateProfileEmail);
+    log('API Request: PUT $uri');
+
+    final response = await _processRequest(() => http.put(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'email': email}),
+        ));
+    return response;
+  }
+
+  Future<Map<String, dynamic>> updateProfileVehicle(
+      String token, String vehicleType, String vehicleNumber) async {
+    final uri = Uri.parse(AppUrls.updateProfileVehicle);
+    log('API Request: PUT $uri');
+
+    final response = await _processRequest(() => http.put(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'vehicle_type': vehicleType,
+            'vehicle_number': vehicleNumber,
+          }),
         ));
     return response;
   }
@@ -662,6 +732,42 @@ class ApiService {
     if (response['status'] != true) {
       throw ValidationException(
           response['message'] ?? 'Failed to mark notification as read');
+    }
+  }
+
+  Future<Map<String, dynamic>> getNotificationSettings(String token) async {
+    final uri = Uri.parse(AppUrls.notificationSettings);
+    log('API Request: GET $uri');
+
+    return await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+  }
+
+  Future<void> updateNotificationSettings(
+      String token, Map<String, dynamic> settings) async {
+    final uri = Uri.parse(AppUrls.notificationSettings);
+    log('API Request: POST $uri');
+    log('API Body: ${jsonEncode(settings)}');
+
+    final response = await _processRequest(() => http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(settings),
+        ));
+
+    if (response['status'] != true) {
+      throw ValidationException(
+          response['message'] ?? 'Failed to update notification settings');
     }
   }
 }

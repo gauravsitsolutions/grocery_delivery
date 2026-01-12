@@ -5,6 +5,8 @@ import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification_settings/notification_settings_view.dart';
 import 'package:intl/intl.dart';
+import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
+import 'package:samrudhi_delivery_agent_app/widget/notification_shimmer.dart';
 import '../../../constant/app_color.dart';
 import '../../../utils/responsive.dart';
 
@@ -19,6 +21,7 @@ class _NotificationsViewState extends State<NotificationsView> {
   int selectedTab = 0;
   final tabs = ['All', 'Orders', 'Updates', 'System'];
   final ScrollController _scrollController = ScrollController();
+  final Set<String> _animatingIds = {};
 
   @override
   void initState() {
@@ -71,7 +74,7 @@ class _NotificationsViewState extends State<NotificationsView> {
 
   Widget _buildContent(NotificationsViewModel viewModel) {
     if (viewModel.isLoading && viewModel.notifications.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const NotificationListShimmer();
     }
 
     if (viewModel.error != null && viewModel.notifications.isEmpty) {
@@ -92,27 +95,31 @@ class _NotificationsViewState extends State<NotificationsView> {
     final notifications = viewModel.getNotificationsByType(tabs[selectedTab]);
 
     if (notifications.isEmpty) {
-      return ListView(
-        children: [
-          SizedBox(height: R.h(100)),
-          Center(
-            child: Column(
-              children: [
-                Icon(RemixIcons.notification_off_line,
-                    size: R.sp(60), color: AppColors.grey),
-                SizedBox(height: R.h(16)),
-                Text(
-                  'No notifications found',
-                  style: TextStyle(
-                    fontSize: R.sp(16),
-                    color: AppColors.bodyText,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(RemixIcons.notification_off_line,
+                size: R.sp(60), color: AppColors.grey.withValues(alpha: 0.5)),
+            SizedBox(height: R.h(16)),
+            Text(
+              'No notifications found',
+              style: TextStyle(
+                fontSize: R.sp(16),
+                color: AppColors.bodyText,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: R.h(8)),
+            Text(
+              'Your notifications will appear here',
+              style: TextStyle(
+                fontSize: R.sp(14),
+                color: AppColors.bodyText.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -129,7 +136,11 @@ class _NotificationsViewState extends State<NotificationsView> {
           SizedBox(height: R.h(12)),
           ...unread.map((n) => Padding(
                 padding: EdgeInsets.only(bottom: R.h(12)),
-                child: _mapNotificationToCard(n),
+                child: AnimatedOrderCard(
+                  key: ValueKey(n.id),
+                  visible: !_animatingIds.contains(n.id),
+                  child: _mapNotificationToCard(n),
+                ),
               )),
           SizedBox(height: R.h(12)),
         ],
@@ -138,13 +149,16 @@ class _NotificationsViewState extends State<NotificationsView> {
           SizedBox(height: R.h(12)),
           ...read.map((n) => Padding(
                 padding: EdgeInsets.only(bottom: R.h(12)),
-                child: _mapNotificationToCard(n),
+                child: AnimatedOrderCard(
+                  key: ValueKey(n.id),
+                  child: _mapNotificationToCard(n),
+                ),
               )),
         ],
         if (viewModel.isLoadingMore)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
+            child: NotificationShimmer(),
           ),
         SizedBox(height: R.h(40)),
       ],
@@ -179,8 +193,22 @@ class _NotificationsViewState extends State<NotificationsView> {
       time: _formatTime(notification.createdAt),
       message: notification.message,
       unread: !notification.isRead,
-      onTap: () {
-        context.read<NotificationsViewModel>().markAsRead(notification.id);
+      onTap: () async {
+        if (_animatingIds.contains(notification.id)) return;
+
+        setState(() {
+          _animatingIds.add(notification.id);
+        });
+
+        // Wait for animation
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        if (mounted) {
+          context.read<NotificationsViewModel>().markAsRead(notification.id);
+          setState(() {
+            _animatingIds.remove(notification.id);
+          });
+        }
       },
     );
   }

@@ -6,6 +6,7 @@ import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/auth_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/profile_view_model.dart';
 import 'res/theme/app_theme.dart';
 
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
@@ -18,6 +19,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => OrderListViewModel()),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
+        ChangeNotifierProvider(create: (_) => ProfileViewModel()),
       ],
       child: const MyApp(),
     ),
