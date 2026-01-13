@@ -5,12 +5,13 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 
 class CustomSnackBar {
   static void showSuccess(BuildContext context, String message,
-      {String title = 'Success'}) {
+      {String title = 'Success', Color? color}) {
     _show(
       context,
       title: title,
       message: message,
       contentType: ContentType.success,
+      color: color,
     );
   }
 
@@ -69,6 +70,7 @@ class CustomSnackBar {
     required String title,
     required String message,
     required ContentType contentType,
+    Color? color,
   }) {
     if (!context.mounted) return;
 
@@ -82,8 +84,10 @@ class CustomSnackBar {
         title: title,
         message: message,
         contentType: contentType,
-        color:
-            contentType == ContentType.success ? AppColors.primaryGreen : null,
+        color: color ??
+            (contentType == ContentType.success
+                ? AppColors.primaryGreen
+                : null),
       ),
     );
 

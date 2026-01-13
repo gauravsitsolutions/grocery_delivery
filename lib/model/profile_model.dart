@@ -60,13 +60,19 @@ class ProfileModel {
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    // Check if 'user' object exists for nested data
+    final user = json['user'];
+
     return ProfileModel(
-      id: json['id'],
-      userId: json['user_id'],
-      name: json['name'],
-      mobile: json['mobile'],
-      email: json['email'],
-      profilePhoto: json['profile_photo'],
+      id: json['agent_id'] ?? json['id'],
+      userId: user != null ? user['id'] : json['user_id'],
+      name: user != null
+          ? '${user['first_name'] ?? ''} ${user['last_name'] ?? ''}'.trim()
+          : json['name'],
+      mobile: user != null ? user['mobile'] : json['mobile'],
+      email: user != null ? user['email'] : json['email'],
+      profilePhoto:
+          user != null ? user['profile_photo'] : json['profile_photo'],
       shopId: json['shop_id'],
       dob: json['dob'],
       gender: json['gender'],

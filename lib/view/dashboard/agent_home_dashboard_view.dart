@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:lottie/lottie.dart';
+// import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart'; // Added shimmer import
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
@@ -1667,14 +1667,55 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   }
 
   Future<void> _showAcceptSuccessDialog(Order order) async {
+    // Auto-close dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
+
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _AnimationDialog(
-        lottieAsset: 'assets/lottie/accept_order.json',
-        title: 'Order Accepted!',
-        subtitle: 'Redirecting to pickup task...',
-        titleColor: AppColors.primaryGreen,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 10,
+        insetPadding: EdgeInsets.symmetric(horizontal: R.w(40)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(R.r(20)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(R.w(30)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check_circle_outline_rounded,
+                color: AppColors.primaryGreen,
+                size: R.w(100),
+              ),
+              SizedBox(height: R.h(20)),
+              Text(
+                'Order Accepted!',
+                style: TextStyle(
+                  fontSize: R.sp(22),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+              SizedBox(height: R.h(8)),
+              Text(
+                'Redirecting to pickup task...',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: R.sp(14),
+                  color: AppColors.bodyText,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
 
@@ -1699,121 +1740,5 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       ),
     );
     _fetchOrders(refresh: false);
-  }
-}
-
-class _AnimationDialog extends StatefulWidget {
-  final String lottieAsset;
-  final String title;
-  final String? subtitle;
-  final Color titleColor;
-
-  const _AnimationDialog({
-    required this.lottieAsset,
-    required this.title,
-    this.subtitle,
-    required this.titleColor,
-  });
-
-  @override
-  State<_AnimationDialog> createState() => _AnimationDialogState();
-}
-
-class _AnimationDialogState extends State<_AnimationDialog>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  bool _isClosed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this);
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _closeDialog();
-      }
-    });
-
-    // Fallback timer to ensure dialog closes
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        _closeDialog();
-      }
-    });
-  }
-
-  void _closeDialog() {
-    if (_isClosed || !mounted) return;
-    _isClosed = true;
-    Navigator.of(context, rootNavigator: true).pop();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
-      elevation: 10,
-      insetPadding: EdgeInsets.symmetric(horizontal: R.w(40)),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(R.r(20)),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(R.w(30)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Lottie.asset(
-              widget.lottieAsset,
-              width: R.w(150),
-              height: R.w(150),
-              fit: BoxFit.contain,
-              repeat: false,
-              controller: _controller,
-              onLoaded: (composition) {
-                _controller
-                  ..duration = composition.duration
-                  ..forward();
-              },
-              errorBuilder: (context, error, stackTrace) {
-                // Determine icon based on title color (Success is Green, Error is Red)
-                final isSuccess = widget.titleColor == AppColors.primaryGreen;
-                return Icon(
-                  isSuccess ? Icons.check_circle : Icons.cancel,
-                  color: widget.titleColor,
-                  size: R.w(80),
-                );
-              },
-            ),
-            SizedBox(height: R.h(20)),
-            Text(
-              widget.title,
-              style: TextStyle(
-                fontSize: R.sp(22),
-                fontWeight: FontWeight.w700,
-                color: widget.titleColor,
-              ),
-            ),
-            if (widget.subtitle != null) ...[
-              SizedBox(height: R.h(8)),
-              Text(
-                widget.subtitle!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: R.sp(14),
-                  color: AppColors.bodyText,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 }

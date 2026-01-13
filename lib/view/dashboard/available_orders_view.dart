@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:lottie/lottie.dart';
+// import 'package:lottie/lottie.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
@@ -109,12 +109,10 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Lottie.asset(
-                  'assets/lottie/accept_order.json',
-                  width: R.w(150),
-                  height: R.w(150),
-                  fit: BoxFit.contain,
-                  repeat: false,
+                Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: AppColors.primaryGreen,
+                  size: R.w(100),
                 ),
                 SizedBox(height: R.h(20)),
                 Text(
