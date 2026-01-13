@@ -523,7 +523,7 @@ class _ProfileViewState extends State<ProfileView> {
           ElevatedButton(
             onPressed: () async {
               final success = await viewModel.updatePhone(controller.text);
-              if (mounted) {
+              if (context.mounted) {
                 Navigator.pop(context);
                 if (success) {
                   CustomSnackBar.showSuccess(
@@ -565,7 +565,7 @@ class _ProfileViewState extends State<ProfileView> {
           ElevatedButton(
             onPressed: () async {
               final success = await viewModel.updateEmail(controller.text);
-              if (mounted) {
+              if (context.mounted) {
                 Navigator.pop(context);
                 if (success) {
                   CustomSnackBar.showSuccess(
@@ -625,7 +625,7 @@ class _ProfileViewState extends State<ProfileView> {
                 typeController.text,
                 numberController.text,
               );
-              if (mounted) {
+              if (context.mounted) {
                 Navigator.pop(context);
                 if (success) {
                   CustomSnackBar.showSuccess(

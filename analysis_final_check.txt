@@ -1,0 +1,33 @@
+Analyzing samrudhi_delivery_agent_app...                        
+
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/auth/forgot_password/otp_verification_view.dart:206:70 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/auth/forgot_password/otp_verification_view.dart:212:47 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/auth/forgot_password/otp_verification_view.dart:217:45 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/auth/forgot_password/otp_verification_view.dart:294:37 • curly_braces_in_flow_control_structures
+warning • The value of the field '_userProfile' isn't used • lib/view/dashboard/agent_home_dashboard_view.dart:63:17 • unused_field
+   info • Statements in an if should be enclosed in a block • lib/view/dashboard/agent_home_dashboard_view.dart:1404:51 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/view/dashboard/agent_home_dashboard_view.dart:1453:57 • use_build_context_synchronously
+warning • Unused import: 'package:samrudhi_delivery_agent_app/constant/app_color.dart' • lib/view/order_details/order_cancelled_details_view.dart:4:8 • unused_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:77:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:97:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:111:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:135:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:154:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:76:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:98:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:110:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:136:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:177:51 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/view/order_details/order_delivery_screen.dart:26:7 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/view/order_details/order_pickup_screen.dart:538:41 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/widgets/navigation_instruction_card.dart:40:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/pickup/pickup_task_view.dart:141:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/pickup/pickup_task_view.dart:156:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/pickup/pickup_task_view.dart:197:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/pickup/pickup_task_view.dart:374:57 • deprecated_member_use
+   info • Unnecessary use of 'toList' in a spread • lib/view/pickup/pickup_task_view.dart:411:12 • unnecessary_to_list_in_spreads
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/verification/delivery_verification_view.dart:111:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/verification/delivery_verification_view.dart:183:54 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/view/verification/delivery_verification_view.dart:224:27 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/verification/delivery_verification_view.dart:308:57 • deprecated_member_use
+

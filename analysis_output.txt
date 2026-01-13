@@ -1,0 +1,217 @@
+Analyzing samrudhi_delivery_agent_app...                        
+
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/auth/forgot_password/otp_verification_view.dart:206:70 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/auth/forgot_password/otp_verification_view.dart:212:47 • use_build_context_synchronously
+   info • Statements in an if should be enclosed in a block • lib/auth/forgot_password/otp_verification_view.dart:217:45 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/auth/forgot_password/otp_verification_view.dart:294:37 • curly_braces_in_flow_control_structures
+warning • The value of the field '_userProfile' isn't used • lib/view/dashboard/agent_home_dashboard_view.dart:62:17 • unused_field
+  error • The named parameter 'margin' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:324:7 • undefined_named_parameter
+  error • The named parameter 'clipBehavior' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:336:7 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:345:15 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:346:15 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:354:19 • undefined_named_parameter
+  error • The named parameter 'color' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:355:19 • undefined_named_parameter
+  error • The element type '(dynamic,)' can't be assigned to the list type 'Widget' • lib/view/dashboard/agent_home_dashboard_view.dart:361:11 • list_element_type_not_assignable
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:412:26 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:455:34 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:467:26 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:592:26 • undefined_named_parameter
+  error • The named parameter 'margin' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:633:7 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:653:17 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:654:17 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:683:30 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:695:27 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:696:27 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:736:20 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:797:21 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:798:21 • undefined_named_parameter
+  error • The named parameter 'color' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:816:50 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:846:34 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:876:24 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:900:36 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:930:24 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:935:17 • undefined_named_parameter
+  error • The element type '(dynamic,)' can't be assigned to the list type 'Widget' • lib/view/dashboard/agent_home_dashboard_view.dart:1068:17 • list_element_type_not_assignable
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1089:33 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1090:33 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1165:25 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1166:25 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1194:26 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1254:44 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1256:44 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1267:46 • undefined_named_parameter
+  error • The named parameter 'key' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1294:55 • undefined_named_parameter
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1296:55 • undefined_named_parameter
+  error • The named parameter 'alignment' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1301:55 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1324:42 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1343:44 • undefined_named_parameter
+  error • The argument type 'List<(dynamic,)>' can't be assigned to the parameter type 'List<Widget>'.  • lib/view/dashboard/agent_home_dashboard_view.dart:1346:41 • argument_type_not_assignable
+  error • The element type '(dynamic,)' can't be assigned to the list type 'Widget' • lib/view/dashboard/agent_home_dashboard_view.dart:1358:37 • list_element_type_not_assignable
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1368:51 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1369:51 • undefined_named_parameter
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1377:44 • undefined_named_parameter
+   info • Statements in an if should be enclosed in a block • lib/view/dashboard/agent_home_dashboard_view.dart:1397:49 • curly_braces_in_flow_control_structures
+  error • Too many positional arguments: 0 expected, but 2 found • lib/view/dashboard/agent_home_dashboard_view.dart:1422:47 • extra_positional_arguments_could_be_named
+  error • Expected to find ',' • lib/view/dashboard/agent_home_dashboard_view.dart:1422:51 • expected_token
+  error • Undefined name 'successCount' • lib/view/dashboard/agent_home_dashboard_view.dart:1422:51 • undefined_identifier
+  error • Expected to find ')' • lib/view/dashboard/agent_home_dashboard_view.dart:1422:67 • expected_token
+  error • Expected to find ']' • lib/view/dashboard/agent_home_dashboard_view.dart:1422:67 • expected_token
+warning • Dead code • lib/view/dashboard/agent_home_dashboard_view.dart:1424:47 • dead_code
+  error • The await expression can only be used in an async function • lib/view/dashboard/agent_home_dashboard_view.dart:1430:51 • await_in_wrong_context
+  error • The await expression can only be used in an async function • lib/view/dashboard/agent_home_dashboard_view.dart:1436:55 • await_in_wrong_context
+  error • The await expression can only be used in an async function • lib/view/dashboard/agent_home_dashboard_view.dart:1442:53 • await_in_wrong_context
+  error • Undefined name 'successCount' • lib/view/dashboard/agent_home_dashboard_view.dart:1453:53 • undefined_identifier
+  error • Undefined name 'successCount' • lib/view/dashboard/agent_home_dashboard_view.dart:1461:53 • undefined_identifier
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/view/dashboard/agent_home_dashboard_view.dart:1463:55 • use_build_context_synchronously
+  error • Undefined name 'successCount' • lib/view/dashboard/agent_home_dashboard_view.dart:1464:66 • undefined_identifier
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1468:46 • expected_class_member
+   info • An uninitialized field should have an explicit type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1469:45 • prefer_typing_uninitialized_variables
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1469:45 • strict_top_level_inference
+  error • Expected to find ';' • lib/view/dashboard/agent_home_dashboard_view.dart:1469:45 • expected_token
+  error • Variables must be declared using the keywords 'const', 'final', 'var' or a type name • lib/view/dashboard/agent_home_dashboard_view.dart:1469:45 • missing_const_final_var_or_type
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1469:50 • expected_class_member
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1469:52 • strict_top_level_inference
+   info • The variable name 'Container' isn't a lowerCamelCase identifier • lib/view/dashboard/agent_home_dashboard_view.dart:1469:52 • non_constant_identifier_names
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1470:47 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1470:54 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1470:54 • obsolete_colon_for_default_value
+  error • The default value of an optional parameter must be constant • lib/view/dashboard/agent_home_dashboard_view.dart:1470:56 • non_constant_default_value
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1473:47 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1473:57 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1473:57 • obsolete_colon_for_default_value
+  error • The default value of an optional parameter must be constant • lib/view/dashboard/agent_home_dashboard_view.dart:1473:59 • non_constant_default_value
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1480:47 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1480:52 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1480:52 • obsolete_colon_for_default_value
+  error • The default value of an optional parameter must be constant • lib/view/dashboard/agent_home_dashboard_view.dart:1480:54 • non_constant_default_value
+  error • A function body must be provided • lib/view/dashboard/agent_home_dashboard_view.dart:1488:46 • missing_function_body
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1488:46 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1489:43 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1489:44 • expected_class_member
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1490:43 • strict_top_level_inference
+   info • The variable name 'SizedBox' isn't a lowerCamelCase identifier • lib/view/dashboard/agent_home_dashboard_view.dart:1490:43 • non_constant_identifier_names
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1490:52 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1490:57 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1490:57 • obsolete_colon_for_default_value
+  error • Methods can't be invoked in constant expressions • lib/view/dashboard/agent_home_dashboard_view.dart:1490:59 • const_eval_method_invocation
+  error • A function body must be provided • lib/view/dashboard/agent_home_dashboard_view.dart:1490:67 • missing_function_body
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1490:67 • expected_class_member
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1491:43 • strict_top_level_inference
+   info • The variable name 'GestureDetector' isn't a lowerCamelCase identifier • lib/view/dashboard/agent_home_dashboard_view.dart:1491:43 • non_constant_identifier_names
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1492:45 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1492:50 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1492:50 • obsolete_colon_for_default_value
+  error • The default value of an optional parameter must be constant • lib/view/dashboard/agent_home_dashboard_view.dart:1492:52 • non_constant_default_value
+  error • The name 'AvailableOrdersView' isn't a class • lib/view/dashboard/agent_home_dashboard_view.dart:1497:61 • creation_with_non_type
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1501:45 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1501:50 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1501:50 • obsolete_colon_for_default_value
+  error • The default value of an optional parameter must be constant • lib/view/dashboard/agent_home_dashboard_view.dart:1501:52 • non_constant_default_value
+  error • A function body must be provided • lib/view/dashboard/agent_home_dashboard_view.dart:1509:44 • missing_function_body
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1509:44 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1510:41 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1510:42 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1511:39 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1511:40 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1512:37 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1512:38 • expected_class_member
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1513:37 • strict_top_level_inference
+   info • The variable name 'SizedBox' isn't a lowerCamelCase identifier • lib/view/dashboard/agent_home_dashboard_view.dart:1513:37 • non_constant_identifier_names
+  error • The name 'SizedBox' is already defined • lib/view/dashboard/agent_home_dashboard_view.dart:1513:37 • duplicate_definition
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1513:46 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1513:52 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1513:52 • obsolete_colon_for_default_value
+  error • Methods can't be invoked in constant expressions • lib/view/dashboard/agent_home_dashboard_view.dart:1513:54 • const_eval_method_invocation
+  error • A function body must be provided • lib/view/dashboard/agent_home_dashboard_view.dart:1513:62 • missing_function_body
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1513:62 • expected_class_member
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1515:37 • strict_top_level_inference
+   info • The variable name 'Builder' isn't a lowerCamelCase identifier • lib/view/dashboard/agent_home_dashboard_view.dart:1515:37 • non_constant_identifier_names
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1515:45 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1515:52 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1515:52 • obsolete_colon_for_default_value
+  error • The default value of an optional parameter must be constant • lib/view/dashboard/agent_home_dashboard_view.dart:1515:54 • non_constant_default_value
+  error • The named parameter 'width' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1520:45 • undefined_named_parameter
+  error • The named parameter 'alignment' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1523:45 • undefined_named_parameter
+  error • A function body must be provided • lib/view/dashboard/agent_home_dashboard_view.dart:1537:39 • missing_function_body
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1537:39 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1538:37 • expected_class_member
+  error • _hasMoreAvailable isn't a type • lib/view/dashboard/agent_home_dashboard_view.dart:1538:41 • not_a_type
+  error • A record type with exactly one positional field requires a trailing comma • lib/view/dashboard/agent_home_dashboard_view.dart:1538:58 • record_type_one_positional_no_trailing_comma
+   info • The variable name 'Padding' isn't a lowerCamelCase identifier • lib/view/dashboard/agent_home_dashboard_view.dart:1539:39 • non_constant_identifier_names
+  error • The body might complete normally, causing 'null' to be returned, but the return type, '(dynamic,)', is a potentially non-nullable type • lib/view/dashboard/agent_home_dashboard_view.dart:1539:39 • body_might_complete_normally
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1540:41 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1540:48 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1540:48 • obsolete_colon_for_default_value
+  error • The default value of an optional parameter must be constant • lib/view/dashboard/agent_home_dashboard_view.dart:1540:50 • non_constant_default_value
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1541:41 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1541:46 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1541:46 • obsolete_colon_for_default_value
+  error • The default value of an optional parameter must be constant • lib/view/dashboard/agent_home_dashboard_view.dart:1541:48 • non_constant_default_value
+  error • The named parameter 'height' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1549:53 • undefined_named_parameter
+  error • The named parameter 'child' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1550:53 • undefined_named_parameter
+  error • A function body must be provided • lib/view/dashboard/agent_home_dashboard_view.dart:1557:40 • missing_function_body
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1557:40 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1558:35 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1558:36 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1559:33 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1559:34 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1560:31 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1560:32 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1561:29 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1561:30 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1562:21 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1562:22 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1563:19 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1563:20 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1564:17 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1564:18 • expected_class_member
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1565:17 • strict_top_level_inference
+   info • The variable name 'SizedBox' isn't a lowerCamelCase identifier • lib/view/dashboard/agent_home_dashboard_view.dart:1565:17 • non_constant_identifier_names
+  error • The name 'SizedBox' is already defined • lib/view/dashboard/agent_home_dashboard_view.dart:1565:17 • duplicate_definition
+   info • Missing type annotation • lib/view/dashboard/agent_home_dashboard_view.dart:1565:26 • strict_top_level_inference
+  error • Named parameters must be enclosed in curly braces ('{' and '}') • lib/view/dashboard/agent_home_dashboard_view.dart:1565:32 • named_parameter_outside_group
+  error • Using a colon as the separator before a default value is no longer supported • lib/view/dashboard/agent_home_dashboard_view.dart:1565:32 • obsolete_colon_for_default_value
+  error • Methods can't be invoked in constant expressions • lib/view/dashboard/agent_home_dashboard_view.dart:1565:34 • const_eval_method_invocation
+  error • A function body must be provided • lib/view/dashboard/agent_home_dashboard_view.dart:1565:42 • missing_function_body
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1565:42 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1566:15 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1566:16 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1567:13 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1567:14 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1568:11 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1568:12 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1569:9 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1569:10 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1570:7 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1570:8 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1571:5 • expected_class_member
+  error • Expected a class member • lib/view/dashboard/agent_home_dashboard_view.dart:1571:6 • expected_class_member
+  error • Undefined name 'context' • lib/view/dashboard/agent_home_dashboard_view.dart:1576:16 • undefined_identifier
+  error • The function '_fetchOrders' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1585:5 • undefined_function
+  error • Undefined name 'context' • lib/view/dashboard/agent_home_dashboard_view.dart:1590:16 • undefined_identifier
+  error • The function '_fetchOrders' isn't defined • lib/view/dashboard/agent_home_dashboard_view.dart:1599:5 • undefined_function
+  error • Expected a method, getter, setter or operator declaration • lib/view/dashboard/agent_home_dashboard_view.dart:1601:1 • expected_executable
+warning • Unused import: 'package:samrudhi_delivery_agent_app/constant/app_color.dart' • lib/view/order_details/order_cancelled_details_view.dart:4:8 • unused_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:77:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:97:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:111:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:135:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_cancelled_details_view.dart:154:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:76:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:98:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:110:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:136:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/order_delivered_details_view.dart:177:51 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/view/order_details/order_delivery_screen.dart:26:7 • curly_braces_in_flow_control_structures
+   info • Don't use 'BuildContext's across async gaps • lib/view/order_details/order_pickup_screen.dart:538:41 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/order_details/widgets/navigation_instruction_card.dart:40:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/pickup/pickup_task_view.dart:141:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/pickup/pickup_task_view.dart:156:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/pickup/pickup_task_view.dart:197:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/pickup/pickup_task_view.dart:374:57 • deprecated_member_use
+   info • Unnecessary use of 'toList' in a spread • lib/view/pickup/pickup_task_view.dart:411:12 • unnecessary_to_list_in_spreads
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/verification/delivery_verification_view.dart:111:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/verification/delivery_verification_view.dart:183:54 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/view/verification/delivery_verification_view.dart:224:27 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/view/verification/delivery_verification_view.dart:308:57 • deprecated_member_use
+

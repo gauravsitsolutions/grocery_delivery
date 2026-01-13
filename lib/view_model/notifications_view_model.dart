@@ -142,6 +142,50 @@ class NotificationsViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> markAllRead() async {
+    // Optimistic update
+    for (var i = 0; i < _notifications.length; i++) {
+      if (!_notifications[i].isRead) {
+        _notifications[i] = NotificationModel(
+          id: _notifications[i].id,
+          title: _notifications[i].title,
+          message: _notifications[i].message,
+          type: _notifications[i].type,
+          createdAt: _notifications[i].createdAt,
+          readAt: DateTime.now(),
+        );
+      }
+    }
+    notifyListeners();
+
+    try {
+      final token = await _authToken;
+      if (token != null) {
+        // await _apiService.markAllNotificationsAsRead(token);
+      }
+    } catch (e) {
+      // Revert or show error
+      debugPrint("Error marking all read: $e");
+    }
+  }
+
+  Future<void> clearAll() async {
+    final backup = List<NotificationModel>.from(_notifications);
+    _notifications.clear();
+    notifyListeners();
+
+    try {
+      final token = await _authToken;
+      if (token != null) {
+        // await _apiService.clearAllNotifications(token);
+      }
+    } catch (e) {
+      _notifications = backup;
+      notifyListeners();
+      debugPrint("Error clearing notifications: $e");
+    }
+  }
+
   Future<void> updateSetting(String key, bool value) async {
     final originalValue = _settings[key];
     _settings[key] = value;
