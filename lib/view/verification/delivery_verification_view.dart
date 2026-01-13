@@ -5,7 +5,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
-import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivered_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/delivery_success_view.dart';
 
 class DeliveryVerificationView extends StatefulWidget {
   final int orderId;
@@ -108,7 +108,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
@@ -286,7 +286,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => OrderDeliveredDetailsView(
+                                builder: (context) => DeliverySuccessView(
                                   order: viewModel.order!,
                                 ),
                               ),

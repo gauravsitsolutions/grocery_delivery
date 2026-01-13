@@ -5,8 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
-
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class OrderViewModel extends ChangeNotifier {
   final int orderId;
@@ -60,8 +59,7 @@ class OrderViewModel extends ChangeNotifier {
   bool isItemVerifying(int itemId) => _verifyingItems.contains(itemId);
 
   Future<String?> get _getToken async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return await SharedPrefsUtil.getToken();
   }
 
   Future<void> toggleItem(int itemId) async {
@@ -278,8 +276,6 @@ class OrderViewModel extends ChangeNotifier {
           if (apiStatus == 'accepted' || apiStatus == 'pending') {
             log('API returned stale status. forcing picked_up state.');
             // Force status to picked_up to ensure navigation
-            // We'd ideally clone the order with new status but for now handling the boolean is mostly enough
-            // _order = _order?.copyWith(status: 'picked_up'); // If copyWith exists
             _isPickupMode = false;
           } else {
             _isPickupMode = apiStatus == 'accepted' || apiStatus == 'pending';
@@ -331,7 +327,6 @@ class OrderViewModel extends ChangeNotifier {
           token, orderId, itemId, issueType, description);
 
       // Optionally mark item as "issue reported" locally if needed?
-      // For now just return true so UI can show success message
       return true;
     } catch (e) {
       _error = e is AppException ? e.message : e.toString();
@@ -352,7 +347,6 @@ class OrderViewModel extends ChangeNotifier {
 
       if (response['status'] == true || response['message'] != null) {
         // Assume cancellation successful
-        // Update order status locally if possible or fetch fresh data
         fetchOrderDetails();
         return true;
       }

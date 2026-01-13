@@ -18,6 +18,7 @@ class ProfileModel {
   final String? name;
   final String? mobile;
   final String? email;
+  final String? profilePhoto;
   final int? shopId;
   final String? dob;
   final String? gender;
@@ -40,6 +41,7 @@ class ProfileModel {
     this.name,
     this.mobile,
     this.email,
+    this.profilePhoto,
     this.shopId,
     this.dob,
     this.gender,
@@ -64,6 +66,7 @@ class ProfileModel {
       name: json['name'],
       mobile: json['mobile'],
       email: json['email'],
+      profilePhoto: json['profile_photo'],
       shopId: json['shop_id'],
       dob: json['dob'],
       gender: json['gender'],
@@ -89,6 +92,7 @@ class ProfileModel {
       'name': name,
       'mobile': mobile,
       'email': email,
+      'profile_photo': profilePhoto,
       'shop_id': shopId,
       'dob': dob,
       'gender': gender,

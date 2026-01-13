@@ -8,7 +8,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
@@ -36,7 +36,11 @@ class _PickupTaskViewState extends State<PickupTaskView> {
       _pickupProof != null;
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 50, // Compress image
+      maxWidth: 1024, // Resize if too large
+    );
     if (image != null) {
       setState(() {
         _pickupProof = File(image.path);
@@ -77,6 +81,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
 
   @override
   Widget build(BuildContext context) {
+    R.init(context); // Initialize Responsive Utils
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB), // Light gray background
       appBar: AppBar(
@@ -115,7 +120,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               left: R.w(16),
               right: R.w(16),
               top: R.h(16),
-              bottom: R.h(100), // Space for bottom button
+              bottom: R.h(120), // Increased space for bottom button
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +138,12 @@ class _PickupTaskViewState extends State<PickupTaskView> {
             left: 0,
             right: 0,
             child: Container(
-              padding: EdgeInsets.all(R.w(16)),
+              padding: EdgeInsets.fromLTRB(
+                R.w(16),
+                R.w(16),
+                R.w(16),
+                R.w(16) + MediaQuery.of(context).padding.bottom, // Safe Area
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -361,9 +371,9 @@ class _PickupTaskViewState extends State<PickupTaskView> {
             padding: EdgeInsets.only(bottom: R.h(12)),
             child: Theme(
               data: ThemeData(
-                  checkboxTheme: CheckboxThemeData(
+                  checkboxTheme: const CheckboxThemeData(
                 shape: CircleBorder(),
-                side: BorderSide(color: Colors.grey[300]!, width: 2),
+                side: BorderSide(color: Color(0xFFE5E7EB), width: 2),
               )),
               child: Container(
                 decoration: BoxDecoration(
@@ -495,8 +505,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     setState(() => _isLoading = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
       if (token == null) throw Exception('Authentication token not found');
 
       // 1. Upload Proof
@@ -518,7 +527,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
         screen: OrderDetailsView(
           orderId: widget.order.id,
           orderNumber: widget.order.orderNumber,
-          order: widget.order, // You might want to refresh order here ideally
+          // order: widget.order, // Don't pass stale order, let it fetch fresh data
         ),
         withNavBar: false,
         pageTransitionAnimation: PageTransitionAnimation.cupertino,
@@ -544,13 +553,14 @@ class DottedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    final double dashWidth = 8;
-    final double dashSpace = 6;
-    final double r = 24.0; // Radius matching container
+    const double dashWidth = 8;
+    const double dashSpace = 6;
+    const double r = 24.0; // Radius matching container
 
     // Start top center
     path.addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height), Radius.circular(r)));
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        const Radius.circular(r)));
 
     // Draw dashed path
     final Path dashedPath = Path();

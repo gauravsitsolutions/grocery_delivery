@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 
@@ -9,9 +11,14 @@ class ProfileViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  int _totalOrders = 0;
+  double _loginHours = 0.0;
+
   ProfileModel? get profile => _profile;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int get totalOrders => _totalOrders;
+  double get loginHours => _loginHours;
 
   Future<void> fetchProfile() async {
     _isLoading = true;
@@ -19,8 +26,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       if (token == null) {
         _error = 'Session expired. Please login again.';
@@ -32,6 +38,19 @@ class ProfileViewModel extends ChangeNotifier {
       final response = await _apiService.getProfile(token);
       if (response.status && response.data != null) {
         _profile = response.data;
+
+        // Update stored info from profile
+        if (_profile!.id != null) {
+          await SharedPrefsUtil.setAgentId(_profile!.id.toString());
+        }
+        if (_profile!.userId != null) {
+          await SharedPrefsUtil.setUserId(_profile!.userId.toString());
+        }
+        if (_profile!.name != null) {
+          await SharedPrefsUtil.setUserName(_profile!.name!);
+        }
+
+        await _fetchStats(token); // Fetch stats after profile
       } else {
         _error = 'Failed to load profile data';
       }
@@ -43,14 +62,25 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _fetchStats(String token) async {
+    try {
+      final orders = await _apiService.getTotalOrders(token);
+      final hours = await _apiService.getLoginHours(token);
+      _totalOrders = orders;
+      _loginHours = hours;
+    } catch (e) {
+      debugPrint('Error fetching profile stats: $e');
+      // Don't error out the whole profile load just for stats
+    }
+  }
+
   Future<bool> updatePhone(String phone) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       if (token == null) {
         _error = 'Session expired. Please login again.';
@@ -80,8 +110,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       if (token == null) {
         _error = 'Session expired. Please login again.';
@@ -111,8 +140,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       if (token == null) {
         _error = 'Session expired. Please login again.';
@@ -126,6 +154,50 @@ class ProfileViewModel extends ChangeNotifier {
         return true;
       } else {
         _error = response['message'] ?? 'Failed to update vehicle details';
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> pickAndUploadImage() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70, // Optimize image size
+      );
+
+      if (image == null) {
+        _isLoading = false;
+        notifyListeners();
+        return false; // User canceled
+      }
+
+      final token = await SharedPrefsUtil.getToken();
+
+      if (token == null) {
+        _error = 'Session expired. Please login again.';
+        return false;
+      }
+
+      final success =
+          await _apiService.uploadProfileImage(token, File(image.path));
+
+      if (success) {
+        await fetchProfile(); // Refresh to get the new image URL if backend returns it
+        return true;
+      } else {
+        _error = 'Failed to upload profile image';
         return false;
       }
     } catch (e) {

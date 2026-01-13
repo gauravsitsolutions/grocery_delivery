@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class NotificationsViewModel extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -30,8 +30,7 @@ class NotificationsViewModel extends ChangeNotifier {
   Map<String, bool> get settings => _settings;
 
   Future<String?> get _authToken async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return await SharedPrefsUtil.getToken();
   }
 
   Future<void> fetchNotifications({bool refresh = false}) async {

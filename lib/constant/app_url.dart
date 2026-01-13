@@ -19,6 +19,7 @@ class AppUrls {
       '$baseUrl/api/delivery_boy/profile/vehicle';
   static const String updateProfileEmail =
       '$baseUrl/api/delivery_boy/profile/email';
+  static const String uploadProfileImage = '$baseUrl/api/partner/profile/image';
   static const String newOrders = '$baseUrl/api/delivery/orders/new';
   static const String myOrders = '$baseUrl/api/delivery/orders/queue';
   static const String deliveries = '$baseUrl/api/deliveries';
@@ -29,29 +30,33 @@ class AppUrls {
       '$baseUrl/api/delivery/orders/$id/accept';
   static String rejectOrder(int id) =>
       '$baseUrl/api/delivery/orders/$id/reject';
-  static String cancelOrder(int id) => '$baseUrl/api/orders/$id/cancel';
-  static String orderDetails(int id) => '$baseUrl/api/orders/$id';
-  static const String currentOrder = '$baseUrl/api/orders/current';
-  static String orderItems(int id) => '$baseUrl/api/orders/$id/items';
+  static String cancelOrder(int id) =>
+      '$baseUrl/api/delivery/orders/$id/cancel';
+  static String orderDetails(int id) => '$baseUrl/api/delivery/orders/$id';
+  static const String currentOrder = '$baseUrl/api/delivery/orders/current';
+  static String orderItems(int id) => '$baseUrl/api/delivery/orders/$id/items';
   static String pickupOrder(int id) =>
-      '$baseUrl/api/orders/$id/pickup/complete';
-  static String getSummary(int id) => '$baseUrl/api/orders/$id/summary';
-  static String pickupProof(int id) => '$baseUrl/api/orders/$id/pickup-proof';
+      '$baseUrl/api/delivery/orders/$id/pickup/complete';
+  static String getSummary(int id) =>
+      '$baseUrl/api/delivery/orders/$id/summary';
+  static String pickupProof(int id) =>
+      '$baseUrl/api/delivery/orders/$id/pickup-proof';
   static String verifyOrderItem(int orderId, int itemId) =>
-      '$baseUrl/api/orders/$orderId/items/$itemId/verify';
+      '$baseUrl/api/delivery/orders/$orderId/items/$itemId/verify';
   static String reportItemIssue(int orderId, int itemId) =>
-      '$baseUrl/api/orders/$orderId/items/$itemId/issue';
+      '$baseUrl/api/delivery/orders/$orderId/items/$itemId/issue';
   static String sendDeliveryOtp(int id) =>
-      '$baseUrl/api/orders/$id/delivery/otp';
+      '$baseUrl/api/delivery/orders/$id/delivery/otp';
   static String completeDelivery(int id) =>
-      '$baseUrl/api/delivery/orders/$id/complete';
+      '$baseUrl/api/delivery/orders/$id/delivery/complete';
   static String rateCustomer(int id) =>
       '$baseUrl/api/delivery/orders/$id/rate-customer';
-  static const String notifications = '$baseUrl/api/notifications';
+
+  static const String notifications = '$baseUrl/api/delivery/notifications';
   static const String notificationSettings =
-      '$baseUrl/api/notifications/settings';
+      '$baseUrl/api/delivery/notifications/settings';
   static const String loginHours = '$baseUrl/api/partner/stats/login-hours';
   static const String totalOrders = '$baseUrl/api/partner/status/orders';
   static String markNotificationAsRead(String id) =>
-      '$baseUrl/api/notifications/$id/read';
+      '$baseUrl/api/delivery/notifications/$id/read';
 }

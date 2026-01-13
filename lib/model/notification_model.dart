@@ -29,6 +29,9 @@ class NotificationResponse {
       current = rawData['current_page'];
       last = rawData['last_page'];
       totalCount = rawData['total'];
+    } else if (rawData is List) {
+      notifications =
+          rawData.map((e) => NotificationModel.fromJson(e)).toList();
     }
 
     return NotificationResponse(

@@ -4,7 +4,6 @@ import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lottie/lottie.dart';
 import 'package:remixicon/remixicon.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
@@ -16,6 +15,7 @@ import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class AvailableOrdersView extends StatefulWidget {
   const AvailableOrdersView({super.key});
@@ -39,10 +39,12 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
   }
 
   Future<void> _loadAuthToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _authToken = prefs.getString('auth_token');
-    });
+    final token = await SharedPrefsUtil.getToken();
+    if (mounted) {
+      setState(() {
+        _authToken = token;
+      });
+    }
   }
 
   @override
@@ -64,14 +66,12 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
     if (!mounted) return;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       if (token == null) return;
 
       if (!mounted) return;
 
-      // Show loading
       // Show loading
       CustomSnackBar.showSuccess(context, 'Accepting order...');
 

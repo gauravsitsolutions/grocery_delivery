@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/notification_shimmer.dart';
 import '../../../constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import '../../../utils/responsive.dart';
 
 class NotificationsView extends StatefulWidget {
@@ -50,14 +51,22 @@ class _NotificationsViewState extends State<NotificationsView> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: R.h(60)),
+        child: Consumer<NotificationsViewModel>(
+          builder: (context, viewModel, child) {
+            return CustomRetryButton(
+              onTap: () => viewModel.fetchNotifications(refresh: true),
+              isLoading: viewModel.isLoading,
+            );
+          },
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       appBar: _appBar(),
       body: Consumer<NotificationsViewModel>(
         builder: (context, viewModel, child) {
-          return RefreshIndicator(
-            onRefresh: () => viewModel.fetchNotifications(refresh: true),
-            color: AppColors.primaryGreen,
-            child: _buildContent(viewModel),
-          );
+          return _buildContent(viewModel);
         },
       ),
     );
@@ -101,20 +110,9 @@ class _NotificationsViewState extends State<NotificationsView> {
                 ),
               ),
               SizedBox(height: R.h(24)),
-              ElevatedButton(
-                onPressed: () => viewModel.fetchNotifications(refresh: true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(R.r(8)),
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: R.w(24),
-                    vertical: R.h(10),
-                  ),
-                ),
-                child: const Text('Retry'),
+              CustomRetryButton(
+                onTap: () => viewModel.fetchNotifications(refresh: true),
+                isLoading: viewModel.isLoading,
               ),
             ],
           ),
@@ -190,25 +188,6 @@ class _NotificationsViewState extends State<NotificationsView> {
                 ),
               ),
               SizedBox(height: R.h(32)),
-              ElevatedButton.icon(
-                onPressed: () => viewModel.fetchNotifications(refresh: true),
-                icon: Icon(Icons.refresh, size: R.sp(18)),
-                label: Text(
-                  'Refresh',
-                  style: TextStyle(
-                      fontSize: R.sp(14), fontWeight: FontWeight.w700),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(
-                      horizontal: R.w(32), vertical: R.h(12)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(R.r(8)),
-                  ),
-                  elevation: 0,
-                ),
-              ),
             ],
           ),
         ),
@@ -281,17 +260,17 @@ class _NotificationsViewState extends State<NotificationsView> {
       iconBg = AppColors.primaryGreen.withValues(alpha: .15);
     } else if (notification.type?.toLowerCase().contains('system') ?? false) {
       icon = RemixIcons.notification_4_fill;
-      iconColor = const Color(0xFF387CFF); // Blue
-      iconBg = const Color(0xFF387CFF).withValues(alpha: .15);
+      iconColor = AppColors.info; // Blue
+      iconBg = AppColors.info.withValues(alpha: .15);
     } else if (notification.type?.toLowerCase().contains('cancel') ?? false) {
       // Assuming 'cancel' type
       icon = RemixIcons.alert_fill;
-      iconColor = const Color(0xFFFF4B4B); // Red
-      iconBg = const Color(0xFFFF4B4B).withValues(alpha: .15);
+      iconColor = AppColors.error; // Red
+      iconBg = AppColors.error.withValues(alpha: .15);
     } else if (notification.type?.toLowerCase().contains('update') ?? false) {
       icon = RemixIcons.map_pin_user_fill;
-      iconColor = const Color(0xFFFF9738); // Orange
-      iconBg = const Color(0xFFFF9738).withValues(alpha: .15);
+      iconColor = AppColors.warning; // Orange
+      iconBg = AppColors.warning.withValues(alpha: .15);
     }
 
     return _notificationCard(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+
 import 'dart:developer';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
@@ -7,10 +7,11 @@ import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/profile_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/profile_shimmer.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
 class ProfileView extends StatefulWidget {
@@ -24,7 +25,6 @@ class _ProfileViewState extends State<ProfileView> {
   bool _isLoggingOut = false;
   String? _userName;
   String? _userId;
-  String? _userRole;
 
   @override
   void initState() {
@@ -36,11 +36,11 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Future<void> _loadSPData() async {
-    final prefs = await SharedPreferences.getInstance();
+    final userName = await SharedPrefsUtil.getUserName();
+    final userId = await SharedPrefsUtil.getUserId();
     setState(() {
-      _userName = prefs.getString('user_name');
-      _userId = prefs.getInt('user_id')?.toString();
-      _userRole = prefs.getString('user_role');
+      _userName = userName;
+      _userId = userId?.toString();
     });
   }
 
@@ -77,9 +77,9 @@ class _ProfileViewState extends State<ProfileView> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(viewModel.error!),
-                    ElevatedButton(
-                      onPressed: () => viewModel.fetchProfile(),
-                      child: const Text('Retry'),
+                    CustomRetryButton(
+                      onTap: () => viewModel.fetchProfile(),
+                      isLoading: viewModel.isLoading,
                     ),
                   ],
                 ),
@@ -89,7 +89,7 @@ class _ProfileViewState extends State<ProfileView> {
             final profile = viewModel.profile;
             final name = _userName ?? profile?.name ?? 'Agent';
             final id = _userId ?? profile?.id?.toString() ?? '---';
-            final role = _userRole ?? 'Delivery Partner';
+            const role = 'Delivery Partner';
 
             return RefreshIndicator(
               onRefresh: () => viewModel.fetchProfile(),
@@ -196,29 +196,60 @@ class _ProfileViewState extends State<ProfileView> {
                 height: R.w(104),
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0xFFF1F1F1),
+                  color: AppColors.softGreyBg,
                 ),
               ),
-              CircleAvatar(
-                radius: R.r(44),
-                backgroundImage:
-                    const AssetImage('assets/images/profile_placeholder.png'),
-              ),
-              Positioned(
-                bottom: R.h(10),
-                right: R.w(10),
-                child: Container(
-                  width: R.w(14),
-                  height: R.w(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.white,
-                      width: R.w(2),
+              Consumer<ProfileViewModel>(
+                builder: (context, viewModel, _) {
+                  final hasImage = viewModel.profile?.profilePhoto != null;
+                  return GestureDetector(
+                    onTap: viewModel.isLoading
+                        ? null
+                        : () async {
+                            final success =
+                                await viewModel.pickAndUploadImage();
+                            if (success && context.mounted) {
+                              CustomSnackBar.showSuccess(context,
+                                  'Profile photo updated successfully');
+                            } else if (viewModel.error != null &&
+                                context.mounted) {
+                              CustomSnackBar.showError(
+                                  context, viewModel.error!);
+                            }
+                          },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: R.r(44),
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage: hasImage
+                              ? NetworkImage(viewModel.profile!.profilePhoto!)
+                              : const AssetImage(
+                                      'assets/images/profile_placeholder.png')
+                                  as ImageProvider,
+                          child: viewModel.isLoading
+                              ? const CircularProgressIndicator()
+                              : null,
+                        ),
+                        if (!viewModel.isLoading)
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: EdgeInsets.all(R.w(4)),
+                              decoration: const BoxDecoration(
+                                color: AppColors.primaryGreen,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(RemixIcons.camera_line,
+                                  color: AppColors.white, size: R.sp(14)),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ],
           ),
@@ -258,6 +289,7 @@ class _ProfileViewState extends State<ProfileView> {
   // ================= PERFORMANCE =================
 
   Widget _performanceSection() {
+    final viewModel = context.watch<ProfileViewModel>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -272,13 +304,11 @@ class _ProfileViewState extends State<ProfileView> {
         SizedBox(height: R.h(16)),
         Row(
           children: [
-            _statCard('Orders', '142'),
+            _statCard('Orders', '${viewModel.totalOrders}'),
             SizedBox(width: R.w(12)),
-            _statCard('Hours', '38h'),
+            _statCard('Hours', '${viewModel.loginHours.toStringAsFixed(1)}h'),
           ],
         ),
-        SizedBox(height: R.h(16)),
-        _chartCard(),
       ],
     );
   }
@@ -307,106 +337,6 @@ class _ProfileViewState extends State<ProfileView> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _chartCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: SizedBox(
-        height: 180,
-        child: LineChart(
-          LineChartData(
-            minY: 0,
-            maxY: 7,
-            gridData: FlGridData(show: false),
-            borderData: FlBorderData(show: false),
-            lineTouchData: LineTouchData(enabled: false),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  interval: 1,
-                  reservedSize: 28,
-                  getTitlesWidget: (value, meta) {
-                    const days = [
-                      'Mon',
-                      'Tue',
-                      'Wed',
-                      'Thu',
-                      'Fri',
-                      'Sat',
-                      'Sun'
-                    ];
-                    if (value < 0 || value > 6) {
-                      return const SizedBox.shrink();
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        days[value.toInt()],
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.bodyText,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              topTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-            ),
-            lineBarsData: [
-              LineChartBarData(
-                spots: const [
-                  FlSpot(0, 3),
-                  FlSpot(1, 4),
-                  FlSpot(2, 2),
-                  FlSpot(3, 5),
-                  FlSpot(4, 4),
-                  FlSpot(5, 6),
-                  FlSpot(6, 4),
-                ],
-                isCurved: true,
-                curveSmoothness: 0.35, // 🔑 important
-                color: AppColors.primaryGreen,
-                barWidth: 3,
-                isStrokeCapRound: true,
-
-                dotData: FlDotData(
-                  show: false, // 🔑 hides dots (old look)
-                ),
-
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.primaryGreen.withValues(alpha: 0.25),
-                      AppColors.primaryGreen.withValues(alpha: 0.05),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -650,26 +580,24 @@ class _ProfileViewState extends State<ProfileView> {
     setState(() => _isLoggingOut = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       log('Logout initiated. Token present: ${token != null}');
 
       if (token != null) {
         try {
-          // Attempt API logout with a short timeout to prevent UI freeze
+          // Attempt API logout with a short timeout
           log('Calling Logout API...');
           await ApiService().logout(token).timeout(const Duration(seconds: 3));
           log('Logout API call successful');
         } catch (e) {
           log('Logout API failed or timed out: $e');
-          // Start local logout regardless of API failure
         }
       }
 
-      log('Clearing SharedPreferences...');
-      await prefs.clear();
-      log('SharedPreferences cleared.');
+      log('Clearing session...');
+      await SharedPrefsUtil.clearSession();
+      log('Session cleared.');
 
       if (!mounted) {
         log('Context not mounted, skipping navigation');
@@ -693,8 +621,7 @@ class _ProfileViewState extends State<ProfileView> {
       );
     } catch (e) {
       log('Critical Error during logout: $e');
-      setState(
-          () => _isLoggingOut = false); // Re-enable button if something crashes
+      setState(() => _isLoggingOut = false);
     }
   }
 

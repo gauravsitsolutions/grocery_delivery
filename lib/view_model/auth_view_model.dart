@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 import 'package:samrudhi_delivery_agent_app/auth/login/login_view.dart'; // For LoginMethod enum
@@ -84,14 +84,12 @@ class AuthViewModel extends ChangeNotifier {
 
       if (response.status) {
         if (response.token != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', response.token!);
-
-          if (response.user != null) {
-            await prefs.setInt('user_id', response.user!.id);
-            await prefs.setString('user_name', response.user!.name);
-            await prefs.setString('user_role', response.user!.role);
-          }
+          await SharedPrefsUtil.saveUserSession(
+            token: response.token!,
+            userName: response.user?.name ?? '',
+            agentId: '', // Update if agent_id becomes available
+            userId: response.user?.id.toString() ?? '',
+          );
         }
         _setLoading(false);
         return {'success': true};
@@ -168,14 +166,12 @@ class AuthViewModel extends ChangeNotifier {
 
       if (response.status) {
         if (response.token != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', response.token!);
-
-          if (response.user != null) {
-            await prefs.setInt('user_id', response.user!.id);
-            await prefs.setString('user_name', response.user!.name);
-            await prefs.setString('user_role', response.user!.role);
-          }
+          await SharedPrefsUtil.saveUserSession(
+            token: response.token!,
+            userName: response.user?.name ?? '',
+            agentId: '', // Update if agent_id becomes available
+            userId: response.user?.id.toString() ?? '',
+          );
         }
         _setLoading(false);
         return {'success': true, 'message': 'Login Successful'};

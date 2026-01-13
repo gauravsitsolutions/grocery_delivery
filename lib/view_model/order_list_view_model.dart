@@ -3,7 +3,7 @@ import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class OrderListViewModel extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -120,6 +120,9 @@ class OrderListViewModel extends ChangeNotifier {
       final response =
           await _apiService.getMyOrders(token, page: _myDeliveriesPage);
 
+      // Guard: If we switched to history while fetching, discard this result
+      if (_isHistoryList) return;
+
       // Also fetch status if this is the first page or a refresh
       if (refresh || _myDeliveriesPage == 1) {
         fetchDeliveryStatus();
@@ -137,6 +140,7 @@ class OrderListViewModel extends ChangeNotifier {
       _isMyDeliveriesLoadingMore = false;
       notifyListeners();
     } catch (e) {
+      if (_isHistoryList) return; // Check again just in case
       _myDeliveriesError = e is AppException ? e.message : e.toString();
       _isMyDeliveriesLoading = false;
       _isMyDeliveriesLoadingMore = false;
@@ -170,6 +174,9 @@ class OrderListViewModel extends ChangeNotifier {
       final response =
           await _apiService.getDeliveries(token, page: _myDeliveriesPage);
 
+      // Guard: If we switched to active while fetching, discard this result
+      if (!_isHistoryList) return;
+
       if (refresh) {
         _myDeliveries = response.data;
       } else {
@@ -182,6 +189,7 @@ class OrderListViewModel extends ChangeNotifier {
       _isMyDeliveriesLoadingMore = false;
       notifyListeners();
     } catch (e) {
+      if (!_isHistoryList) return;
       _myDeliveriesError = e is AppException ? e.message : e.toString();
       _isMyDeliveriesLoading = false;
       _isMyDeliveriesLoadingMore = false;
@@ -322,7 +330,6 @@ class OrderListViewModel extends ChangeNotifier {
   }
 
   Future<String?> get _authToken async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return await SharedPrefsUtil.getToken();
   }
 }

@@ -11,8 +11,9 @@ import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivery_sc
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivered_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 
 class OrderDetailsView extends StatelessWidget {
   final int orderId;
@@ -32,8 +33,7 @@ class OrderDetailsView extends StatelessWidget {
         builder: (context, viewModel, child) {
           if (viewModel.isUnauthenticated) {
             WidgetsBinding.instance.addPostFrameCallback((_) async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
+              await SharedPrefsUtil.clearSession();
               if (context.mounted) {
                 Navigator.of(context)
                     .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
@@ -108,9 +108,9 @@ class OrderDetailsView extends StatelessWidget {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             "Order Pickup",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           Text(
             "INTERNAL ORDER #${order.orderNumber}",
@@ -138,9 +138,9 @@ class OrderDetailsView extends StatelessWidget {
           children: [
             Text("Error: ${viewModel.error}"),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => viewModel.fetchOrderDetails(),
-              child: const Text("Retry"),
+            CustomRetryButton(
+              onTap: () => viewModel.fetchOrderDetails(),
+              isLoading: viewModel.isLoading,
             ),
           ],
         ),
@@ -150,13 +150,13 @@ class OrderDetailsView extends StatelessWidget {
     // Only used for Pickup mode now
     return RefreshIndicator(
       onRefresh: viewModel.fetchOrderDetails,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      child: const SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
-            const SizedBox(height: 16),
-            const OrderPickupScreen(),
-            const SizedBox(height: 24),
+            SizedBox(height: 16),
+            OrderPickupScreen(),
+            SizedBox(height: 24),
           ],
         ),
       ),

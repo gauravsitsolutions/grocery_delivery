@@ -5,7 +5,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -117,18 +117,16 @@ class _SplashScreenState extends State<SplashScreen>
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values, // This brings back Status Bar + Nav Bar
     );
-    
+
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ));
 
     // Check for saved session
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    
-    // Using print since 'log' needs developer import, checking if already imported or using print
-    debugPrint('Splash: Saved Token found: $token'); 
+    final token = await SharedPrefsUtil.getToken();
+
+    debugPrint('Splash: Saved Token found: $token');
 
     if (!mounted) return;
 
@@ -153,7 +151,6 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     R.init(context);
-    // bool isTablet = MediaQuery.of(context).size.shortestSide >= 600;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -173,7 +170,7 @@ class _SplashScreenState extends State<SplashScreen>
                     'assets/images/app_logo.png',
                     height: R.w(170),
                     width: R.w(170),
-                    fit: BoxFit.contain, // Changed to contain to avoid cropping if aspect ratio mismatches
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
@@ -238,7 +235,8 @@ class _SplashScreenState extends State<SplashScreen>
               child: Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
                 ),
               ),
             ),
@@ -278,7 +276,7 @@ class _FeatureItem extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(R.w(12)),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.5), // Increased opacity slightly for visibility on light bg
+            color: Colors.white.withValues(alpha: 0.5),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(

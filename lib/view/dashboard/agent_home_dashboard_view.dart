@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart'; // Added shimmer import
@@ -24,7 +24,9 @@ import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/dashboard_waiting_state.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/available_orders_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import 'package:provider/provider.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -83,8 +85,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Future<void> _fetchProfile() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
       if (token != null) {
         final profileResponse = await _apiService.getProfile(token);
         if (mounted && profileResponse.data != null) {
@@ -100,8 +101,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Future<void> _fetchStats() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
       if (token != null) {
         final hours = await _apiService.getLoginHours(token);
         final orders = await _apiService.getTotalOrders(token);
@@ -127,8 +127,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       if (token == null) {
         if (mounted) {
@@ -188,8 +187,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       log('Error fetching orders: $e');
       if (mounted) {
         if (e is UnauthorisedException) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
+          await SharedPrefsUtil.clearSession();
           if (mounted) {
             Navigator.pushNamedAndRemoveUntil(
                 context, AppRoutes.login, (route) => false);
@@ -212,8 +210,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
       if (token == null) return;
 
       final nextPage = _availablePage + 1;
@@ -246,8 +243,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
       if (token == null) return;
 
       final nextPage = _myOrdersPage + 1;
@@ -280,16 +276,33 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       if (token == null) return;
 
       if (!mounted) return;
 
       // Show loading
-      // Show loading
       CustomSnackBar.showSuccess(context, 'Accepting order...');
+
+      // Find the order object to pass to the next screen
+      final orderToAccept = _availableOrders.firstWhere(
+        (o) => o.id == orderId,
+        orElse: () => Order(
+          id: orderId,
+          userId: _userProfile?.userId ?? 0,
+          orderNumber: '',
+          subtotal: '0',
+          deliveryCharge: '0',
+          discount: '0',
+          couponDiscount: '0',
+          totalAmount: '0',
+          orderItems: [],
+          status: 'accepted',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
 
       await _apiService.acceptOrder(token, orderId);
 
@@ -297,10 +310,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
       if (!context.mounted) return;
 
-      _showAcceptSuccessDialog();
+      _showAcceptSuccessDialog(orderToAccept);
     } catch (e) {
       if (mounted) {
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
+        setState(() {
+          _removingOrderIds.remove(orderId);
+        });
       }
     }
   }
@@ -313,8 +329,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await SharedPrefsUtil.getToken();
 
       if (token == null) return;
 
@@ -333,6 +348,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     } catch (e) {
       if (mounted) {
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
+        setState(() {
+          _removingOrderIds.remove(orderId);
+        });
       }
     }
   }
@@ -348,7 +366,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       margin: EdgeInsets.symmetric(horizontal: R.w(4)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(24)), // More rounded
+        borderRadius:
+            BorderRadius.circular(R.r(24)), // Consistent with summary cards
         boxShadow: [
           BoxShadow(
             color: AppColors.shadow.withValues(alpha: 0.1),
@@ -369,14 +388,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               height: 4,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFF10C971)
+                color: AppColors.primaryGreen
                     .withValues(alpha: 0.2), // Light green bg
               ),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
                   width: R.w(150), // Mock progress
-                  color: const Color(0xFF10C971),
+                  color: AppColors.primaryGreen,
                 ),
               ),
             ),
@@ -394,14 +413,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       padding: EdgeInsets.symmetric(
                           horizontal: R.w(8), vertical: R.h(4)),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE0F9EB),
+                        color: AppColors.softGreenBg,
                         borderRadius: BorderRadius.circular(R.r(4)),
                       ),
                       child: Text(
                         'NEW REQUEST',
                         style: TextStyle(
-                          color: const Color(0xFF10C971),
-                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                          fontWeight: FontWeight.w800,
                           fontSize: R.sp(12),
                           letterSpacing: 0.5,
                         ),
@@ -419,13 +438,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         ),
                         SizedBox(width: R.w(12)),
                         Icon(RemixIcons.timer_2_fill,
-                            size: R.sp(16), color: const Color(0xFFFF6B00)),
+                            size: R.sp(16), color: AppColors.warning),
                         SizedBox(width: R.w(4)),
                         Text(
                           '45s',
                           style: TextStyle(
-                            color: const Color(0xFFFF6B00),
-                            fontWeight: FontWeight.bold,
+                            color: AppColors.warning,
+                            fontWeight: FontWeight.w800,
                             fontSize: R.sp(15),
                           ),
                         ),
@@ -495,7 +514,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       child: ElevatedButton(
                         onPressed: () => _rejectOrder(orderId),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF2F4F7),
+                          backgroundColor: AppColors.softGreyBg,
                           foregroundColor: AppColors.headingText,
                           elevation: 0,
                           padding: EdgeInsets.symmetric(vertical: R.h(14)),
@@ -517,7 +536,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       child: ElevatedButton(
                         onPressed: () => _acceptOrder(orderId),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF10C971),
+                          backgroundColor: AppColors.primaryGreen,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: EdgeInsets.symmetric(vertical: R.h(14)),
@@ -595,8 +614,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: Icon(
               isPickup ? Icons.shopping_bag : Icons.home_filled, // Icon match
               color: isPickup
-                  ? const Color(0xFF10C971)
-                  : const Color(0xFF387CFF), // Green vs Blue
+                  ? AppColors.primaryGreen
+                  : AppColors.info, // Green vs Blue
               size: R.sp(24),
             ),
           ),
@@ -630,8 +649,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
             decoration: BoxDecoration(
               color: isPickup
-                  ? const Color(0xFFE0F9EB)
-                  : const Color(0xFFEBF2FF), // Light Green vs Light Blue
+                  ? AppColors.softGreenBg
+                  : AppColors.summaryBlueBg, // Light Green vs Light Blue
               borderRadius: BorderRadius.circular(R.r(6)),
             ),
             child: Text(
@@ -639,9 +658,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               style: TextStyle(
                 fontSize: R.sp(11),
                 fontWeight: FontWeight.w800,
-                color: isPickup
-                    ? const Color(0xFF10C971)
-                    : const Color(0xFF387CFF),
+                color: isPickup ? AppColors.primaryGreen : AppColors.info,
               ),
             ),
           ),
@@ -741,7 +758,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               OutlinedButton(
                 onPressed: () => _acceptOrder(order.id),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF10C971)),
+                  side: const BorderSide(color: AppColors.primaryGreen),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(R.r(8)),
                   ),
@@ -750,7 +767,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 child: Text(
                   'Add',
                   style: TextStyle(
-                    color: const Color(0xFF10C971),
+                    color: AppColors.primaryGreen,
                     fontWeight: FontWeight.w700,
                     fontSize: R.sp(14),
                   ),
@@ -905,7 +922,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 padding: EdgeInsets.symmetric(
                     horizontal: R.w(16), vertical: R.h(14)),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9), // Light green bg
+                  color: AppColors.paleGreen, // Light green bg
                   borderRadius: BorderRadius.circular(R.r(12)),
                 ),
                 child: Row(
@@ -1006,22 +1023,86 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   }
 
   Widget _iconButton({required IconData icon, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(R.w(10)),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, size: R.sp(20), color: AppColors.primaryGreen),
+        onPressed: onTap,
+        padding: EdgeInsets.all(R.w(8)),
+        constraints: const BoxConstraints(),
+      ),
+    );
+  }
+
+  Widget _statCard({
+    required String label,
+    required String value,
+    required String footer,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(R.w(12)),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(R.r(16)),
+        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: R.sp(10),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.bodyText.withValues(alpha: 0.6),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Icon(icon, color: AppColors.primaryGreen, size: R.sp(16)),
+            ],
+          ),
+          SizedBox(height: R.h(8)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: R.sp(22),
+              fontWeight: FontWeight.w800,
+              color: AppColors.headingText,
             ),
-          ],
-        ),
-        child: Icon(icon, size: R.sp(20), color: AppColors.headingText),
+          ),
+          SizedBox(height: R.h(4)),
+          Text(
+            footer,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: R.sp(9),
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1079,417 +1160,351 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
         bottom: false,
-        child: RefreshIndicator(
-          onRefresh: _fetchOrders,
-          color: AppColors.primaryGreen,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(
-              horizontal: R.w(16),
-              vertical: R.h(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: R.w(12)), // Reduced 16->12
-                  child: Row(
-                    children: [
-                      // Online Status Toggle
-                      GestureDetector(
-                        onTap: () => widget.onStatusChanged(!isOnline),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: R.w(60),
-                          height: R.h(32),
-                          padding: EdgeInsets.symmetric(horizontal: R.w(4)),
-                          decoration: BoxDecoration(
-                            color: isOnline
-                                ? const Color(0xFF10C971)
-                                : const Color(0xFFE2E2E2),
-                            borderRadius: BorderRadius.circular(R.r(30)),
-                          ),
-                          child: Stack(
-                            children: [
-                              AnimatedAlign(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                                alignment: isOnline
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  width: R.w(24),
-                                  height: R.w(24),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: isOnline
-                                      ? Icon(Icons.check,
-                                          size: R.sp(16),
-                                          color: const Color(0xFF10C971))
-                                      : null,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: R.w(8)), // Reduced 12->8
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isOnline ? 'Online' : 'Offline',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: R.sp(18),
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.headingText,
-                                height: 1.2,
-                              ),
-                            ),
-                            Text(
-                              isOnline ? 'DUTY MODE' : 'YOU ARE OFFLINE',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: R.sp(11),
-                                fontWeight: FontWeight.w600,
-                                color:
-                                    AppColors.bodyText.withValues(alpha: 0.6),
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: R.w(8)), // Kept small
-                      // Timer Pill
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: R.w(8),
-                            vertical: R.h(8)), // Reduced horiz 12->8
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(
+            horizontal: R.w(16),
+            vertical: R.h(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: R.w(12)), // Reduced 16->12
+                child: Row(
+                  children: [
+                    // Online Status Toggle
+                    GestureDetector(
+                      onTap: () => widget.onStatusChanged(!isOnline),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: R.w(60),
+                        height: R.h(32),
+                        padding: EdgeInsets.symmetric(horizontal: R.w(4)),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(R.r(20)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          color: isOnline
+                              ? const Color(0xFF10C971)
+                              : const Color(0xFFE2E2E2),
+                          borderRadius: BorderRadius.circular(R.r(30)),
                         ),
-                        child: Row(
+                        child: Stack(
                           children: [
-                            Icon(RemixIcons.time_fill,
-                                size: R.sp(16), color: const Color(0xFF10C971)),
-                            SizedBox(width: R.w(4)), // Reduced 6->4
-                            Text(
-                              '04:22:15',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: R.sp(14),
-                                color: AppColors.headingText,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: R.w(10)), // Reduced 16->8
-                      // Notification Bell
-                      Container(
-                        width: R.w(36), // Reduced 40->36
-                        height: R.w(36), // Reduced 40->36
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: Icon(RemixIcons.notification_4_line,
-                              size: R.sp(20), color: AppColors.headingText),
-                          onPressed: () {
-                            Navigator.of(context, rootNavigator: true).push(
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NotificationsView()),
-                            );
-                          },
-                          padding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: R.h(24)),
-                AbsorbPointer(
-                  absorbing: !isOnline,
-                  child: ColorFiltered(
-                    colorFilter: isOnline
-                        ? const ColorFilter.mode(
-                            Colors.transparent, BlendMode.multiply)
-                        : const ColorFilter.matrix(<double>[
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0.2126,
-                            0.7152,
-                            0.0722,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                          ]),
-                    child: Opacity(
-                      opacity: isOnline ? 1.0 : 0.6,
-                      child: (_availableOrders.isEmpty &&
-                              _myOrders.isEmpty &&
-                              _currentOrder == null &&
-                              !_isLoading)
-                          ? DashboardWaitingState(
-                              isGoalMet: _completedDeliveries >= _dailyGoal,
-                              completedToday: _completedDeliveries,
-                              dailyGoal: _dailyGoal,
-                              onTimePercentage: _onTimePercentage,
-                              loginHours: _loginHours,
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (_currentOrder != null) ...[
-                                  _sectionHeader(
-                                    title: 'Current Task',
-                                    count: null,
-                                    action: GestureDetector(
-                                      onTap: widget.onViewDeliveries,
-                                      child: Text(
-                                        'View all',
-                                        style: TextStyle(
-                                          fontSize: R.sp(14),
-                                          color: AppColors.primaryGreen,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: R.h(12)),
-                                  _currentTaskCard(_currentOrder!),
-                                  SizedBox(height: R.h(24)),
-                                ],
-
-                                // New Order Request
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _sectionHeader(
-                                      title: 'New Order Request',
-                                      count: null,
-                                    ),
-                                    SizedBox(height: R.h(12)),
-                                    AnimatedSwitcher(
-                                      duration:
-                                          const Duration(milliseconds: 300),
-                                      transitionBuilder: (child, animation) {
-                                        return FadeTransition(
-                                          opacity: animation,
-                                          child: SlideTransition(
-                                            position: Tween<Offset>(
-                                              begin: const Offset(0.0, 0.05),
-                                              end: Offset.zero,
-                                            ).animate(animation),
-                                            child: child,
-                                          ),
-                                        );
-                                      },
-                                      child: _isLoading
-                                          ? const OrderShimmer()
-                                          : _error != null
-                                              ? Center(
-                                                  key: const ValueKey('error'),
-                                                  child: Text(_error!,
-                                                      style: const TextStyle(
-                                                          color:
-                                                              AppColors.error)))
-                                              : _availableOrders.isEmpty
-                                                  ? Container(
-                                                      key: const ValueKey(
-                                                          'empty'),
-                                                      width: double.infinity,
-                                                      padding:
-                                                          EdgeInsets.symmetric(
-                                                              vertical:
-                                                                  R.h(20)),
-                                                      alignment:
-                                                          Alignment.center,
-                                                      child: const Text(
-                                                          'No new orders',
-                                                          style: TextStyle(
-                                                              color: AppColors
-                                                                  .bodyText)))
-                                                  : _newRequestCard(
-                                                      orderId: _availableOrders
-                                                          .first.id,
-                                                      title: _availableOrders
-                                                          .first
-                                                          .orderNumber, // e.g. Costco
-                                                      price:
-                                                          '₹ ${_availableOrders.first.totalAmount}',
-                                                      meta:
-                                                          '${_availableOrders.first.orderItems.length} items', // e.g. 15 items
-                                                      acceptText:
-                                                          'Accept', // Ignored by newRequestCard but kept compatible
-                                                    ),
+                            AnimatedAlign(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              alignment: isOnline
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Container(
+                                width: R.w(24),
+                                height: R.w(24),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.black12,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: R.h(24)),
-
-                                // Delivery Queue (Shows if more than 1 accepted order)
-                                if (_myOrders.length > 1) ...[
-                                  _sectionHeader(
-                                    title: 'My Queue',
-                                    count: _myOrders.length - 1,
-                                    action: GestureDetector(
-                                      onTap: widget.onViewDeliveries,
-                                      child: Text(
-                                        '${_myOrders.length - 1} more',
-                                        style: TextStyle(
-                                          fontSize: R.sp(14),
-                                          color: AppColors.primaryGreen,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: R.h(12)),
-                                  Column(
-                                    children:
-                                        _myOrders.skip(1).take(2).map((order) {
-                                      return Padding(
-                                        padding:
-                                            EdgeInsets.only(bottom: R.h(12)),
-                                        child: AnimatedOrderCard(
-                                          key: ValueKey(order.id),
-                                          child: _myQueueItem(order),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                  if (_hasMoreMyOrders)
-                                    Padding(
-                                      padding: EdgeInsets.only(top: R.h(8)),
-                                      child: Center(
-                                        child: TextButton(
-                                          onPressed: _isMyOrdersLoadingMore
-                                              ? null
-                                              : _loadMoreMyOrders,
-                                          child: _isMyOrdersLoadingMore
-                                              ? SizedBox(
-                                                  width: R.w(20),
-                                                  height: R.w(20),
-                                                  child:
-                                                      const CircularProgressIndicator(
-                                                          strokeWidth: 2),
-                                                )
-                                              : const Text('Load More'),
-                                        ),
-                                      ),
-                                    ),
-                                  SizedBox(height: R.h(24)),
-                                ],
-
-                                // Available Orders
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
+                                child: isOnline
+                                    ? Icon(Icons.check,
+                                        size: R.sp(16),
+                                        color: const Color(0xFF10C971))
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: R.w(8)), // Reduced 12->8
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isOnline ? 'Online' : 'Offline',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: R.sp(18),
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.headingText,
+                              height: 1.2,
+                            ),
+                          ),
+                          Text(
+                            isOnline ? 'DUTY MODE' : 'YOU ARE OFFLINE',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: R.sp(11),
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.bodyText.withValues(alpha: 0.6),
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: R.w(8)), // Kept small
+                    // Timer Pill
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: R.w(8),
+                          vertical: R.h(8)), // Reduced horiz 12->8
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(R.r(20)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadow.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(RemixIcons.time_fill,
+                              size: R.sp(16), color: const Color(0xFF10C971)),
+                          SizedBox(width: R.w(4)), // Reduced 6->4
+                          Text(
+                            '04:22:15',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: R.sp(14),
+                              color: AppColors.headingText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: R.w(10)), // Reduced 16->8
+                    // Notification Bell
+                    Container(
+                      width: R.w(38), // Reduced 40->36
+                      height: R.w(38), // Reduced 40->36
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadow.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: Icon(RemixIcons.notification_4_line,
+                            size: R.sp(24), color: AppColors.headingText),
+                        onPressed: () {
+                          Navigator.of(context, rootNavigator: true).push(
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const NotificationsView()),
+                          );
+                        },
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: R.h(24)),
+              AbsorbPointer(
+                absorbing: !isOnline,
+                child: ColorFiltered(
+                  colorFilter: isOnline
+                      ? const ColorFilter.mode(
+                          AppColors.transparent, BlendMode.multiply)
+                      : const ColorFilter.matrix(<double>[
+                          0.2126,
+                          0.7152,
+                          0.0722,
+                          0,
+                          0,
+                          0.2126,
+                          0.7152,
+                          0.0722,
+                          0,
+                          0,
+                          0.2126,
+                          0.7152,
+                          0.0722,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          1,
+                          0,
+                        ]),
+                  child: Opacity(
+                    opacity: isOnline ? 1.0 : 0.6,
+                    child: Column(
+                      children: [
+                        (_availableOrders.isEmpty &&
+                                _myOrders.isEmpty &&
+                                _currentOrder == null &&
+                                !_isLoading)
+                            ? const DashboardWaitingState()
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (_currentOrder != null) ...[
                                     _sectionHeader(
-                                      title: 'Nearby Available',
-                                      action: Row(
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const AvailableOrdersView(),
-                                                ),
-                                              ).then((_) => _fetchOrders());
-                                            },
-                                            child: Text(
-                                              'See all',
-                                              style: TextStyle(
-                                                fontSize: R.sp(14),
-                                                color: AppColors.primaryGreen,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
+                                      title: 'Current Task',
+                                      count: null,
+                                      action: GestureDetector(
+                                        onTap: widget.onViewDeliveries,
+                                        child: Text(
+                                          'View all',
+                                          style: TextStyle(
+                                            fontSize: R.sp(14),
+                                            color: AppColors.primaryGreen,
+                                            fontWeight: FontWeight.w600,
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                     SizedBox(height: R.h(12)),
-                                    // ... logic for available list or mock
-                                    Builder(builder: (context) {
-                                      final remainingOrders =
-                                          _availableOrders.skip(1).toList();
-                                      if (remainingOrders.isEmpty) {
-                                        return Container(
-                                            width: double.infinity,
-                                            padding: EdgeInsets.symmetric(
-                                                vertical: R.h(20)),
-                                            alignment: Alignment.center,
-                                            child: const Text(
-                                                'No other available orders',
-                                                style: TextStyle(
-                                                    color:
-                                                        AppColors.bodyText)));
-                                      }
-                                      return Column(
-                                        children: remainingOrders
-                                            .take(2)
-                                            .map((order) =>
-                                                _availableOrderItem(order))
-                                            .toList(),
-                                      );
-                                    }),
-                                    if (_hasMoreAvailable)
+                                    _currentTaskCard(_currentOrder!),
+                                    SizedBox(height: R.h(24)),
+                                  ],
+
+                                  // New Order Request
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _sectionHeader(
+                                        title: 'New Order Request',
+                                        count: null,
+                                      ),
+                                      SizedBox(height: R.h(12)),
+                                      AnimatedSwitcher(
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                        transitionBuilder: (child, animation) {
+                                          return FadeTransition(
+                                            opacity: animation,
+                                            child: SlideTransition(
+                                              position: Tween<Offset>(
+                                                begin: const Offset(0.0, 0.05),
+                                                end: Offset.zero,
+                                              ).animate(animation),
+                                              child: child,
+                                            ),
+                                          );
+                                        },
+                                        child: _isLoading
+                                            ? const OrderShimmer()
+                                            : _error != null
+                                                ? Center(
+                                                    key:
+                                                        const ValueKey('error'),
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Text(_error!,
+                                                            style: const TextStyle(
+                                                                color: AppColors
+                                                                    .error)),
+                                                        SizedBox(
+                                                            height: R.h(16)),
+                                                        CustomRetryButton(
+                                                          onTap: () =>
+                                                              _fetchOrders(
+                                                                  refresh:
+                                                                      true),
+                                                          isLoading: _isLoading,
+                                                        ),
+                                                      ],
+                                                    ))
+                                                : _availableOrders.isEmpty
+                                                    ? Container(
+                                                        key: const ValueKey(
+                                                            'empty'),
+                                                        width: double.infinity,
+                                                        padding: EdgeInsets
+                                                            .symmetric(
+                                                                vertical:
+                                                                    R.h(20)),
+                                                        alignment:
+                                                            Alignment.center,
+                                                        child: const Text(
+                                                            'No new orders',
+                                                            style: TextStyle(
+                                                                color: AppColors
+                                                                    .bodyText)))
+                                                    : _newRequestCard(
+                                                        orderId:
+                                                            _availableOrders
+                                                                .first.id,
+                                                        title: _availableOrders
+                                                            .first
+                                                            .orderNumber, // e.g. Costco
+                                                        price:
+                                                            '₹ ${_availableOrders.first.totalAmount}',
+                                                        meta:
+                                                            '${_availableOrders.first.orderItems.length} items', // e.g. 15 items
+                                                        acceptText:
+                                                            'Accept', // Ignored by newRequestCard but kept compatible
+                                                      ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: R.h(24)),
+
+                                  // Delivery Queue (Shows if more than 1 accepted order)
+                                  if (_myOrders.length > 1) ...[
+                                    _sectionHeader(
+                                      title: 'My Queue',
+                                      count: _myOrders.length - 1,
+                                      action: GestureDetector(
+                                        onTap: widget.onViewDeliveries,
+                                        child: Text(
+                                          '${_myOrders.length - 1} more',
+                                          style: TextStyle(
+                                            fontSize: R.sp(14),
+                                            color: AppColors.primaryGreen,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: R.h(12)),
+                                    Column(
+                                      children: _myOrders
+                                          .skip(1)
+                                          .take(2)
+                                          .map((order) {
+                                        return Padding(
+                                          padding:
+                                              EdgeInsets.only(bottom: R.h(12)),
+                                          child: AnimatedOrderCard(
+                                            key: ValueKey(order.id),
+                                            child: _myQueueItem(order),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                    if (_hasMoreMyOrders)
                                       Padding(
                                         padding: EdgeInsets.only(top: R.h(8)),
                                         child: Center(
                                           child: TextButton(
-                                            onPressed: _isAvailableLoadingMore
+                                            onPressed: _isMyOrdersLoadingMore
                                                 ? null
-                                                : _loadMoreAvailableOrders,
-                                            child: _isAvailableLoadingMore
+                                                : _loadMoreMyOrders,
+                                            child: _isMyOrdersLoadingMore
                                                 ? SizedBox(
                                                     width: R.w(20),
                                                     height: R.w(20),
@@ -1501,34 +1516,163 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                           ),
                                         ),
                                       ),
+                                    SizedBox(height: R.h(24)),
                                   ],
-                                ),
-                              ],
+
+                                  // Available Orders
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _sectionHeader(
+                                        title: 'Nearby Available',
+                                        action: Row(
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const AvailableOrdersView(),
+                                                  ),
+                                                ).then((_) => _fetchOrders());
+                                              },
+                                              child: Text(
+                                                'See all',
+                                                style: TextStyle(
+                                                  fontSize: R.sp(14),
+                                                  color: AppColors.primaryGreen,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(height: R.h(12)),
+                                      // ... logic for available list or mock
+                                      Builder(builder: (context) {
+                                        final remainingOrders =
+                                            _availableOrders.skip(1).toList();
+                                        if (remainingOrders.isEmpty) {
+                                          return Container(
+                                              width: double.infinity,
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: R.h(20)),
+                                              alignment: Alignment.center,
+                                              child: const Text(
+                                                  'No other available orders',
+                                                  style: TextStyle(
+                                                      color:
+                                                          AppColors.bodyText)));
+                                        }
+                                        return Column(
+                                          children: remainingOrders
+                                              .take(2)
+                                              .map((order) =>
+                                                  _availableOrderItem(order))
+                                              .toList(),
+                                        );
+                                      }),
+                                      if (_hasMoreAvailable)
+                                        Padding(
+                                          padding: EdgeInsets.only(top: R.h(8)),
+                                          child: Center(
+                                            child: TextButton(
+                                              onPressed: _isAvailableLoadingMore
+                                                  ? null
+                                                  : _loadMoreAvailableOrders,
+                                              child: _isAvailableLoadingMore
+                                                  ? SizedBox(
+                                                      width: R.w(20),
+                                                      height: R.w(20),
+                                                      child:
+                                                          const CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    )
+                                                  : const Text('Load More'),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+
+                        // Performance Today Row
+                        SizedBox(height: R.h(24)),
+                        _sectionHeader(title: 'Performance Today'),
+                        SizedBox(height: R.h(12)),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _statCard(
+                                label: 'COMPLETED',
+                                value: '$_completedDeliveries',
+                                footer: _completedDeliveries >= _dailyGoal
+                                    ? 'Goal Met! ✨'
+                                    : '+2 vs Avg',
+                                icon: RemixIcons.checkbox_circle_fill,
+                              ),
                             ),
+                            SizedBox(width: R.w(10)),
+                            Expanded(
+                              child: _statCard(
+                                label: 'ON-TIME',
+                                value: '$_onTimePercentage%',
+                                footer: 'Elite Status',
+                                icon: RemixIcons.timer_flash_fill,
+                              ),
+                            ),
+                            SizedBox(width: R.w(10)),
+                            Expanded(
+                              child: _statCard(
+                                label: 'HOURS',
+                                value: _loginHours.toStringAsFixed(1),
+                                footer: 'Active Time',
+                                icon: RemixIcons.time_fill,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: R.h(20)),
-              ],
-            ),
+              ),
+              SizedBox(height: R.h(20)),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Future<void> _showAcceptSuccessDialog() async {
+  Future<void> _showAcceptSuccessDialog(Order order) async {
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => _AnimationDialog(
         lottieAsset: 'assets/lottie/accept_order.json',
         title: 'Order Accepted!',
-        subtitle: 'Order moved to delivery queue.',
+        subtitle: 'Redirecting to pickup task...',
         titleColor: AppColors.primaryGreen,
       ),
     );
-    _fetchOrders(refresh: false);
+
+    if (!mounted) return;
+
+    // Navigate to Pickup Task View
+    PersistentNavBarNavigator.pushNewScreen(
+      context,
+      screen: PickupTaskView(order: order),
+      withNavBar: false, // Hide nav bar for task focus
+      pageTransitionAnimation: PageTransitionAnimation.cupertino,
+    ).then((_) {
+      // Refresh orders when coming back
+      _fetchOrders();
+    });
   }
 
   Future<void> _showRejectSuccessDialog() async {
@@ -1566,6 +1710,7 @@ class _AnimationDialog extends StatefulWidget {
 class _AnimationDialogState extends State<_AnimationDialog>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  bool _isClosed = false;
 
   @override
   void initState() {
@@ -1586,9 +1731,9 @@ class _AnimationDialogState extends State<_AnimationDialog>
   }
 
   void _closeDialog() {
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    if (_isClosed || !mounted) return;
+    _isClosed = true;
+    Navigator.of(context, rootNavigator: true).pop();
   }
 
   @override
@@ -1623,6 +1768,15 @@ class _AnimationDialogState extends State<_AnimationDialog>
                 _controller
                   ..duration = composition.duration
                   ..forward();
+              },
+              errorBuilder: (context, error, stackTrace) {
+                // Determine icon based on title color (Success is Green, Error is Red)
+                final isSuccess = widget.titleColor == AppColors.primaryGreen;
+                return Icon(
+                  isSuccess ? Icons.check_circle : Icons.cancel,
+                  color: widget.titleColor,
+                  size: R.w(80),
+                );
               },
             ),
             SizedBox(height: R.h(20)),

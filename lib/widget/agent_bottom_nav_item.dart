@@ -6,9 +6,9 @@ import 'package:samrudhi_delivery_agent_app/view/dashboard/agent_home_dashboard_
 import 'package:samrudhi_delivery_agent_app/view/deliveries/deliveries_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/profile/profile_view.dart';
 import '../../constant/app_color.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class AgentBottomNavView extends StatefulWidget {
   const AgentBottomNavView({super.key});
@@ -58,8 +58,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
               isOnline: isOnline,
               onStatusChanged: (val) async {
                 try {
-                  final prefs = await SharedPreferences.getInstance();
-                  final token = prefs.getString('auth_token');
+                  final token = await SharedPrefsUtil.getToken();
 
                   if (token == null) {
                     if (!context.mounted) return;
@@ -114,7 +113,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
           stateManagement: true,
           hideNavigationBarWhenKeyboardAppears: true,
           margin: EdgeInsets.zero,
-          decoration: NavBarDecoration(
+          decoration: const NavBarDecoration(
             colorBehindNavBar: Colors.white,
           ),
           navBarStyle: NavBarStyle.style1,
