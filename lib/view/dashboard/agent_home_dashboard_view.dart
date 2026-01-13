@@ -63,15 +63,19 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   ProfileModel? _userProfile;
 
   // Dashboard Stats (Mock Data for now)
-  final int _completedDeliveries = 8;
-  final int _dailyGoal = 12;
-  final int _onTimePercentage = 95;
+  // Dashboard Stats
+  int _completedDeliveries = 0;
+  double _loginHours = 0.0;
+  final int _dailyGoal =
+      12; // Keeping goal mock/static for now or fetch if available
+  final int _onTimePercentage = 95; // Keeping this mock/static for now
 
   @override
   void initState() {
     super.initState();
     _fetchOrders();
     _fetchProfile();
+    _fetchStats();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NotificationsViewModel>().fetchNotifications(refresh: true);
     });
@@ -91,6 +95,25 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       }
     } catch (e) {
       log('Error fetching profile: $e');
+    }
+  }
+
+  Future<void> _fetchStats() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token != null) {
+        final hours = await _apiService.getLoginHours(token);
+        final orders = await _apiService.getTotalOrders(token);
+        if (mounted) {
+          setState(() {
+            _loginHours = hours;
+            _completedDeliveries = orders;
+          });
+        }
+      }
+    } catch (e) {
+      log('Error fetching stats: $e');
     }
   }
 
@@ -1069,10 +1092,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: R.w(16)),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: R.w(12)), // Reduced 16->12
                   child: Row(
                     children: [
-                      // Online Status Toggle (Visual)
+                      // Online Status Toggle
                       GestureDetector(
                         onTap: () => widget.onStatusChanged(!isOnline),
                         child: AnimatedContainer(
@@ -1119,35 +1143,43 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           ),
                         ),
                       ),
-                      SizedBox(width: R.w(12)),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isOnline ? 'Online' : 'Offline',
-                            style: TextStyle(
-                              fontSize: R.sp(18),
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.headingText,
-                              height: 1.2,
+                      SizedBox(width: R.w(8)), // Reduced 12->8
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isOnline ? 'Online' : 'Offline',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: R.sp(18),
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.headingText,
+                                height: 1.2,
+                              ),
                             ),
-                          ),
-                          Text(
-                            isOnline ? 'DUTY MODE' : 'YOU ARE OFFLINE',
-                            style: TextStyle(
-                              fontSize: R.sp(11),
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.bodyText.withValues(alpha: 0.6),
-                              letterSpacing: 1.0,
+                            Text(
+                              isOnline ? 'DUTY MODE' : 'YOU ARE OFFLINE',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: R.sp(11),
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    AppColors.bodyText.withValues(alpha: 0.6),
+                                letterSpacing: 1.0,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const Spacer(),
+                      SizedBox(width: R.w(8)), // Kept small
                       // Timer Pill
                       Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: R.w(12), vertical: R.h(8)),
+                            horizontal: R.w(8),
+                            vertical: R.h(8)), // Reduced horiz 12->8
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(R.r(20)),
@@ -1163,9 +1195,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           children: [
                             Icon(RemixIcons.time_fill,
                                 size: R.sp(16), color: const Color(0xFF10C971)),
-                            SizedBox(width: R.w(6)),
+                            SizedBox(width: R.w(4)), // Reduced 6->4
                             Text(
-                              '04:22:15', // Static for now as requested
+                              '04:22:15',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: R.sp(14),
@@ -1175,11 +1207,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           ],
                         ),
                       ),
-                      SizedBox(width: R.w(16)),
+                      SizedBox(width: R.w(10)), // Reduced 16->8
                       // Notification Bell
                       Container(
-                        width: R.w(40),
-                        height: R.w(40),
+                        width: R.w(36), // Reduced 40->36
+                        height: R.w(36), // Reduced 40->36
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           shape: BoxShape.circle,
@@ -1192,7 +1224,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           ],
                         ),
                         child: IconButton(
-                          icon: Icon(RemixIcons.notification_4_fill,
+                          icon: Icon(RemixIcons.notification_4_line,
                               size: R.sp(20), color: AppColors.headingText),
                           onPressed: () {
                             Navigator.of(context, rootNavigator: true).push(
@@ -1247,6 +1279,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                               completedToday: _completedDeliveries,
                               dailyGoal: _dailyGoal,
                               onTimePercentage: _onTimePercentage,
+                              loginHours: _loginHours,
                             )
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1401,96 +1434,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                       title: 'Nearby Available',
                                       action: Row(
                                         children: [
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: R.w(12),
-                                                vertical: R.h(6)),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFE0F9EB),
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                      R.r(20)),
-                                            ),
-                                            child: GestureDetector(
-                                              onTap: () async {
-                                                if (_availableOrders.isEmpty)
-                                                  return;
-
-                                                CustomSnackBar.showSuccess(
-                                                    context,
-                                                    'Processing batch accept...');
-
-                                                int successCount = 0;
-                                                // Create a copy to iterate
-                                                final ordersToBatch =
-                                                    _availableOrders.toList();
-
-                                                for (var order
-                                                    in ordersToBatch) {
-                                                  try {
-                                                    // Basic throttle
-                                                    await Future.delayed(
-                                                        const Duration(
-                                                            milliseconds: 300));
-
-                                                    // We reuse the token
-                                                    final prefs =
-                                                        await SharedPreferences
-                                                            .getInstance();
-                                                    final token =
-                                                        prefs.getString(
-                                                            'auth_token');
-
-                                                    if (token != null) {
-                                                      await _apiService
-                                                          .acceptOrder(
-                                                              token, order.id);
-
-                                                      // Update UI state for each success
-                                                      if (mounted) {
-                                                        setState(() {
-                                                          _removingOrderIds
-                                                              .add(order.id);
-                                                        });
-                                                      }
-                                                      successCount++;
-                                                    }
-                                                  } catch (e) {
-                                                    log('Failed to batch accept order ${order.id}: $e');
-                                                  }
-                                                }
-
-                                                if (mounted) {
-                                                  if (successCount > 0) {
-                                                    CustomSnackBar.showSuccess(
-                                                        context,
-                                                        'Accepted $successCount orders via Batch!');
-                                                  }
-                                                  _fetchOrders();
-                                                }
-                                              },
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.auto_awesome,
-                                                      size: R.sp(14),
-                                                      color: const Color(
-                                                          0xFF10C971)),
-                                                  SizedBox(width: R.w(4)),
-                                                  Text(
-                                                    'Batch All',
-                                                    style: TextStyle(
-                                                      fontSize: R.sp(14),
-                                                      color: const Color(
-                                                          0xFF10C971),
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width: R.w(12)),
                                           GestureDetector(
                                             onTap: () {
                                               Navigator.push(

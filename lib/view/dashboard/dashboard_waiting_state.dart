@@ -9,6 +9,7 @@ class DashboardWaitingState extends StatelessWidget {
   final int completedToday;
   final int dailyGoal;
   final int onTimePercentage;
+  final double loginHours;
 
   const DashboardWaitingState({
     super.key,
@@ -16,6 +17,7 @@ class DashboardWaitingState extends StatelessWidget {
     this.completedToday = 8, // Default value for now
     this.dailyGoal = 12, // Default value for now
     this.onTimePercentage = 95, // Default value
+    this.loginHours = 0.0,
   });
 
   @override
@@ -415,6 +417,16 @@ class DashboardWaitingState extends StatelessWidget {
                 footerColor: AppColors.primaryGreen,
                 icon: null, // Custom implementation for button
                 showButton: true,
+              ),
+            ),
+            SizedBox(width: R.w(16)),
+            Expanded(
+              child: _buildStatCard(
+                label: 'HOURS',
+                value: loginHours.toStringAsFixed(1),
+                footer: 'Online Time',
+                footerColor: AppColors.primaryGreen,
+                icon: RemixIcons.time_line,
               ),
             ),
           ],

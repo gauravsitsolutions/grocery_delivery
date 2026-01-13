@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
@@ -69,26 +70,54 @@ class _NotificationsViewState extends State<NotificationsView> {
 
     if (viewModel.error != null && viewModel.notifications.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Error: ${viewModel.error}'),
-            ElevatedButton(
-              onPressed: () => viewModel.fetchNotifications(refresh: true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(R.r(8)),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: R.w(24),
-                  vertical: R.h(10),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                RemixIcons.error_warning_line,
+                size: R.sp(60),
+                color: AppColors.grey,
+              ),
+              SizedBox(height: R.h(16)),
+              Text(
+                'Something went wrong',
+                style: TextStyle(
+                  fontSize: R.sp(18),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.headingText,
                 ),
               ),
-              child: const Text('Retry'),
-            ),
-          ],
+              SizedBox(height: R.h(8)),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: R.w(40)),
+                child: Text(
+                  viewModel.error ?? 'Unknown error occurred',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: R.sp(14),
+                    color: AppColors.bodyText.withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+              SizedBox(height: R.h(24)),
+              ElevatedButton(
+                onPressed: () => viewModel.fetchNotifications(refresh: true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(R.r(8)),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: R.w(24),
+                    vertical: R.h(10),
+                  ),
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -312,11 +341,7 @@ class _NotificationsViewState extends State<NotificationsView> {
       elevation: 0,
       centerTitle: false,
       titleSpacing: 0,
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios,
-            color: AppColors.headingText, size: R.sp(20)),
-        onPressed: () => Navigator.pop(context),
-      ),
+      leading: BackButton(),
       title: Text(
         'Notifications',
         style: TextStyle(

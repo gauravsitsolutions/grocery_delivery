@@ -72,7 +72,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
     R.init(context);
 
     return ChangeNotifierProvider(
-      create: (_) => OrderListViewModel()..fetchMyDeliveries(refresh: true),
+      create: (_) => OrderListViewModel()..fetchActiveOrders(refresh: true),
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
@@ -126,8 +126,10 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                 if (viewModel.isSearching) {
                   await viewModel.searchDeliveries(_searchController.text,
                       refresh: true);
+                } else if (_selectedStatus == 'Pending') {
+                  await viewModel.fetchActiveOrders(refresh: true);
                 } else {
-                  await viewModel.fetchMyDeliveries(refresh: true);
+                  await viewModel.fetchHistoryOrders(refresh: true);
                 }
               },
               color: AppColors.primaryGreen,
@@ -442,15 +444,25 @@ class _DeliveriesViewState extends State<DeliveriesView> {
       ),
       child: Row(
         children: [
-          _statusTab('Pending',
-              active: _selectedStatus == 'Pending',
-              onTap: () => setState(() => _selectedStatus = 'Pending')),
-          _statusTab('Delivered',
-              active: _selectedStatus == 'Delivered',
-              onTap: () => setState(() => _selectedStatus = 'Delivered')),
-          _statusTab('Cancelled',
-              active: _selectedStatus == 'Cancelled',
-              onTap: () => setState(() => _selectedStatus = 'Cancelled')),
+          _statusTab('Pending', active: _selectedStatus == 'Pending',
+              onTap: () {
+            setState(() => _selectedStatus = 'Pending');
+            context.read<OrderListViewModel>().fetchActiveOrders(refresh: true);
+          }),
+          _statusTab('Delivered', active: _selectedStatus == 'Delivered',
+              onTap: () {
+            setState(() => _selectedStatus = 'Delivered');
+            context
+                .read<OrderListViewModel>()
+                .fetchHistoryOrders(refresh: true);
+          }),
+          _statusTab('Cancelled', active: _selectedStatus == 'Cancelled',
+              onTap: () {
+            setState(() => _selectedStatus = 'Cancelled');
+            context
+                .read<OrderListViewModel>()
+                .fetchHistoryOrders(refresh: true);
+          }),
         ],
       ),
     );

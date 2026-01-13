@@ -108,6 +108,44 @@ class ApiService {
     return response;
   }
 
+  Future<double> getLoginHours(String token) async {
+    final uri = Uri.parse(AppUrls.loginHours);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response['status'] == true && response['totalHours'] != null) {
+      return (response['totalHours'] as num).toDouble();
+    }
+    return 0.0;
+  }
+
+  Future<int> getTotalOrders(String token) async {
+    final uri = Uri.parse(AppUrls.totalOrders);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() => http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ));
+
+    if (response['status'] == true && response['totalOrders'] != null) {
+      return (response['totalOrders'] as num).toInt();
+    }
+    return 0;
+  }
+
   Future<LoginResponse> verifyOtp(String mobile, String otp) async {
     final uri = Uri.parse(AppUrls.verifyOtp);
     log('API Request: POST $uri');

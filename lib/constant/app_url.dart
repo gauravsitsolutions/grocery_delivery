@@ -50,12 +50,8 @@ class AppUrls {
   static const String notifications = '$baseUrl/api/notifications';
   static const String notificationSettings =
       '$baseUrl/api/notifications/settings';
+  static const String loginHours = '$baseUrl/api/partner/stats/login-hours';
+  static const String totalOrders = '$baseUrl/api/partner/status/orders';
   static String markNotificationAsRead(String id) =>
       '$baseUrl/api/notifications/$id/read';
-
-  static String getFullUrl(String path) {
-    if (path.startsWith('http')) return path;
-    if (path.startsWith('/')) return '$baseUrl$path';
-    return '$baseUrl/$path';
-  }
 }

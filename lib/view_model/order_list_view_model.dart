@@ -16,13 +16,16 @@ class OrderListViewModel extends ChangeNotifier {
   bool _newOrdersHasMore = false;
   String? _newOrdersError;
 
-  // State for "My Deliveries"
+  // State for "My Deliveries" (Shared list for both Active and History tabs)
   List<Order> _myDeliveries = [];
   bool _isMyDeliveriesLoading = false;
   bool _isMyDeliveriesLoadingMore = false;
   int _myDeliveriesPage = 1;
   bool _myDeliveriesHasMore = false;
   String? _myDeliveriesError;
+
+  // Track which type of list is currently loaded
+  bool _isHistoryList = false;
 
   // Getters
   List<Order> get newOrders => _newOrders;
@@ -90,14 +93,18 @@ class OrderListViewModel extends ChangeNotifier {
     await fetchNewOrders();
   }
 
-  // Fetch My Deliveries
-  Future<void> fetchMyDeliveries({bool refresh = false}) async {
+  // Fetch ACTIVE Orders (Queue) - typically "Pending", "Assigned", "Picked Up"
+  Future<void> fetchActiveOrders({bool refresh = false}) async {
     if (refresh) {
+      _isHistoryList = false; // Mark as Active
       _myDeliveriesPage = 1;
       _myDeliveriesHasMore = false;
       _myDeliveriesError = null;
       _isMyDeliveriesLoading = true;
       notifyListeners();
+    } else if (_isHistoryList) {
+      // Prevent loading more if we are switching contexts incorrectly
+      return;
     }
 
     try {
@@ -109,13 +116,59 @@ class OrderListViewModel extends ChangeNotifier {
         return;
       }
 
+      // Use getMyOrders for Active queue
       final response =
-          await _apiService.getDeliveries(token, page: _myDeliveriesPage);
+          await _apiService.getMyOrders(token, page: _myDeliveriesPage);
 
       // Also fetch status if this is the first page or a refresh
       if (refresh || _myDeliveriesPage == 1) {
         fetchDeliveryStatus();
       }
+
+      if (refresh) {
+        _myDeliveries = response.data;
+      } else {
+        _myDeliveries.addAll(response.data);
+      }
+
+      _myDeliveriesHasMore = (response.currentPage ?? _myDeliveriesPage) <
+          (response.lastPage ?? _myDeliveriesPage);
+      _isMyDeliveriesLoading = false;
+      _isMyDeliveriesLoadingMore = false;
+      notifyListeners();
+    } catch (e) {
+      _myDeliveriesError = e is AppException ? e.message : e.toString();
+      _isMyDeliveriesLoading = false;
+      _isMyDeliveriesLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  // Fetch HISTORY Orders - typically "Delivered", "Cancelled"
+  Future<void> fetchHistoryOrders({bool refresh = false}) async {
+    if (refresh) {
+      _isHistoryList = true; // Mark as History
+      _myDeliveriesPage = 1;
+      _myDeliveriesHasMore = false;
+      _myDeliveriesError = null;
+      _isMyDeliveriesLoading = true;
+      notifyListeners();
+    } else if (!_isHistoryList) {
+      return;
+    }
+
+    try {
+      final token = await _authToken;
+      if (token == null) {
+        _myDeliveriesError = 'Not authenticated';
+        _isMyDeliveriesLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // Use getDeliveries for History
+      final response =
+          await _apiService.getDeliveries(token, page: _myDeliveriesPage);
 
       if (refresh) {
         _myDeliveries = response.data;
@@ -147,7 +200,11 @@ class OrderListViewModel extends ChangeNotifier {
     _myDeliveriesPage++;
     notifyListeners();
 
-    await fetchMyDeliveries();
+    if (_isHistoryList) {
+      await fetchHistoryOrders();
+    } else {
+      await fetchActiveOrders();
+    }
   }
 
   // Search State
