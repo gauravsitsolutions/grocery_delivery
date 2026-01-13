@@ -418,7 +418,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

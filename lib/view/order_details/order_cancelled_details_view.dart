@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:remixicon/remixicon.dart';
-import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:cached_network_image/cached_network_image.dart';

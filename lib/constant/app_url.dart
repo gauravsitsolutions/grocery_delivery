@@ -46,17 +46,15 @@ class AppUrls {
   static String reportItemIssue(int orderId, int itemId) =>
       '$baseUrl/api/delivery/orders/$orderId/items/$itemId/issue';
   static String sendDeliveryOtp(int id) =>
-      '$baseUrl/api/delivery/orders/$id/delivery/otp';
+      '$baseUrl/api/partner/orders/$id/delivery/send-otp';
+  static String resendDeliveryOtp(int id) =>
+      '$baseUrl/api/partner/orders/$id/delivery/resend-otp';
   static String completeDelivery(int id) =>
-      '$baseUrl/api/delivery/orders/$id/delivery/complete';
+      '$baseUrl/api/partner/orders/$id/delivery/verify-otp';
   static String rateCustomer(int id) =>
       '$baseUrl/api/delivery/orders/$id/rate-customer';
 
-  static const String notifications = '$baseUrl/api/delivery/notifications';
-  static const String notificationSettings =
-      '$baseUrl/api/delivery/notifications/settings';
+  static const String notifications = '$baseUrl/api/notifications';
   static const String loginHours = '$baseUrl/api/partner/stats/login-hours';
   static const String totalOrders = '$baseUrl/api/partner/status/orders';
-  static String markNotificationAsRead(String id) =>
-      '$baseUrl/api/delivery/notifications/$id/read';
 }

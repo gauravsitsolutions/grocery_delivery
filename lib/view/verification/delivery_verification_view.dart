@@ -215,8 +215,9 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                       _secondsRemaining = 300;
                     }); // Reset UI immediately
 
-                    final success =
-                        await context.read<OrderViewModel>().sendDeliveryOtp();
+                    final success = await context
+                        .read<OrderViewModel>()
+                        .resendDeliveryOtp();
 
                     if (success && mounted) {
                       _startTimer();

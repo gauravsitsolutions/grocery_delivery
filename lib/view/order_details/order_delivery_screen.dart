@@ -22,8 +22,9 @@ class _OrderDeliveryScreenState extends State<OrderDeliveryScreen> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<OrderViewModel>();
     // Ensure we have an order to show
-    if (viewModel.order == null)
+    if (viewModel.order == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       body: Stack(

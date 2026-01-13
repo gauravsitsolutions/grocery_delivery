@@ -204,6 +204,28 @@ class OrderViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> resendDeliveryOtp() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await _getToken;
+      if (token == null) throw Exception('Not authenticated');
+
+      await _apiService.resendDeliveryOtp(token, orderId);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e is AppException ? e.message : e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   final ImagePicker _picker = ImagePicker();
 
   Future<void> pickProofImage(ImageSource source) async {

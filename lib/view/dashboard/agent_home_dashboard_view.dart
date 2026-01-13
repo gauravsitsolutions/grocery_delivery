@@ -18,15 +18,14 @@ import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/dashboard_shimmer.dart';
-import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
-import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/dashboard_waiting_state.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/available_orders_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
-import 'package:provider/provider.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
+import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -75,17 +74,34 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   @override
   void initState() {
     super.initState();
-    _fetchOrders();
-    _fetchProfile();
-    _fetchStats();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationsViewModel>().fetchNotifications(refresh: true);
-    });
+    _initDashboard();
+  }
+
+  Future<void> _initDashboard() async {
+    final token = await SharedPrefsUtil.getToken();
+    if (token != null) {
+      if (mounted) {
+        setState(() {
+          _authToken = token;
+        });
+      }
+      // Re-fetch everything with the token
+      _fetchOrders(refresh: true);
+      _fetchProfile();
+      _fetchStats();
+    } else {
+      if (mounted) {
+        setState(() {
+          _error = 'User not authenticated';
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchProfile() async {
     try {
-      final token = await SharedPrefsUtil.getToken();
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
       if (token != null) {
         final profileResponse = await _apiService.getProfile(token);
         if (mounted && profileResponse.data != null) {
@@ -101,7 +117,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Future<void> _fetchStats() async {
     try {
-      final token = await SharedPrefsUtil.getToken();
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
       if (token != null) {
         final hours = await _apiService.getLoginHours(token);
         final orders = await _apiService.getTotalOrders(token);
@@ -127,7 +143,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     }
 
     try {
-      final token = await SharedPrefsUtil.getToken();
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
 
       if (token == null) {
         if (mounted) {
@@ -210,7 +226,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final token = await SharedPrefsUtil.getToken();
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
       if (token == null) return;
 
       final nextPage = _availablePage + 1;
@@ -243,7 +259,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final token = await SharedPrefsUtil.getToken();
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
       if (token == null) return;
 
       final nextPage = _myOrdersPage + 1;
@@ -276,7 +292,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final token = await SharedPrefsUtil.getToken();
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
 
       if (token == null) return;
 
@@ -329,7 +345,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final token = await SharedPrefsUtil.getToken();
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
 
       if (token == null) return;
 
@@ -344,7 +360,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
       if (!context.mounted) return;
 
-      _showRejectSuccessDialog();
+      _showRejectSuccessDialog(orderId);
     } catch (e) {
       if (mounted) {
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
@@ -1284,11 +1300,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         ],
                       ),
                     ),
-                    SizedBox(width: R.w(10)), // Reduced 16->8
-                    // Notification Bell
+                    SizedBox(width: R.w(12)),
+                    // Notification Button
                     Container(
-                      width: R.w(38), // Reduced 40->36
-                      height: R.w(38), // Reduced 40->36
+                      width: R.w(38),
+                      height: R.w(38),
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         shape: BoxShape.circle,
@@ -1304,7 +1320,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         icon: Icon(RemixIcons.notification_4_line,
                             size: R.sp(24), color: AppColors.headingText),
                         onPressed: () {
-                          Navigator.of(context, rootNavigator: true).push(
+                          Navigator.push(
+                            context,
                             MaterialPageRoute(
                                 builder: (context) =>
                                     const NotificationsView()),
@@ -1675,15 +1692,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
   }
 
-  Future<void> _showRejectSuccessDialog() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _AnimationDialog(
-        lottieAsset: 'assets/lottie/reject_order.json',
-        title: 'Order Rejected!',
-        subtitle: 'Order removed from available list.',
-        titleColor: AppColors.error,
+  Future<void> _showRejectSuccessDialog(int orderId) async {
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (context) => OrderRejectedFeedbackView(orderId: orderId),
       ),
     );
     _fetchOrders(refresh: false);

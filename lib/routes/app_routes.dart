@@ -11,9 +11,7 @@ class AppRoutes {
   static const bottomNav = '/bottom-nav';
   static const dashboard = '/dashboard';
   static const customerInfo = '/customer-info';
-  static const notification = '/notification';
   static const profile = '/profile';
-  static const notificationSettings = '/notification_settings';
   static const deliverySummary = '/delivery-summary';
   static const navigationView = '/navigation-view';
   static const verificationView = '/verification-view';

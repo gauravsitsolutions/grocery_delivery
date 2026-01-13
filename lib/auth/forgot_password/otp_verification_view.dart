@@ -213,8 +213,9 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                               e.toString().replaceAll(
                                                   'Exception: ', ''));
                                         } finally {
-                                          if (mounted)
+                                          if (mounted) {
                                             setState(() => _isLoading = false);
+                                          }
                                         }
                                       },
                                 child: _isLoading
@@ -290,8 +291,9 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                           .toString()
                                           .replaceAll('Exception: ', ''));
                                 } finally {
-                                  if (mounted)
+                                  if (mounted) {
                                     setState(() => _isLoading = false);
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(

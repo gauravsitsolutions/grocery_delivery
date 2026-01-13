@@ -51,18 +51,6 @@ class _NotificationsViewState extends State<NotificationsView> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
-      floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: R.h(60)),
-        child: Consumer<NotificationsViewModel>(
-          builder: (context, viewModel, child) {
-            return CustomRetryButton(
-              onTap: () => viewModel.fetchNotifications(refresh: true),
-              isLoading: viewModel.isLoading,
-            );
-          },
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       appBar: _appBar(),
       body: Consumer<NotificationsViewModel>(
         builder: (context, viewModel, child) {

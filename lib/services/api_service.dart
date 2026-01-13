@@ -661,6 +661,21 @@ class ApiService {
     }
   }
 
+  Future<void> resendDeliveryOtp(String? token, int orderId) async {
+    final uri = Uri.parse(AppUrls.resendDeliveryOtp(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response['status'] != true) {
+      throw ValidationException(
+          response['message'] ?? 'Failed to resend delivery OTP');
+    }
+  }
+
   Future<Map<String, dynamic>> getOrderSummary(
       String? token, int orderId) async {
     final uri = Uri.parse(AppUrls.getSummary(orderId));
@@ -701,6 +716,8 @@ class ApiService {
     }
   }
 
+  // ================= NOTIFICATIONS =================
+
   Future<NotificationResponse> getNotifications(String? token,
       {int page = 1}) async {
     final uri = Uri.parse('${AppUrls.notifications}?page=$page');
@@ -714,24 +731,23 @@ class ApiService {
     return NotificationResponse.fromJson(response);
   }
 
-  Future<void> markNotificationAsRead(
+  /// Mark notification as read
+  Future<bool> markNotificationAsRead(
       String? token, String notificationId) async {
-    final uri = Uri.parse(AppUrls.markNotificationAsRead(notificationId));
-    log('API Request: GET $uri');
+    final uri = Uri.parse('${AppUrls.notifications}/$notificationId/read');
+    log('API Request: PATCH $uri');
 
-    final response = await _processRequest(() async => http.get(
+    final response = await _processRequest(() async => http.patch(
           uri,
           headers: await _getHeaders(token),
         ));
 
-    if (response['status'] != true) {
-      throw ValidationException(
-          response['message'] ?? 'Failed to mark notification as read');
-    }
+    return response['status'] == true || response['status'] == 'success';
   }
 
+  /// Get notification settings
   Future<Map<String, dynamic>> getNotificationSettings(String? token) async {
-    final uri = Uri.parse(AppUrls.notificationSettings);
+    final uri = Uri.parse('${AppUrls.notifications}/settings');
     log('API Request: GET $uri');
 
     return await _processRequest(() async => http.get(
@@ -740,21 +756,16 @@ class ApiService {
         ));
   }
 
-  Future<void> updateNotificationSettings(
-      String? token, Map<String, dynamic> settings) async {
-    final uri = Uri.parse(AppUrls.notificationSettings);
-    log('API Request: POST $uri');
-    log('API Body: ${jsonEncode(settings)}');
+  /// Update notification settings
+  Future<Map<String, dynamic>> updateNotificationSettings(
+      String? token, Map<String, bool> settings) async {
+    final uri = Uri.parse('${AppUrls.notifications}/settings');
+    log('API Request: PUT $uri');
 
-    final response = await _processRequest(() async => http.post(
+    return await _processRequest(() async => http.put(
           uri,
           headers: await _getHeaders(token),
           body: jsonEncode(settings),
         ));
-
-    if (response['status'] != true) {
-      throw ValidationException(
-          response['message'] ?? 'Failed to update notification settings');
-    }
   }
 }

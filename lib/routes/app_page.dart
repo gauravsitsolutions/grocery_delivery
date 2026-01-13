@@ -8,8 +8,6 @@ import 'package:samrudhi_delivery_agent_app/view/dashboard/agent_home_dashboard_
 import 'package:samrudhi_delivery_agent_app/view/customer_info/customer_info_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/notification_settings/notification_settings_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/widget/agent_bottom_nav_item.dart';
@@ -35,8 +33,6 @@ class AppPages {
           onStatusChanged: (_) {},
         ),
     AppRoutes.customerInfo: (_) => const CustomerInfoView(),
-    AppRoutes.notification: (_) => const NotificationsView(),
-    AppRoutes.notificationSettings: (_) => const NotificationSettingsView(),
     AppRoutes.deliverySummary: (_) => const DeliverySummaryView(),
     AppRoutes.navigationView: (_) => const NavigationView(),
     AppRoutes.verificationView: (_) => const VerificationView(),
