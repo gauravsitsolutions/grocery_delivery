@@ -76,7 +76,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   if (val) {
                     CustomSnackBar.showSuccess(context, 'You are now Online');
                   } else {
-                    CustomSnackBar.showError(context, 'You are now Offline');
+                    CustomSnackBar.showInfo(context, 'You are now Offline');
                   }
                 } catch (e) {
                   if (!context.mounted) return;

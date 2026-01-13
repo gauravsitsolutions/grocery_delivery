@@ -10,6 +10,7 @@ class DashboardWaitingState extends StatelessWidget {
   final int dailyGoal;
   final int onTimePercentage;
   final double loginHours;
+  final bool isOnline; // Added parameter
 
   const DashboardWaitingState({
     super.key,
@@ -18,6 +19,7 @@ class DashboardWaitingState extends StatelessWidget {
     this.dailyGoal = 12, // Default value for now
     this.onTimePercentage = 95, // Default value
     this.loginHours = 0.0,
+    this.isOnline = true, // Default to true
   });
 
   @override
@@ -339,7 +341,7 @@ class DashboardWaitingState extends StatelessWidget {
           child: AvatarGlow(
             glowColor: AppColors.primaryGreen,
             duration: const Duration(milliseconds: 2000),
-            repeat: true,
+            repeat: isOnline, // Use isOnline to toggle glow
             startDelay: const Duration(milliseconds: 1000),
             glowRadiusFactor: 0.5, // Controls size relative to child
             curve: Curves.easeOutQuad,

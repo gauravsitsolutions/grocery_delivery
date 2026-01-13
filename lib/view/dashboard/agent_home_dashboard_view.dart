@@ -1370,7 +1370,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                 _myOrders.isEmpty &&
                                 _currentOrder == null &&
                                 !_isLoading)
-                            ? const DashboardWaitingState()
+                            ? DashboardWaitingState(isOnline: isOnline)
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

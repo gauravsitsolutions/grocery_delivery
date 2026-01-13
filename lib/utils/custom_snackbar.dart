@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 
+import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+
 class CustomSnackBar {
   static void showSuccess(BuildContext context, String message,
       {String title = 'Success'}) {
@@ -74,10 +76,14 @@ class CustomSnackBar {
       elevation: 0,
       behavior: SnackBarBehavior.floating,
       backgroundColor: Colors.transparent,
+      margin: const EdgeInsets.all(20),
+      duration: const Duration(seconds: 4),
       content: AwesomeSnackbarContent(
         title: title,
         message: message,
         contentType: contentType,
+        color:
+            contentType == ContentType.success ? AppColors.primaryGreen : null,
       ),
     );
 
@@ -103,6 +109,8 @@ class CustomSnackBar {
         message: message,
         contentType: contentType,
         inMaterialBanner: true,
+        color:
+            contentType == ContentType.success ? AppColors.primaryGreen : null,
       ),
       actions: const [SizedBox.shrink()],
     );
