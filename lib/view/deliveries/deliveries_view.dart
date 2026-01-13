@@ -954,39 +954,102 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   }
 
   Widget _filterChips() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: R.w(0)),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
-          _filterChip('Today', active: true),
+          _filterChip(
+            'All',
+            active: true,
+            isDark: true,
+          ),
           SizedBox(width: R.w(8)),
-          _filterChip('Weekly'),
+          _filterChip(
+            'Date',
+            icon: RemixIcons.calendar_line,
+            isDropdown: true,
+          ),
           SizedBox(width: R.w(8)),
-          _filterChip('Monthly'),
+          _filterChip(
+            'Type',
+            icon: RemixIcons.shopping_bag_3_line,
+            isDropdown: true,
+          ),
+          SizedBox(width: R.w(8)),
+          _filterChip(
+            'COD',
+            icon: RemixIcons.money_dollar_circle_line,
+          ),
+          SizedBox(width: R.w(8)),
+          Container(
+            padding: EdgeInsets.all(R.w(8)),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.borderLight),
+            ),
+            child: Icon(
+              RemixIcons.filter_3_line,
+              size: R.sp(20),
+              color: AppColors.headingText,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _filterChip(String label, {bool active = false}) {
+  Widget _filterChip(
+    String label, {
+    bool active = false,
+    bool isDark = false,
+    IconData? icon,
+    bool isDropdown = false,
+  }) {
+    final bgColor = isDark
+        ? AppColors.headingText
+        : (active
+            ? AppColors.primaryGreen.withValues(alpha: 0.1)
+            : AppColors.white);
+    final borderColor = isDark
+        ? AppColors.headingText
+        : (active ? AppColors.primaryGreen : AppColors.borderLight);
+    final textColor = isDark
+        ? AppColors.white
+        : (active ? AppColors.primaryGreen : AppColors.headingText);
+    final iconColor = isDark
+        ? AppColors.white
+        : (active ? AppColors.primaryGreen : AppColors.headingText);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(8)),
       decoration: BoxDecoration(
-        color: active
-            ? AppColors.primaryGreen.withValues(alpha: 0.1)
-            : AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(20)),
-        border: Border.all(
-          color: active ? AppColors.primaryGreen : AppColors.borderLight,
-        ),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(R.r(24)),
+        border: Border.all(color: borderColor),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: R.sp(13),
-          fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-          color: active ? AppColors.primaryGreen : AppColors.bodyText,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: R.sp(16), color: iconColor),
+            SizedBox(width: R.w(6)),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: R.sp(14),
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          if (isDropdown) ...[
+            SizedBox(width: R.w(4)),
+            Icon(Icons.arrow_drop_down_rounded,
+                size: R.sp(20), color: iconColor),
+          ],
+        ],
       ),
     );
   }
