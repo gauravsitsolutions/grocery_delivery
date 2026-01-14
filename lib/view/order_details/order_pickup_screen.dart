@@ -6,6 +6,7 @@ import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
 class OrderPickupScreen extends StatelessWidget {
   const OrderPickupScreen({super.key});
@@ -537,12 +538,9 @@ class OrderPickupScreen extends StatelessWidget {
                           );
                           Navigator.pop(dialogContext);
                           if (context.mounted && success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Issue reported successfully'),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                              ),
+                            CustomSnackBar.showSuccess(
+                              context,
+                              'Issue reported successfully',
                             );
                           }
                         },

@@ -9,6 +9,7 @@ import 'package:samrudhi_delivery_agent_app/widget/notification_shimmer.dart';
 import '../../../constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/custom_snackbar.dart';
 
 class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
@@ -326,16 +327,16 @@ class _NotificationsViewState extends State<NotificationsView> {
                   GestureDetector(
                     onTap: () {
                       viewModel.clearAll();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Notifications cleared'),
-                          action: SnackBarAction(
-                            label: 'UNDO',
-                            onPressed: () {
-                              // Undo logic if needed, currently viewmodel restores on error but we might want explicit undo
-                              viewModel.fetchNotifications(refresh: true);
-                            },
-                          ),
+                      CustomSnackBar.showSuccess(
+                        context,
+                        'Notifications cleared',
+                        centered: true,
+                        action: SnackBarAction(
+                          label: 'UNDO',
+                          textColor: AppColors.white,
+                          onPressed: () {
+                            viewModel.fetchNotifications(refresh: true);
+                          },
                         ),
                       );
                     },

@@ -1089,15 +1089,28 @@ class _SummaryCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(R.w(12)),
       decoration: BoxDecoration(
-        color: bg.withValues(alpha: 0.05),
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(16)),
-        border: Border.all(color: bg.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor, size: R.sp(20)),
-          SizedBox(height: R.h(8)),
+          Container(
+            padding: EdgeInsets.all(R.w(8)),
+            decoration: BoxDecoration(
+              color: bg.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: R.sp(20)),
+          ),
+          SizedBox(height: R.h(12)),
           Text(
             value,
             style: TextStyle(
@@ -1106,12 +1119,13 @@ class _SummaryCard extends StatelessWidget {
               color: textColor,
             ),
           ),
+          SizedBox(height: R.h(4)),
           Text(
             title,
             style: TextStyle(
-              fontSize: R.sp(11),
+              fontSize: R.sp(12),
               fontWeight: FontWeight.w600,
-              color: AppColors.bodyText,
+              color: AppColors.bodyText.withValues(alpha: 0.8),
             ),
           ),
         ],

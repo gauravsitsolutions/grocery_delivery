@@ -14,7 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
   responsive_framework: ^1.5.1
-  lottie: ^3.3.2
+
   persistent_bottom_nav_bar: ^6.2.1
   fl_chart: ^1.1.1
   remixicon: ^1.4.1
@@ -56,4 +56,3 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    - assets/lottie/

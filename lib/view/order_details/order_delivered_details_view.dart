@@ -6,6 +6,7 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OrderDeliveredDetailsView extends StatelessWidget {
   final Order order;
@@ -26,6 +27,8 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: R.w(16)),
                 child: Column(
                   children: [
+                    _buildCustomerCard(),
+                    SizedBox(height: R.h(16)),
                     _buildRouteCard(),
                     SizedBox(height: R.h(16)),
                     _buildProofCard(),
@@ -102,7 +105,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(height: R.h(30)),
+          SizedBox(height: R.h(20)),
           Container(
             padding: EdgeInsets.all(R.w(12)),
             decoration: BoxDecoration(
@@ -131,11 +134,144 @@ class OrderDeliveredDetailsView extends StatelessWidget {
           Text(
             order.status.toLowerCase() == 'cancelled'
                 ? 'Order was cancelled'
-                : 'Successfully completed',
+                : 'Successfully dropped off at ${order.deliveredAt != null ? DateFormat('h:mm a').format(order.deliveredAt!.toLocal()) : ''}',
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: R.sp(13),
               fontWeight: FontWeight.w400,
+            ),
+          ),
+          SizedBox(height: R.h(24)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildSummaryChip(
+                Remix.calendar_line,
+                'Today',
+              ),
+              SizedBox(width: R.w(12)),
+              _buildSummaryChip(
+                Remix.time_line,
+                '14 mins', // Placeholder duration as discussed
+              ),
+              SizedBox(width: R.w(12)),
+              _buildSummaryChip(
+                Remix.map_pin_line,
+                '2.4 km', // Placeholder distance as discussed
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryChip(IconData icon, String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(8)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(R.r(20)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: const Color(0xFF6B7280), size: R.sp(14)),
+          SizedBox(width: R.w(6)),
+          Text(
+            label,
+            style: TextStyle(
+              color: const Color(0xFF374151),
+              fontSize: R.sp(13),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(R.w(16)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(R.r(24)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: R.w(50),
+            height: R.w(50),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(R.r(16)),
+            ),
+            child: order.user?.profilePhoto != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(R.r(16)),
+                    child: CachedNetworkImage(
+                      imageUrl: order.user!.profilePhoto!.startsWith('http')
+                          ? order.user!.profilePhoto!
+                          : '${AppUrls.baseUrl}/${order.user!.profilePhoto}',
+                      fit: BoxFit.cover,
+                      errorWidget: (context, url, error) => Icon(
+                          Remix.user_fill,
+                          color: Colors.grey[400],
+                          size: R.sp(24)),
+                    ),
+                  )
+                : Icon(Remix.user_fill,
+                    color: Colors.grey[400], size: R.sp(24)),
+          ),
+          SizedBox(width: R.w(16)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'CUSTOMER',
+                  style: TextStyle(
+                    color: const Color(0xFF9CA3AF),
+                    fontSize: R.sp(10),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                SizedBox(height: R.h(4)),
+                Text(
+                  order.user?.fullName ?? 'Customer',
+                  style: TextStyle(
+                    color: const Color(0xFF1F2937),
+                    fontSize: R.sp(16),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () async {
+              if (order.user?.mobile != null) {
+                final Uri launchUri = Uri(
+                  scheme: 'tel',
+                  path: order.user!.mobile,
+                );
+                await launchUrl(launchUri);
+              }
+            },
+            child: Container(
+              padding: EdgeInsets.all(R.w(10)),
+              decoration: const BoxDecoration(
+                color: Color(0xFFDCFCE7), // Light green
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Remix.phone_fill,
+                color: AppColors.primaryGreen,
+                size: R.sp(20),
+              ),
             ),
           ),
         ],

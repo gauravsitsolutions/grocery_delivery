@@ -20,7 +20,7 @@ class AppUrls {
   static const String updateProfileEmail =
       '$baseUrl/api/delivery_boy/profile/email';
   static const String uploadProfileImage = '$baseUrl/api/partner/profile/image';
-  static const String newOrders = '$baseUrl/api/delivery/orders/new';
+  static const String newOrders = '$baseUrl/api/delivery/orders/available';
   static const String myOrders = '$baseUrl/api/delivery/orders/queue';
   static const String deliveries = '$baseUrl/api/deliveries';
   static const String searchDeliveries = '$baseUrl/api/deliveries/search';
@@ -32,27 +32,24 @@ class AppUrls {
       '$baseUrl/api/delivery/orders/$id/reject';
   static String cancelOrder(int id) =>
       '$baseUrl/api/delivery/orders/$id/cancel';
-  static String orderDetails(int id) => '$baseUrl/api/delivery/orders/$id';
-  static const String currentOrder = '$baseUrl/api/delivery/orders/current';
-  static String orderItems(int id) => '$baseUrl/api/delivery/orders/$id/items';
+  static String orderDetails(int id) => '$baseUrl/api/orders/$id';
+  static const String currentOrder = '$baseUrl/api/orders/current';
+  static String orderItems(int id) => '$baseUrl/api/orders/$id/items';
   static String pickupOrder(int id) =>
-      '$baseUrl/api/delivery/orders/$id/pickup/complete';
-  static String getSummary(int id) =>
-      '$baseUrl/api/delivery/orders/$id/summary';
-  static String pickupProof(int id) =>
-      '$baseUrl/api/delivery/orders/$id/pickup-proof';
+      '$baseUrl/api/orders/$id/pickup/complete';
+  static String getSummary(int id) => '$baseUrl/api/orders/$id/summary';
+  static String pickupProof(int id) => '$baseUrl/api/orders/$id/pickup-proof';
   static String verifyOrderItem(int orderId, int itemId) =>
-      '$baseUrl/api/delivery/orders/$orderId/items/$itemId/verify';
+      '$baseUrl/api/orders/$orderId/items/$itemId/verify';
   static String reportItemIssue(int orderId, int itemId) =>
-      '$baseUrl/api/delivery/orders/$orderId/items/$itemId/issue';
+      '$baseUrl/api/orders/$orderId/items/$itemId/issue';
   static String sendDeliveryOtp(int id) =>
-      '$baseUrl/api/partner/orders/$id/delivery/send-otp';
+      '$baseUrl/api/partner/orders/$id/delivery/send-otp'; // Keeping partner/orders as per likely structure, or should this change too? User didn't specify. Sticking to 'delivery/orders' removal for now.
   static String resendDeliveryOtp(int id) =>
       '$baseUrl/api/partner/orders/$id/delivery/resend-otp';
   static String completeDelivery(int id) =>
       '$baseUrl/api/partner/orders/$id/delivery/verify-otp';
-  static String rateCustomer(int id) =>
-      '$baseUrl/api/delivery/orders/$id/rate-customer';
+  static String rateCustomer(int id) => '$baseUrl/api/orders/$id/rate-customer';
 
   static const String notifications = '$baseUrl/api/notifications';
   static const String loginHours = '$baseUrl/api/partner/stats/login-hours';

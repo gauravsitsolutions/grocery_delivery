@@ -564,7 +564,7 @@ class ApiService {
           uri,
           headers: await _getHeaders(token),
           body: jsonEncode({
-            'issueType': issueType,
+            'issue_type': issueType,
             'description': description,
           }),
         ));
@@ -735,9 +735,9 @@ class ApiService {
   Future<bool> markNotificationAsRead(
       String? token, String notificationId) async {
     final uri = Uri.parse('${AppUrls.notifications}/$notificationId/read');
-    log('API Request: PATCH $uri');
+    log('API Request: POST $uri');
 
-    final response = await _processRequest(() async => http.patch(
+    final response = await _processRequest(() async => http.post(
           uri,
           headers: await _getHeaders(token),
         ));

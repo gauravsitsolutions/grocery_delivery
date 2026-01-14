@@ -18,8 +18,8 @@ class DeliveryVerificationView extends StatefulWidget {
 
 class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   final List<TextEditingController> _controllers =
-      List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+      List.generate(4, (index) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
   Timer? _timer;
   int _secondsRemaining = 300;
   bool _canResend = false;
@@ -64,7 +64,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   }
 
   void _onOtpChanged(String value, int index) {
-    if (value.length == 1 && index < 5) {
+    if (value.length == 1 && index < 3) {
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
@@ -132,7 +132,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
               ),
               const SizedBox(height: 12),
               Text(
-                "Please ask the customer for the 6-digit verification code sent to their mobile number.",
+                "Please ask the customer for the 4-digit verification code sent to their mobile number.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -156,7 +156,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
               // OTP Fields
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) {
+                children: List.generate(4, (index) {
                   final isFocused = _focusNodes[index].hasFocus;
                   final hasValue = _controllers[index].text.isNotEmpty;
 
@@ -268,9 +268,9 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                       ? null
                       : () async {
                           final otp = _otpCode;
-                          if (otp.length != 6) {
+                          if (otp.length != 4) {
                             CustomSnackBar.showError(context,
-                                "Please enter the complete 6-digit code");
+                                "Please enter the complete 4-digit code");
                             return;
                           }
 

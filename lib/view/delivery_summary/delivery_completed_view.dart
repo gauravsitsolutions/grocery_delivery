@@ -1,6 +1,6 @@
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_review/in_app_review.dart';
-import 'package:lottie/lottie.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
@@ -81,19 +81,39 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
   // ================= SUCCESS =================
 
   Widget _successIcon() {
-    return Container(
-      width: R.r(120),
-      height: R.r(120),
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-      ),
-      child: ClipOval(
-        child: Lottie.asset(
-          'assets/lottie/success_check.json',
-          width: R.r(120),
-          height: R.r(120),
-          fit: BoxFit.contain,
-          repeat: true, 
+    return AvatarGlow(
+      glowColor: AppColors.primaryGreen,
+      glowRadiusFactor: 0.4,
+      duration: const Duration(milliseconds: 2000),
+      repeat: true,
+      child: Container(
+        width: R.w(100),
+        height: R.w(100),
+        decoration: const BoxDecoration(
+          color: AppColors.primaryGreen,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x4010C971),
+              blurRadius: 20,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Container(
+            width: R.w(50),
+            height: R.w(50),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              RemixIcons.check_line,
+              color: AppColors.primaryGreen,
+              size: R.sp(32),
+            ),
+          ),
         ),
       ),
     );

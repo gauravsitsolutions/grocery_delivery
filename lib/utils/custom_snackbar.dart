@@ -5,43 +5,56 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 
 class CustomSnackBar {
   static void showSuccess(BuildContext context, String message,
-      {String title = 'Success', Color? color}) {
+      {String title = 'Success',
+      Color? color,
+      SnackBarAction? action,
+      bool centered = false}) {
     _show(
       context,
       title: title,
       message: message,
       contentType: ContentType.success,
       color: color,
+      action: action,
+      centered: centered,
     );
   }
 
   static void showError(BuildContext context, String message,
-      {String title = 'Error'}) {
+      {String title = 'Error', SnackBarAction? action, bool centered = false}) {
     _show(
       context,
       title: title,
       message: message,
       contentType: ContentType.failure,
+      action: action,
+      centered: centered,
     );
   }
 
   static void showWarning(BuildContext context, String message,
-      {String title = 'Warning'}) {
+      {String title = 'Warning',
+      SnackBarAction? action,
+      bool centered = false}) {
     _show(
       context,
       title: title,
       message: message,
       contentType: ContentType.warning,
+      action: action,
+      centered: centered,
     );
   }
 
   static void showInfo(BuildContext context, String message,
-      {String title = 'Help'}) {
+      {String title = 'Help', SnackBarAction? action, bool centered = false}) {
     _show(
       context,
       title: title,
       message: message,
       contentType: ContentType.help,
+      action: action,
+      centered: centered,
     );
   }
 
@@ -71,6 +84,8 @@ class CustomSnackBar {
     required String message,
     required ContentType contentType,
     Color? color,
+    SnackBarAction? action,
+    bool centered = false,
   }) {
     if (!context.mounted) return;
 
@@ -78,8 +93,14 @@ class CustomSnackBar {
       elevation: 0,
       behavior: SnackBarBehavior.floating,
       backgroundColor: Colors.transparent,
-      margin: const EdgeInsets.all(20),
+      margin: centered
+          ? EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height / 2 - 50,
+              left: 20,
+              right: 20)
+          : const EdgeInsets.all(20),
       duration: const Duration(seconds: 4),
+      action: action,
       content: AwesomeSnackbarContent(
         title: title,
         message: message,

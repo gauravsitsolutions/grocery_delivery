@@ -28,6 +28,7 @@ class NotificationsViewModel extends ChangeNotifier {
   bool get hasMore => _hasMore;
   String? get error => _error;
   Map<String, bool> get settings => _settings;
+  int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
   Future<String?> get _authToken async {
     return await SharedPrefsUtil.getToken();

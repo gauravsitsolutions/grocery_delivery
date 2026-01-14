@@ -234,6 +234,8 @@ class DeliveryAddress {
   final String city;
   final String state;
   final String postcode;
+  final String? latitude;
+  final String? longitude;
 
   DeliveryAddress({
     required this.id,
@@ -242,6 +244,8 @@ class DeliveryAddress {
     required this.city,
     required this.state,
     required this.postcode,
+    this.latitude,
+    this.longitude,
   });
 
   factory DeliveryAddress.fromJson(Map<String, dynamic> json) {
@@ -252,6 +256,8 @@ class DeliveryAddress {
       city: json['city'] ?? '',
       state: json['state'] ?? '',
       postcode: json['postcode'] ?? '',
+      latitude: json['latitude']?.toString(),
+      longitude: json['longitude']?.toString(),
     );
   }
 }

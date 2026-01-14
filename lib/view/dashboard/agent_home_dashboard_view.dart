@@ -1,14 +1,17 @@
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-// import 'package:lottie/lottie.dart';
+
 import 'package:shimmer/shimmer.dart'; // Added shimmer import
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
+// import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
@@ -22,10 +25,11 @@ import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_vie
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/dashboard_waiting_state.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/available_orders_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
+
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -65,11 +69,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   // Dashboard Stats (Mock Data for now)
   // Dashboard Stats
+  // Dashboard Stats
   int _completedDeliveries = 0;
-  double _loginHours = 0.0;
-  final int _dailyGoal =
-      12; // Keeping goal mock/static for now or fetch if available
-  final int _onTimePercentage = 95; // Keeping this mock/static for now
+  int _pendingDeliveries = 0;
+  int _cancelledDeliveries = 0;
 
   @override
   void initState() {
@@ -89,6 +92,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       _fetchOrders(refresh: true);
       _fetchProfile();
       _fetchStats();
+      // Fetch notifications for badge
+      if (mounted) {
+        Provider.of<NotificationsViewModel>(context, listen: false)
+            .fetchNotifications();
+      }
     } else {
       if (mounted) {
         setState(() {
@@ -119,12 +127,16 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     try {
       final token = _authToken ?? await SharedPrefsUtil.getToken();
       if (token != null) {
-        final hours = await _apiService.getLoginHours(token);
-        final orders = await _apiService.getTotalOrders(token);
+        final deliveryStatusInfo = await _apiService.getDeliveryStatus(token);
+        // final orders = await _apiService.getTotalOrders(token); // Replaced by getDeliveryStatus
+
         if (mounted) {
           setState(() {
-            _loginHours = hours;
-            _completedDeliveries = orders;
+            _completedDeliveries =
+                deliveryStatusInfo.data?.deliveredOrders ?? 0;
+            _pendingDeliveries = deliveryStatusInfo.data?.pendingOrders ?? 0;
+            _cancelledDeliveries =
+                deliveryStatusInfo.data?.cancelledOrders ?? 0;
           });
         }
       }
@@ -1308,35 +1320,79 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       ),
                       // Notification Button Removed
                       SizedBox(width: R.w(8)),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const NotificationsView(),
+                      Consumer<NotificationsViewModel>(
+                        builder: (context, notificationsVM, child) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NotificationsView(),
+                                ),
+                              ).then((_) {
+                                // Refresh count when returning
+                                if (mounted) {
+                                  notificationsVM.fetchNotifications(
+                                      refresh: true);
+                                }
+                              });
+                            },
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Container(
+                                  width: R.h(34),
+                                  height: R.h(34),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.shadow
+                                            .withValues(alpha: 0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    RemixIcons.notification_2_line,
+                                    size: R.sp(24),
+                                    color: AppColors.headingText,
+                                  ),
+                                ),
+                                if (notificationsVM.unreadCount > 0)
+                                  Positioned(
+                                    top: -2,
+                                    right: -2,
+                                    child: Container(
+                                      padding: EdgeInsets.all(R.w(4)),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: BoxConstraints(
+                                        minWidth: R.w(16),
+                                        minHeight: R.w(16),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '${notificationsVM.unreadCount > 99 ? '99+' : notificationsVM.unreadCount}',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: R.sp(10),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           );
                         },
-                        child: Container(
-                          width: R.h(34),
-                          height: R.h(34),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadow.withValues(alpha: 0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            RemixIcons.notification_2_line,
-                            size: R.sp(24),
-                            color: AppColors.headingText,
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -1382,23 +1438,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    // Stats Cards Row
+
                                     if (_currentOrder != null) ...[
-                                      _sectionHeader(
-                                        title: 'Current Task',
-                                        count: null,
-                                        action: GestureDetector(
-                                          onTap: widget.onViewDeliveries,
-                                          child: Text(
-                                            'View all',
-                                            style: TextStyle(
-                                              fontSize: R.sp(14),
-                                              color: AppColors.primaryGreen,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: R.h(12)),
                                       _currentTaskCard(_currentOrder!),
                                       SizedBox(height: R.h(24)),
                                     ],
@@ -1631,41 +1673,45 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   ],
                                 ),
 
-                          // Performance Today Row
+                          // Today Performance Row
                           SizedBox(height: R.h(24)),
-                          _sectionHeader(title: 'Performance Today'),
+                          _sectionHeader(
+                            title: 'Today Performance',
+                            count: null,
+                          ),
                           SizedBox(height: R.h(12)),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _statCard(
-                                  label: 'COMPLETED',
-                                  value: '$_completedDeliveries',
-                                  footer: _completedDeliveries >= _dailyGoal
-                                      ? 'Goal Met! ✨'
-                                      : '+2 vs Avg',
-                                  icon: RemixIcons.checkbox_circle_fill,
+                          Padding(
+                            padding: EdgeInsets.only(bottom: R.h(24)),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _statCard(
+                                    label: 'Delivered',
+                                    value: _completedDeliveries.toString(),
+                                    footer: 'Orders',
+                                    icon: RemixIcons.check_double_line,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(width: R.w(10)),
-                              Expanded(
-                                child: _statCard(
-                                  label: 'ON-TIME',
-                                  value: '$_onTimePercentage%',
-                                  footer: 'Elite Status',
-                                  icon: RemixIcons.timer_flash_fill,
+                                SizedBox(width: R.w(12)),
+                                Expanded(
+                                  child: _statCard(
+                                    label: 'Pending',
+                                    value: _pendingDeliveries.toString(),
+                                    footer: 'Orders',
+                                    icon: RemixIcons.time_line,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(width: R.w(10)),
-                              Expanded(
-                                child: _statCard(
-                                  label: 'HOURS',
-                                  value: _loginHours.toStringAsFixed(1),
-                                  footer: 'Active Time',
-                                  icon: RemixIcons.time_fill,
+                                SizedBox(width: R.w(12)),
+                                Expanded(
+                                  child: _statCard(
+                                    label: 'Cancelled',
+                                    value: _cancelledDeliveries.toString(),
+                                    footer: 'Orders',
+                                    icon: RemixIcons.close_circle_line,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -1682,68 +1728,19 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   }
 
   Future<void> _showAcceptSuccessDialog(Order order) async {
-    // Auto-close dialog after 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-    });
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 10,
-        insetPadding: EdgeInsets.symmetric(horizontal: R.w(40)),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(R.r(20)),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(R.w(30)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.check_circle_outline_rounded,
-                color: AppColors.primaryGreen,
-                size: R.w(100),
-              ),
-              SizedBox(height: R.h(20)),
-              Text(
-                'Order Accepted!',
-                style: TextStyle(
-                  fontSize: R.sp(22),
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryGreen,
-                ),
-              ),
-              SizedBox(height: R.h(8)),
-              Text(
-                'Redirecting to pickup task...',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: R.sp(14),
-                  color: AppColors.bodyText,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    // Navigate to Order Accepted Success View (Full Screen)
+    // This hides the bottom nav bar automatically when pushed with PersistentNavBarNavigator or standard push if rootNavigator is used.
 
     if (!mounted) return;
 
-    // Navigate to Pickup Task View
+    // We use pushNewScreen withNavBar: false to hide the bottom nav
     PersistentNavBarNavigator.pushNewScreen(
       context,
-      screen: PickupTaskView(order: order),
-      withNavBar: false, // Hide nav bar for task focus
+      screen: OrderAcceptedSuccessView(order: order),
+      withNavBar: false,
       pageTransitionAnimation: PageTransitionAnimation.cupertino,
     ).then((_) {
-      // Refresh orders when coming back
+      // Refresh orders when coming back (if they navigate back instead of to pickup)
       _fetchOrders();
     });
   }

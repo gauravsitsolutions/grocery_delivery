@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -7,12 +6,13 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
-import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
-import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_success_view.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 
 class PickupTaskView extends StatefulWidget {
   final Order order;
@@ -24,30 +24,6 @@ class PickupTaskView extends StatefulWidget {
 }
 
 class _PickupTaskViewState extends State<PickupTaskView> {
-  final Set<int> _selectedItemIds = {};
-  File? _pickupProof;
-
-  final ImagePicker _picker = ImagePicker();
-  final ApiService _apiService = ApiService();
-  bool _isLoading = false;
-
-  bool get _canProceed =>
-      _selectedItemIds.length == widget.order.orderItems.length &&
-      _pickupProof != null;
-
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 50, // Compress image
-      maxWidth: 1024, // Resize if too large
-    );
-    if (image != null) {
-      setState(() {
-        _pickupProof = File(image.path);
-      });
-    }
-  }
-
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(
       scheme: 'tel',
@@ -69,134 +45,143 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     }
   }
 
-  void _toggleItem(int id) {
-    setState(() {
-      if (_selectedItemIds.contains(id)) {
-        _selectedItemIds.remove(id);
-      } else {
-        _selectedItemIds.add(id);
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     R.init(context); // Initialize Responsive Utils
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB), // Light gray background
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.black, size: R.sp(20)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        centerTitle: true,
-        title: Column(
-          children: [
-            Text(
-              'PICKUP TASK',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: R.sp(16),
-                fontWeight: FontWeight.bold,
-              ),
+    return Consumer<OrderViewModel>(
+      builder: (context, viewModel, child) {
+        final order = viewModel.order ?? widget.order;
+        final canProceed =
+            viewModel.checkedItems.length == viewModel.orderItems.length &&
+                viewModel.pickupProofImage != null;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF9FAFB), // Light gray background
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios,
+                  color: Colors.black, size: R.sp(20)),
+              onPressed: () => Navigator.pop(context),
             ),
-            Text(
-              '#${widget.order.orderNumber}',
-              style: TextStyle(
-                color: AppColors.primaryGreen,
-                fontSize: R.sp(12),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: EdgeInsets.only(
-              left: R.w(16),
-              right: R.w(16),
-              top: R.h(16),
-              bottom: R.h(120), // Increased space for bottom button
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            centerTitle: true,
+            title: Column(
               children: [
-                _buildLocationCard(),
-                SizedBox(height: R.h(24)),
-                _buildItemChecklist(),
-                SizedBox(height: R.h(24)),
-                _buildPickupProof(),
+                Text(
+                  'PICKUP TASK',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: R.sp(16),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '#${order.orderNumber}',
+                  style: TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontSize: R.sp(12),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.fromLTRB(
-                R.w(16),
-                R.w(16),
-                R.w(16),
-                R.w(16) + MediaQuery.of(context).padding.bottom, // Safe Area
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: R.w(16),
+                  right: R.w(16),
+                  top: R.h(16),
+                  bottom: R.h(120), // Increased space for bottom button
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLocationCard(order),
+                    SizedBox(height: R.h(24)),
+                    _buildItemChecklist(viewModel),
+                    SizedBox(height: R.h(24)),
+                    _buildPickupProof(viewModel),
+                  ],
+                ),
               ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(
+                    R.w(16),
+                    R.w(16),
+                    R.w(16),
+                    R.w(16) +
+                        MediaQuery.of(context).padding.bottom, // Safe Area
                   ),
-                ],
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                height: R.h(50),
-                child: ElevatedButton(
-                  onPressed:
-                      _canProceed && !_isLoading ? _handleConfirmPickup : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    disabledBackgroundColor:
-                        AppColors.primaryGreen.withOpacity(0.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(R.r(25)),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Confirm & Start Delivery',
-                        style: TextStyle(
-                          fontSize: R.sp(16),
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
                       ),
-                      if (_canProceed) ...[
-                        SizedBox(width: R.w(8)),
-                        Icon(RemixIcons.checkbox_circle_fill,
-                            color: Colors.white, size: R.sp(20)),
-                      ],
                     ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: R.h(50),
+                    child: ElevatedButton(
+                      onPressed: canProceed && !viewModel.isPickupLoading
+                          ? () => _handleConfirmPickup(viewModel)
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        disabledBackgroundColor:
+                            AppColors.primaryGreen.withOpacity(0.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(R.r(25)),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: viewModel.isPickupLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Confirm & Start Delivery',
+                                  style: TextStyle(
+                                    fontSize: R.sp(16),
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                if (canProceed) ...[
+                                  SizedBox(width: R.w(8)),
+                                  Icon(RemixIcons.checkbox_circle_fill,
+                                      color: Colors.white, size: R.sp(20)),
+                                ],
+                              ],
+                            ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildLocationCard() {
+  Widget _buildLocationCard(Order order) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -229,7 +214,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 ),
                 SizedBox(height: R.h(8)),
                 Text(
-                  widget.order.vendor?.storeName ?? 'Warehouse Bay 4B',
+                  order.vendor?.storeName ?? 'Warehouse Bay 4B',
                   style: TextStyle(
                     color: const Color(0xFF1F2937),
                     fontSize: R.sp(18),
@@ -238,7 +223,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 ),
                 SizedBox(height: R.h(4)),
                 Text(
-                  widget.order.vendor?.address ??
+                  order.vendor?.address ??
                       'Avenue 5, Logistics Park, Sector 12',
                   style: TextStyle(
                     color: const Color(0xFF6B7280),
@@ -252,7 +237,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                       child: ElevatedButton.icon(
                         onPressed: () {
                           // Use vendor address or a default one
-                          final address = widget.order.vendor?.address ??
+                          final address = order.vendor?.address ??
                               'Avenue 5, Logistics Park, Sector 12';
                           _openMap(address);
                         },
@@ -278,8 +263,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                       child: TextButton.icon(
                         onPressed: () {
                           // Use vendor mobile or a default
-                          _makePhoneCall(
-                              widget.order.vendor?.mobile ?? '1234567890');
+                          _makePhoneCall(order.vendor?.mobile ?? '1234567890');
                         },
                         icon: Icon(RemixIcons.phone_fill,
                             color: const Color(0xFF1F2937), size: R.sp(18)),
@@ -332,7 +316,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     );
   }
 
-  Widget _buildItemChecklist() {
+  Widget _buildItemChecklist(OrderViewModel viewModel) {
     return Column(
       children: [
         Row(
@@ -354,7 +338,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 borderRadius: BorderRadius.circular(R.r(6)),
               ),
               child: Text(
-                '${widget.order.orderItems.length} ITEMS',
+                '${viewModel.orderItems.length} ITEMS',
                 style: TextStyle(
                   color: const Color(0xFF6B7280),
                   fontSize: R.sp(11),
@@ -365,8 +349,10 @@ class _PickupTaskViewState extends State<PickupTaskView> {
           ],
         ),
         SizedBox(height: R.h(16)),
-        ...widget.order.orderItems.map((item) {
-          final isSelected = _selectedItemIds.contains(item.id);
+        ...viewModel.orderItems.map((item) {
+          final isSelected = viewModel.checkedItems.contains(item.id);
+          final isVerifying = viewModel.isItemVerifying(item.id);
+
           return Padding(
             padding: EdgeInsets.only(bottom: R.h(12)),
             child: Theme(
@@ -386,17 +372,26 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 ),
                 child: CheckboxListTile(
                   value: isSelected,
-                  onChanged: (val) => _toggleItem(item.id),
+                  onChanged: isVerifying
+                      ? null
+                      : (val) => viewModel.toggleItem(item.id),
                   activeColor: AppColors.primaryGreen,
                   checkColor: Colors.white,
                   contentPadding: EdgeInsets.symmetric(
                       horizontal: R.w(16), vertical: R.h(6)),
-                  secondary: CircleAvatar(
-                    backgroundColor: Colors.grey[100],
-                    radius: R.r(24),
-                    child: Icon(RemixIcons.shopping_bag_3_fill,
-                        color: Colors.grey[400], size: R.sp(20)),
-                  ),
+                  secondary: isVerifying
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.primaryGreen),
+                        )
+                      : CircleAvatar(
+                          backgroundColor: Colors.grey[100],
+                          radius: R.r(24),
+                          child: Icon(RemixIcons.shopping_bag_3_fill,
+                              color: Colors.grey[400], size: R.sp(20)),
+                        ),
                   title: Text(
                     item.product?.name ?? 'Product Item',
                     style: TextStyle(
@@ -423,7 +418,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     );
   }
 
-  Widget _buildPickupProof() {
+  Widget _buildPickupProof(OrderViewModel viewModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,7 +432,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
         ),
         SizedBox(height: R.h(16)),
         InkWell(
-          onTap: _pickImage,
+          onTap: () => viewModel.pickProofImage(ImageSource.camera),
           borderRadius: BorderRadius.circular(R.r(24)),
           child: Container(
             width: double.infinity,
@@ -450,11 +445,11 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 style: BorderStyle.solid,
               ),
             ),
-            child: _pickupProof != null
+            child: viewModel.pickupProofImage != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(R.r(24)),
                     child: Image.file(
-                      _pickupProof!,
+                      viewModel.pickupProofImage!,
                       fit: BoxFit.cover,
                     ),
                   )
@@ -501,44 +496,24 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     );
   }
 
-  Future<void> _handleConfirmPickup() async {
-    setState(() => _isLoading = true);
+  Future<void> _handleConfirmPickup(OrderViewModel viewModel) async {
+    final success = await viewModel.pickupOrder();
 
-    try {
-      final token = await SharedPrefsUtil.getToken();
-      if (token == null) throw Exception('Authentication token not found');
+    if (!mounted) return;
 
-      // 1. Upload Proof
-      if (_pickupProof != null) {
-        await _apiService.uploadPickupProof(
-            token, widget.order.id, _pickupProof!);
-      }
-
-      // 2. Confirm Pickup
-      await _apiService.confirmPickup(token, widget.order.id);
-
-      if (!mounted) return;
-
+    if (success) {
       CustomSnackBar.showSuccess(context, 'Pickup confirmed successfully!');
 
-      // Navigate to Order Details (which handles delivery flow)
+      // Navigate to Pickup Success View
       PersistentNavBarNavigator.pushNewScreen(
         context,
-        screen: OrderDetailsView(
-          orderId: widget.order.id,
-          orderNumber: widget.order.orderNumber,
-          // order: widget.order, // Don't pass stale order, let it fetch fresh data
-        ),
+        screen: PickupSuccessView(order: widget.order),
         withNavBar: false,
         pageTransitionAnimation: PageTransitionAnimation.cupertino,
       );
-    } catch (e) {
-      if (mounted) {
-        CustomSnackBar.showError(context, 'Failed to confirm pickup: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+    } else {
+      if (viewModel.error != null) {
+        CustomSnackBar.showError(context, viewModel.error!);
       }
     }
   }
