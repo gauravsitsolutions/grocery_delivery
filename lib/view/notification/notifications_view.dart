@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
-
 import 'package:intl/intl.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/notification_shimmer.dart';

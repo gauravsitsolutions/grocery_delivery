@@ -25,7 +25,7 @@ import 'package:samrudhi_delivery_agent_app/view/dashboard/available_orders_view
 import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
-// import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -1277,7 +1277,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       // Timer Pill
                       Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: R.w(8),
+                            horizontal: R.w(10),
                             vertical: R.h(8)), // Reduced horiz 12->8
                         decoration: BoxDecoration(
                           color: AppColors.white,
@@ -1307,7 +1307,37 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         ),
                       ),
                       // Notification Button Removed
-                      /* Container(...) */
+                      SizedBox(width: R.w(8)),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationsView(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: R.h(34),
+                          height: R.h(34),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadow.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            RemixIcons.notification_2_line,
+                            size: R.sp(24),
+                            color: AppColors.headingText,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
