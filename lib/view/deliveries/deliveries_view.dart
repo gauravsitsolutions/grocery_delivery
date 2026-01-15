@@ -17,6 +17,12 @@ import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../utils/responsive.dart';
 
+// Helper for date comparison
+bool isSameDay(DateTime? a, DateTime? b) {
+  if (a == null || b == null) return false;
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
 class DeliveriesView extends StatefulWidget {
   const DeliveriesView({super.key});
 
@@ -85,10 +91,43 @@ class _DeliveriesViewState extends State<DeliveriesView> {
             final orders = viewModel.isSearching
                 ? viewModel.searchResults
                 : viewModel.myDeliveries.where((o) {
+                    // 1. Status Filter
+                    bool matchStatus = false;
                     if (_selectedStatus == 'Pending') {
-                      return o.status != 'delivered' && o.status != 'cancelled';
+                      matchStatus =
+                          o.status != 'delivered' && o.status != 'cancelled';
+                    } else {
+                      matchStatus = o.status == statusFilter;
                     }
-                    return o.status == statusFilter;
+
+                    // 2. Date Filter
+                    bool matchDate = true;
+                    if (viewModel.activeDateFilter == 'Today') {
+                      matchDate = isSameDay(o.createdAt, DateTime.now());
+                    } else if (viewModel.activeDateFilter == 'Yesterday') {
+                      matchDate = isSameDay(o.createdAt,
+                          DateTime.now().subtract(const Duration(days: 1)));
+                    } else if (viewModel.activeDateFilter == 'Last 7 Days') {
+                      final difference =
+                          DateTime.now().difference(o.createdAt).inDays;
+                      matchDate = difference <= 7;
+                    } else if (viewModel.activeDateFilter != 'All') {
+                      // Custom Date (YYYY-MM-DD)
+                      final customDate =
+                          DateTime.tryParse(viewModel.activeDateFilter);
+                      if (customDate != null) {
+                        matchDate = isSameDay(o.createdAt, customDate);
+                      }
+                    }
+
+                    // 3. Type Filter (Placeholder as model lacks type)
+                    bool matchType = true;
+                    if (viewModel.activeTypeFilter != 'All') {
+                      // Logic would go here if we had type
+                      // matchType = o.type == viewModel.activeTypeFilter;
+                    }
+
+                    return matchStatus && matchDate && matchType;
                   }).toList();
 
             final isLoading = viewModel.isSearching
@@ -295,6 +334,39 @@ class _DeliveriesViewState extends State<DeliveriesView> {
     );
   }
 
+  void _openFilterSheet(
+      BuildContext context, OrderListViewModel viewModel) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => FilterDeliveriesSheet(
+        initialDate: viewModel.activeDateFilter,
+        initialType: viewModel.activeTypeFilter,
+        initialStatus: _selectedStatus,
+      ),
+    );
+
+    if (result != null) {
+      viewModel.setFilters(result['date'], result['type']);
+      if (result['status'] != null) {
+        String newStatus = result['status'];
+        if (newStatus == 'Pending' ||
+            newStatus == 'Delivered' ||
+            newStatus == 'Cancelled') {
+          setState(() {
+            _selectedStatus = newStatus;
+          });
+          if (newStatus == 'Pending') {
+            viewModel.fetchActiveOrders(refresh: true);
+          } else {
+            viewModel.fetchHistoryOrders(refresh: true);
+          }
+        }
+      }
+    }
+  }
+
   // ================= SEARCH =================
 
   Widget _searchBar(BuildContext context) {
@@ -413,14 +485,8 @@ class _DeliveriesViewState extends State<DeliveriesView> {
               color: AppColors.headingText,
               size: R.sp(20),
             ),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: AppColors.transparent,
-                builder: (_) => const FilterDeliveriesSheet(),
-              );
-            },
+            onPressed: () => _openFilterSheet(context,
+                Provider.of<OrderListViewModel>(context, listen: false)),
           ),
         ),
       ],
@@ -954,45 +1020,63 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   }
 
   Widget _filterChips() {
+    final viewModel = Provider.of<OrderListViewModel>(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
-          _filterChip(
-            'All',
-            active: true,
-            isDark: true,
-          ),
+          _filterChip('All',
+              active: viewModel.activeDateFilter == 'All' &&
+                  viewModel.activeTypeFilter == 'All',
+              isDark: viewModel.activeDateFilter == 'All', onTap: () {
+            viewModel.clearFilters();
+          }),
           SizedBox(width: R.w(8)),
           _filterChip(
             'Date',
+            label: viewModel.activeDateFilter != 'All'
+                ? viewModel.activeDateFilter
+                : 'Date',
+            active: viewModel.activeDateFilter != 'All',
             icon: RemixIcons.calendar_line,
             isDropdown: true,
+            onTap: () => _openFilterSheet(context, viewModel),
           ),
           SizedBox(width: R.w(8)),
           _filterChip(
             'Type',
+            label: viewModel.activeTypeFilter != 'All'
+                ? viewModel.activeTypeFilter
+                : 'Type',
+            active: viewModel.activeTypeFilter != 'All',
             icon: RemixIcons.shopping_bag_3_line,
             isDropdown: true,
+            onTap: () => _openFilterSheet(context, viewModel),
           ),
+          // Removing COD/Filter icon placeholder code or keeping it but making it do something?
+          // I'll keep COD as visual only for now or remove? User didn't circle it.
+          // I'll keep it as is but add onTap safety
           SizedBox(width: R.w(8)),
           _filterChip(
             'COD',
             icon: RemixIcons.money_dollar_circle_line,
           ),
           SizedBox(width: R.w(8)),
-          Container(
-            padding: EdgeInsets.all(R.w(8)),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.borderLight),
-            ),
-            child: Icon(
-              RemixIcons.filter_3_line,
-              size: R.sp(20),
-              color: AppColors.headingText,
+          GestureDetector(
+            onTap: () => _openFilterSheet(context, viewModel),
+            child: Container(
+              padding: EdgeInsets.all(R.w(8)),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: Icon(
+                RemixIcons.filter_3_line,
+                size: R.sp(20),
+                color: AppColors.headingText,
+              ),
             ),
           ),
         ],
@@ -1001,11 +1085,14 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   }
 
   Widget _filterChip(
-    String label, {
+    String text, {
+    // Renamed label to text because I added named argument label
+    String? label,
     bool active = false,
     bool isDark = false,
     IconData? icon,
     bool isDropdown = false,
+    VoidCallback? onTap,
   }) {
     final bgColor = isDark
         ? AppColors.headingText
@@ -1022,34 +1109,37 @@ class _DeliveriesViewState extends State<DeliveriesView> {
         ? AppColors.white
         : (active ? AppColors.primaryGreen : AppColors.headingText);
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(8)),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(R.r(24)),
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: R.sp(16), color: iconColor),
-            SizedBox(width: R.w(6)),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: R.sp(14),
-              fontWeight: FontWeight.w600,
-              color: textColor,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(8)),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(R.r(24)),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: R.sp(16), color: iconColor),
+              SizedBox(width: R.w(6)),
+            ],
+            Text(
+              label ?? text,
+              style: TextStyle(
+                fontSize: R.sp(14),
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
             ),
-          ),
-          if (isDropdown) ...[
-            SizedBox(width: R.w(4)),
-            Icon(Icons.arrow_drop_down_rounded,
-                size: R.sp(20), color: iconColor),
+            if (isDropdown) ...[
+              SizedBox(width: R.w(4)),
+              Icon(Icons.arrow_drop_down_rounded,
+                  size: R.sp(20), color: iconColor),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

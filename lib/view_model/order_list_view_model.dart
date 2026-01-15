@@ -40,6 +40,25 @@ class OrderListViewModel extends ChangeNotifier {
   bool get myDeliveriesHasMore => _myDeliveriesHasMore;
   String? get myDeliveriesError => _myDeliveriesError;
 
+  // Filters from Sheet
+  String _activeDateFilter = 'All';
+  String _activeTypeFilter = 'All';
+
+  String get activeDateFilter => _activeDateFilter;
+  String get activeTypeFilter => _activeTypeFilter;
+
+  void setFilters(String date, String type) {
+    _activeDateFilter = date;
+    _activeTypeFilter = type;
+    notifyListeners();
+  }
+
+  void clearFilters() {
+    _activeDateFilter = 'All';
+    _activeTypeFilter = 'All';
+    notifyListeners();
+  }
+
   // Fetch New Orders
   Future<void> fetchNewOrders({bool refresh = false}) async {
     if (refresh) {

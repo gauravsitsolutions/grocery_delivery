@@ -4,16 +4,33 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
 class FilterDeliveriesSheet extends StatefulWidget {
-  const FilterDeliveriesSheet({super.key});
+  final String? initialDate;
+  final String? initialStatus;
+  final String? initialType;
+
+  const FilterDeliveriesSheet({
+    super.key,
+    this.initialDate,
+    this.initialStatus,
+    this.initialType,
+  });
 
   @override
   State<FilterDeliveriesSheet> createState() => _FilterDeliveriesSheetState();
 }
 
 class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
-  String date = 'Today';
-  String status = 'Pending';
-  String type = 'Standard';
+  late String date;
+  late String status;
+  late String type;
+
+  @override
+  void initState() {
+    super.initState();
+    date = widget.initialDate ?? 'All';
+    status = widget.initialStatus ?? 'Pending';
+    type = widget.initialType ?? 'All';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,9 +98,11 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
                       Wrap(
                         spacing: R.w(12),
                         children: [
+                          _dateChip('All'),
                           _dateChip('Today'),
                           _dateChip('Yesterday'),
                           _dateChip('Last 7 Days'),
+                          _customDateChip(),
                         ],
                       ),
                       SizedBox(height: R.h(24)),
@@ -118,6 +137,13 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
                         Icons.inventory_2,
                         'Standard',
                       ),
+                      SizedBox(height: R.h(12)),
+                      _deliveryTile(
+                        'All Types',
+                        'Show all deliveries',
+                        Icons.layers,
+                        'All',
+                      ),
                     ],
                   ),
                 ),
@@ -131,9 +157,9 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
                       child: OutlinedButton(
                         onPressed: () {
                           setState(() {
-                            date = 'Today';
+                            date = 'All';
                             status = 'Pending';
-                            type = 'Standard';
+                            type = 'All';
                           });
                         },
                         style: OutlinedButton.styleFrom(
@@ -151,7 +177,13 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
                     SizedBox(width: R.w(12)),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          Navigator.pop(context, {
+                            'date': date,
+                            'status': status,
+                            'type': type,
+                          });
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.greenAccent,
                           padding: EdgeInsets.symmetric(vertical: R.h(16)),
@@ -180,6 +212,61 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
 
   // ---------------- Widgets ----------------
 
+  Widget _customDateChip() {
+    bool isCustom = date != 'All' &&
+        date != 'Today' &&
+        date != 'Yesterday' &&
+        date != 'Last 7 Days';
+
+    return ChoiceChip(
+      label: Text(isCustom ? date : 'Custom Date'),
+      selected: isCustom,
+      onSelected: (_) => _pickDate(),
+      selectedColor: AppColors.primaryGreen,
+      backgroundColor: Colors.white,
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w600,
+        color: isCustom ? Colors.black : Colors.grey.shade700,
+      ),
+      avatar: isCustom
+          ? null
+          : Icon(Icons.calendar_today,
+              size: R.sp(14), color: Colors.grey.shade700),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(R.r(24)),
+        side: BorderSide(color: Colors.grey.shade300),
+      ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryGreen,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        // Format: YYYY-MM-DD
+        date = picked.toString().split(' ')[0];
+      });
+    }
+  }
+
   Widget _dateChip(String label) {
     final active = date == label;
     return ChoiceChip(
@@ -206,8 +293,9 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
       child: Container(
         padding: EdgeInsets.all(R.w(14)),
         decoration: BoxDecoration(
-          color:
-              active ? AppColors.primaryGreen.withValues(alpha: .15) : Colors.white,
+          color: active
+              ? AppColors.primaryGreen.withValues(alpha: .15)
+              : Colors.white,
           borderRadius: BorderRadius.circular(R.r(16)),
           border: Border.all(
             color: active ? AppColors.primaryGreen : Colors.grey.shade300,
@@ -229,7 +317,8 @@ class _FilterDeliveriesSheetState extends State<FilterDeliveriesSheet> {
                   CircleAvatar(
                     radius: R.r(10),
                     backgroundColor: AppColors.primaryGreen,
-                    child: Icon(Icons.check, size: R.sp(14), color: Colors.black),
+                    child:
+                        Icon(Icons.check, size: R.sp(14), color: Colors.black),
                   ),
               ],
             ),
