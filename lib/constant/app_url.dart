@@ -57,4 +57,8 @@ class AppUrls {
   static const String totalOrders = '$baseUrl/api/partner/status/orders';
   static const String deliverySummary =
       '$baseUrl/api/partner/deliveries/summary';
+  static const String partnerProfileSummary =
+      '$baseUrl/api/partner/profile/summary';
+  static const String partnerPerformanceGraph =
+      '$baseUrl/api/partner/performance/graph';
 }

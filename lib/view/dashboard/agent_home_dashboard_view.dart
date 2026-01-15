@@ -7,7 +7,6 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
 import 'package:shimmer/shimmer.dart'; // Added shimmer import
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
@@ -25,6 +24,7 @@ import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_vie
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/dashboard_waiting_state.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/available_orders_view.dart';
+import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
 
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
@@ -66,9 +66,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   String? _authToken;
   final Set<int> _removingOrderIds = {};
   ProfileModel? _userProfile;
+  PartnerSummary? _partnerSummary;
 
   // Dashboard Stats (Mock Data for now)
-  // Dashboard Stats
   // Dashboard Stats
   int _completedDeliveries = 0;
   int _pendingDeliveries = 0;
@@ -92,12 +92,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       _fetchOrders(refresh: true);
       _fetchProfile();
       _fetchStats();
+      _fetchPartnerSummary();
+
       // Fetch notifications for badge
       if (mounted) {
         Provider.of<NotificationsViewModel>(context, listen: false)
-            .fetchNotifications();
+            .fetchNotifications(refresh: true);
       }
     } else {
+      // Handle no token? Login screen?
       if (mounted) {
         setState(() {
           _error = 'User not authenticated';
@@ -121,6 +124,31 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     } catch (e) {
       log('Error fetching profile: $e');
     }
+  }
+
+  Future<void> _fetchPartnerSummary() async {
+    try {
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
+      if (token != null) {
+        final summary = await _apiService.getPartnerProfileSummary(token);
+        if (mounted) {
+          setState(() {
+            _partnerSummary = summary;
+          });
+        }
+      }
+    } catch (e) {
+      log('Error fetching partner summary: $e');
+    }
+  }
+
+  String _formatDutyTime(int totalSeconds) {
+    if (totalSeconds <= 0) return '00:00:00';
+    final duration = Duration(seconds: totalSeconds);
+    final hours = duration.inHours.toString().padLeft(2, '0');
+    final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
+    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+    return '$hours:$minutes:$seconds';
   }
 
   Future<void> _fetchStats() async {
@@ -1209,6 +1237,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
+      appBar: _buildAppBar(context, isOnline),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -1223,202 +1252,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: R.w(12)), // Reduced 16->12
-                  child: Row(
-                    children: [
-                      // Online Status Toggle
-                      GestureDetector(
-                        onTap: () => widget.onStatusChanged(!isOnline),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: R.w(60),
-                          height: R.h(32),
-                          padding: EdgeInsets.symmetric(horizontal: R.w(4)),
-                          decoration: BoxDecoration(
-                            color: isOnline
-                                ? const Color(0xFF10C971)
-                                : const Color(0xFFE2E2E2),
-                            borderRadius: BorderRadius.circular(R.r(30)),
-                          ),
-                          child: Stack(
-                            children: [
-                              AnimatedAlign(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                                alignment: isOnline
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  width: R.w(24),
-                                  height: R.w(24),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.black12,
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: isOnline
-                                      ? Icon(Icons.check,
-                                          size: R.sp(16),
-                                          color: const Color(0xFF10C971))
-                                      : null,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: R.w(8)), // Reduced 12->8
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isOnline ? 'Online' : 'Offline',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: R.sp(18),
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.headingText,
-                                height: 1.2,
-                              ),
-                            ),
-                            Text(
-                              isOnline ? 'DUTY MODE' : 'YOU ARE OFFLINE',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: R.sp(11),
-                                fontWeight: FontWeight.w600,
-                                color:
-                                    AppColors.bodyText.withValues(alpha: 0.6),
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: R.w(8)), // Kept small
-                      // Timer Pill
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: R.w(10),
-                            vertical: R.h(8)), // Reduced horiz 12->8
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(R.r(20)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shadow.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(RemixIcons.time_fill,
-                                size: R.sp(16), color: const Color(0xFF10C971)),
-                            SizedBox(width: R.w(4)), // Reduced 6->4
-                            Text(
-                              '04:22:15',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: R.sp(14),
-                                color: AppColors.headingText,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Notification Button Removed
-                      SizedBox(width: R.w(8)),
-                      Consumer<NotificationsViewModel>(
-                        builder: (context, notificationsVM, child) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NotificationsView(),
-                                ),
-                              ).then((_) {
-                                // Refresh count when returning
-                                if (mounted) {
-                                  notificationsVM.fetchNotifications(
-                                      refresh: true);
-                                }
-                              });
-                            },
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Container(
-                                  width: R.h(34),
-                                  height: R.h(34),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.white,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.shadow
-                                            .withValues(alpha: 0.05),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    RemixIcons.notification_2_line,
-                                    size: R.sp(24),
-                                    color: AppColors.headingText,
-                                  ),
-                                ),
-                                if (notificationsVM.unreadCount > 0)
-                                  Positioned(
-                                    top: -2,
-                                    right: -2,
-                                    child: Container(
-                                      padding: EdgeInsets.all(R.w(4)),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      constraints: BoxConstraints(
-                                        minWidth: R.w(16),
-                                        minHeight: R.w(16),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          '${notificationsVM.unreadCount > 99 ? '99+' : notificationsVM.unreadCount}',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: R.sp(10),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: R.h(24)),
                 AbsorbPointer(
                   absorbing: !isOnline,
                   child: ColorFiltered(
@@ -1773,5 +1606,180 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       ),
     );
     _fetchOrders(refresh: false);
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isOnline) {
+    return AppBar(
+      backgroundColor: AppColors.scaffoldBg,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      titleSpacing: 0,
+      title: Padding(
+        padding: EdgeInsets.only(left: R.w(16)),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => widget.onStatusChanged(!isOnline),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: R.w(50),
+                height: R.h(28),
+                padding: EdgeInsets.symmetric(horizontal: R.w(3)),
+                decoration: BoxDecoration(
+                  color: isOnline
+                      ? const Color(0xFF10C971)
+                      : const Color(0xFFE2E2E2),
+                  borderRadius: BorderRadius.circular(R.r(30)),
+                ),
+                child: Stack(
+                  children: [
+                    AnimatedAlign(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      alignment: isOnline
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        width: R.w(22),
+                        height: R.w(22),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.black12,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: isOnline
+                            ? Icon(Icons.check,
+                                size: R.sp(14), color: const Color(0xFF10C971))
+                            : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(width: R.w(8)),
+            Text(
+              isOnline ? 'Online' : 'Offline',
+              style: TextStyle(
+                fontSize: R.sp(14),
+                fontWeight: FontWeight.bold,
+                color: isOnline
+                    ? const Color(0xFF10C971)
+                    : AppColors.bodyText.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(6)),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(R.r(20)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(RemixIcons.time_fill,
+                  size: R.sp(14), color: const Color(0xFF10C971)),
+              SizedBox(width: R.w(4)),
+              Text(
+                _formatDutyTime(_partnerSummary?.todayDutyTime ?? 0),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: R.sp(12),
+                  color: AppColors.headingText,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: R.w(12)),
+        Consumer<NotificationsViewModel>(
+          builder: (context, notificationsVM, child) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsView(),
+                  ),
+                ).then((_) {
+                  if (mounted) {
+                    notificationsVM.fetchNotifications(refresh: true);
+                  }
+                });
+              },
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: R.h(34),
+                    height: R.h(34),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadow.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      RemixIcons.notification_2_line,
+                      size: R.sp(20),
+                      color: AppColors.headingText,
+                    ),
+                  ),
+                  if (notificationsVM.unreadCount > 0)
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        padding: EdgeInsets.all(R.w(4)),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: BoxConstraints(
+                          minWidth: R.w(16),
+                          minHeight: R.w(16),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${notificationsVM.unreadCount > 99 ? '99+' : notificationsVM.unreadCount}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: R.sp(10),
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+        SizedBox(width: R.w(16)),
+      ],
+    );
   }
 }

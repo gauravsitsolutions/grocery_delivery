@@ -10,6 +10,8 @@ import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/delivery_summary_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
@@ -277,6 +279,30 @@ class ApiService {
           headers: await _getHeaders(token),
         ));
     return ProfileResponse.fromJson(response);
+  }
+
+  Future<PartnerSummary> getPartnerProfileSummary(String? token) async {
+    final uri = Uri.parse(AppUrls.partnerProfileSummary);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+    return PartnerSummary.fromJson(response);
+  }
+
+  Future<List<DailyPerformance>> getPartnerPerformanceGraph(
+      String token) async {
+    final uri = Uri.parse(AppUrls.partnerPerformanceGraph);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    return PartnerPerformanceModel.fromJson(response).data;
   }
 
   Future<Map<String, dynamic>> updateProfilePhone(

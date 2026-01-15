@@ -14,6 +14,8 @@ import 'package:samrudhi_delivery_agent_app/view_model/profile_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/profile_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
+import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/performance_graph_card.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -26,14 +28,32 @@ class _ProfileViewState extends State<ProfileView> {
   bool _isLoggingOut = false;
   String? _userName;
   String? _userId;
+  List<DailyPerformance> _performanceData = [];
 
   @override
   void initState() {
     super.initState();
     _loadSPData();
+    _fetchPerformanceGraph();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProfileViewModel>().fetchProfile();
     });
+  }
+
+  Future<void> _fetchPerformanceGraph() async {
+    try {
+      final token = await SharedPrefsUtil.getToken();
+      if (token != null) {
+        final data = await ApiService().getPartnerPerformanceGraph(token);
+        if (mounted) {
+          setState(() {
+            _performanceData = data;
+          });
+        }
+      }
+    } catch (e) {
+      log('Error fetching performance graph: $e');
+    }
   }
 
   Future<void> _loadSPData() async {
@@ -338,6 +358,8 @@ class _ProfileViewState extends State<ProfileView> {
             _statCard('Hours', '${viewModel.loginHours.toStringAsFixed(1)}h'),
           ],
         ),
+        SizedBox(height: R.h(24)),
+        PerformanceGraphCard(data: _performanceData),
       ],
     );
   }
