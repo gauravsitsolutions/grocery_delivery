@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
@@ -13,6 +14,7 @@ class OrderViewModel extends ChangeNotifier {
 
   Order? _order;
   List<OrderItem> _orderItems = [];
+  List<CancellationReason> _cancellationReasons = [];
   bool _isLoading = true;
   bool _isItemsLoading = true;
   String? _error;
@@ -34,6 +36,7 @@ class OrderViewModel extends ChangeNotifier {
   // Getters
   Order? get order => _order;
   List<OrderItem> get orderItems => _orderItems;
+  List<CancellationReason> get cancellationReasons => _cancellationReasons;
   bool get isLoading => _isLoading;
   bool get isItemsLoading => _isItemsLoading;
   String? get error => _error;
@@ -357,7 +360,18 @@ class OrderViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> cancelOrder(String reason) async {
+  Future<void> fetchCancellationReasons() async {
+    try {
+      final token = await _getToken;
+      if (token == null) return;
+      _cancellationReasons = await _apiService.getCancellationReasons(token);
+      notifyListeners();
+    } catch (e) {
+      log('Error fetching cancellation reasons: $e');
+    }
+  }
+
+  Future<bool> cancelOrder(int reasonId) async {
     _isLoading = true;
     notifyListeners();
 
@@ -365,7 +379,7 @@ class OrderViewModel extends ChangeNotifier {
       final token = await _getToken;
       if (token == null) throw Exception('Not authenticated');
 
-      final response = await _apiService.cancelOrder(token, orderId, reason);
+      final response = await _apiService.cancelOrder(token, orderId, reasonId);
 
       if (response['status'] == true || response['message'] != null) {
         // Assume cancellation successful

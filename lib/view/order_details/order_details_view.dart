@@ -216,9 +216,20 @@ class OrderDetailsView extends StatelessWidget {
 
   void _showCancellationDialog(
       BuildContext context, OrderViewModel viewModel) async {
-    final result = await showDialog<String>(
+    // 1. Fetch reasons if empty
+    if (viewModel.cancellationReasons.isEmpty) {
+      // Improve UX: show a loading indicator or similar if needed.
+      // For now, we await the fetch.
+      await viewModel.fetchCancellationReasons();
+    }
+
+    if (!context.mounted) return;
+
+    final result = await showDialog<int>(
       context: context,
-      builder: (context) => const OrderCancellationDialog(),
+      builder: (context) => OrderCancellationDialog(
+        reasons: viewModel.cancellationReasons,
+      ),
     );
 
     if (result != null && context.mounted) {

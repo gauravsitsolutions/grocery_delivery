@@ -30,9 +30,10 @@ class AppUrls {
       '$baseUrl/api/delivery/orders/$id/accept';
   static String rejectOrder(int id) =>
       '$baseUrl/api/delivery/orders/$id/reject';
-  static String cancelOrder(int id) =>
-      '$baseUrl/api/delivery/orders/$id/cancel';
+  static String cancelOrder(int id) => '$baseUrl/api/orders/$id/cancel';
   static String orderDetails(int id) => '$baseUrl/api/orders/$id';
+  static const String cancellationReasons =
+      '$baseUrl/api/orders/cancellation-reasons';
   static const String currentOrder = '$baseUrl/api/partner/orders/current';
   static String orderItems(int id) => '$baseUrl/api/orders/$id/items';
   static String pickupOrder(int id) =>
@@ -54,4 +55,6 @@ class AppUrls {
   static const String notifications = '$baseUrl/api/notifications';
   static const String loginHours = '$baseUrl/api/partner/stats/login-hours';
   static const String totalOrders = '$baseUrl/api/partner/status/orders';
+  static const String deliverySummary =
+      '$baseUrl/api/partner/deliveries/summary';
 }

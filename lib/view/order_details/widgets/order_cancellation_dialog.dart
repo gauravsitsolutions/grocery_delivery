@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 
 class OrderCancellationDialog extends StatefulWidget {
-  const OrderCancellationDialog({super.key});
+  final List<CancellationReason> reasons;
+
+  const OrderCancellationDialog({super.key, required this.reasons});
 
   @override
   State<OrderCancellationDialog> createState() =>
@@ -10,15 +13,7 @@ class OrderCancellationDialog extends StatefulWidget {
 }
 
 class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
-  String? _selectedReason;
-
-  final List<String> _reasons = [
-    'Too far',
-    'Vehicle issue',
-    'End of shift',
-    'Emergency',
-    'Other'
-  ];
+  int? _selectedReasonId;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +29,7 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle Bar (Visual element from design)
+            // Handle Bar
             Container(
               width: 40,
               height: 4,
@@ -64,7 +59,6 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
                     ),
                   ),
                 ),
-                // Balancing space for center alignment
                 const SizedBox(width: 24),
               ],
             ),
@@ -83,75 +77,80 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
             const SizedBox(height: 24),
 
             // Reasons List
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: _reasons.map((reason) {
-                    final isSelected = _selectedReason == reason;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedReason = reason;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.grey[200]!,
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              reason,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            Container(
-                              width: 24,
-                              height: 24,
+            widget.reasons.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("No reasons available"),
+                  )
+                : Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: widget.reasons.map((reason) {
+                          final isSelected = _selectedReasonId == reason.id;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedReasonId = reason.id;
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: isSelected
-                                      ? Colors.red // Using Red for cancellation
-                                      : Colors.grey[300]!,
-                                  width: isSelected ? 6 : 1,
+                                  color: Colors.grey[200]!,
+                                  width: 1,
                                 ),
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.white,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    reason.reason,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? Colors.red
+                                            : Colors.grey[300]!,
+                                        width: isSelected ? 6 : 1,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        }).toList(),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
+                    ),
+                  ),
             const SizedBox(height: 24),
 
             // Confirm Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _selectedReason == null
+                onPressed: _selectedReasonId == null
                     ? null
                     : () {
-                        Navigator.pop(context, _selectedReason);
+                        Navigator.pop(context, _selectedReasonId);
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      Colors.red, // Design uses red for reject/cancel
+                  backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: Colors.red.withValues(alpha: 0.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),

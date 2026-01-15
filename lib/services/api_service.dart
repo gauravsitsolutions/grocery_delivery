@@ -8,6 +8,8 @@ import 'package:samrudhi_delivery_agent_app/model/user_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/delivery_summary_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
@@ -581,7 +583,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> cancelOrder(
-      String? token, int orderId, String reason) async {
+      String? token, int orderId, int reasonId) async {
     final uri = Uri.parse(AppUrls.cancelOrder(orderId));
     log('API Request: POST $uri');
 
@@ -589,7 +591,8 @@ class ApiService {
           uri,
           headers: await _getHeaders(token),
           body: jsonEncode({
-            'cancel_reason': reason,
+            'reasonId': reasonId,
+            'reason_id': reasonId,
           }),
         ));
 
@@ -770,5 +773,47 @@ class ApiService {
           headers: await _getHeaders(token),
           body: jsonEncode(settings),
         ));
+  }
+
+  Future<List<CancellationReason>> getCancellationReasons(String? token) async {
+    final uri = Uri.parse(AppUrls.cancellationReasons);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response is List) {
+      return response.map((e) => CancellationReason.fromJson(e)).toList();
+    } else if (response['data'] is List) {
+      return (response['data'] as List)
+          .map((e) => CancellationReason.fromJson(e))
+          .toList();
+    }
+
+    return [];
+  }
+
+  Future<DeliverySummary> getDeliverySummary(String? token,
+      {required String dateRange, String? fromDate, String? toDate}) async {
+    String url = '${AppUrls.deliverySummary}?dateRange=$dateRange';
+    if (dateRange == 'custom' && fromDate != null && toDate != null) {
+      url += '&fromDate=$fromDate&toDate=$toDate';
+    }
+    final uri = Uri.parse(url);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response['status'] == true && response['data'] != null) {
+      return DeliverySummary.fromJson(response['data']);
+    }
+
+    // Fallback or empty if structure differs
+    return DeliverySummary.fromJson(response);
   }
 }

@@ -151,10 +151,10 @@ class OrderDeliveryScreen extends StatelessWidget {
                                       : '${AppUrls.baseUrl}/${order.user!.profilePhoto}',
                                   fit: BoxFit.cover,
                                   errorWidget: (_, __, ___) => Image.asset(
-                                      'assets/images/user_placeholder.png'),
+                                      'assets/images/profile_placeholder.png'),
                                 )
                               : Image.asset(
-                                  'assets/images/user_placeholder.png'),
+                                  'assets/images/profile_placeholder.png'),
                         ),
                       ),
                       SizedBox(width: R.w(16)),
