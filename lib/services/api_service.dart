@@ -319,7 +319,7 @@ class ApiService {
     return response;
   }
 
-  Future<bool> uploadProfileImage(String token, File imageFile) async {
+  Future<String?> uploadProfileImage(String token, File imageFile) async {
     final uri = Uri.parse(AppUrls.uploadProfileImage);
     log('API Request: POST Multipart $uri');
 
@@ -344,7 +344,10 @@ class ApiService {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final body = jsonDecode(response.body);
-        return body['status'] == true;
+        if (body['status'] == true) {
+          return body['imageUrl'];
+        }
+        return null;
       } else {
         final body = jsonDecode(response.body);
         throw ValidationException(body['message'] ?? 'Failed to upload image');

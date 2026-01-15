@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
@@ -134,8 +135,11 @@ class DeliveryBottomCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DeliveryVerificationView(
-                      orderId: order.id,
+                    builder: (context) => ChangeNotifierProvider.value(
+                      value: viewModel,
+                      child: DeliveryVerificationView(
+                        orderId: order.id,
+                      ),
                     ),
                   ),
                 );

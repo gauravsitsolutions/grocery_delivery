@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/order_pickup_screen.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
-import 'package:samrudhi_delivery_agent_app/view/order_details/order_pickup_screen.dart';
+import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivery_screen.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_delivered_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
@@ -52,6 +54,12 @@ class OrderDetailsView extends StatelessWidget {
             return const OrderDeliveryScreen();
           }
 
+          // Pickup Mode: Delegate completely to PickupTaskView
+          if (viewModel.isPickupMode && viewModel.order != null) {
+            return PickupTaskView(order: viewModel.order!);
+          }
+
+          // Fallback / Loading State for normal view (shouldn't really happen if logic is tight)
           return Scaffold(
             backgroundColor: const Color(0xFFF8F9FA),
             appBar: _buildAppBar(context, viewModel),
@@ -62,6 +70,10 @@ class OrderDetailsView extends StatelessWidget {
       ),
     );
   }
+
+  // NOTE: The _buildAppBar, _buildBody, etc. below are now only used if NOT in Pickup/Delivery specialized modes,
+  // or if viewModel.order is null (loading/error).
+  // Ideally, PickupTaskView handles its own AppBar and Body.
 
   PreferredSizeWidget? _buildAppBar(
       BuildContext context, OrderViewModel viewModel) {
@@ -202,54 +214,24 @@ class OrderDetailsView extends StatelessWidget {
     return null;
   }
 
-  void _showCancellationDialog(BuildContext context, OrderViewModel viewModel) {
-    final TextEditingController reasonController = TextEditingController();
-    showDialog(
+  void _showCancellationDialog(
+      BuildContext context, OrderViewModel viewModel) async {
+    final result = await showDialog<String>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Cancel Order'),
-          content: TextField(
-            controller: reasonController,
-            decoration: const InputDecoration(
-              hintText: 'Enter cancellation reason',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 3,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Back'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () async {
-                final reason = reasonController.text.trim();
-                if (reason.isEmpty) {
-                  CustomSnackBar.showError(context, 'Reason is required');
-                  return;
-                }
-                Navigator.pop(context); // Close dialog
-
-                final success = await viewModel.cancelOrder(reason);
-                if (context.mounted) {
-                  if (success) {
-                    CustomSnackBar.showSuccess(
-                        context, 'Order cancelled successfully');
-                    Navigator.pop(context); // Exit Order Details screen
-                  } else {
-                    CustomSnackBar.showError(
-                        context, viewModel.error ?? 'Cancellation failed');
-                  }
-                }
-              },
-              child: const Text('Confirm Cancel',
-                  style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
+      builder: (context) => const OrderCancellationDialog(),
     );
+
+    if (result != null && context.mounted) {
+      final success = await viewModel.cancelOrder(result);
+      if (context.mounted) {
+        if (success) {
+          CustomSnackBar.showSuccess(context, 'Order cancelled successfully');
+          Navigator.pop(context); // Exit Order Details screen
+        } else {
+          CustomSnackBar.showError(
+              context, viewModel.error ?? 'Cancellation failed');
+        }
+      }
+    }
   }
 }

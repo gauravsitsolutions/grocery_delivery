@@ -73,10 +73,24 @@ class Customer {
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
+    String first = json['first_name'] ?? '';
+    String last = json['last_name'] ?? '';
+
+    // Fallback for simple 'name' field
+    if (first.isEmpty && last.isEmpty && json['name'] != null) {
+      final parts = (json['name'] as String).trim().split(' ');
+      if (parts.isNotEmpty) {
+        first = parts.first;
+        if (parts.length > 1) {
+          last = parts.sublist(1).join(' ');
+        }
+      }
+    }
+
     return Customer(
       id: json['id'] ?? 0,
-      firstName: json['first_name'] ?? '',
-      lastName: json['last_name'] ?? '',
+      firstName: first,
+      lastName: last,
       mobile: json['mobile'] ?? '',
       profilePhoto: json['profile_photo'],
     );
@@ -142,7 +156,7 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      id: json['id'] ?? 0,
+      id: json['id'] ?? json['orderId'] ?? 0,
       userId: json['user_id'] ?? 0,
       deliveryAgentId: json['delivery_agent_id'],
       offerId: json['offer_id'],
@@ -163,8 +177,14 @@ class Order {
           : [],
       deliveryAddress: json['delivery_address'] != null
           ? DeliveryAddress.fromJson(json['delivery_address'])
-          : null,
-      user: json['user'] != null ? Customer.fromJson(json['user']) : null,
+          : json['deliveryAddress'] != null
+              ? DeliveryAddress.fromJson(json['deliveryAddress'])
+              : null,
+      user: json['user'] != null
+          ? Customer.fromJson(json['user'])
+          : json['customer'] != null
+              ? Customer.fromJson(json['customer'])
+              : null,
       vendor: json['vendor'] != null ? Vendor.fromJson(json['vendor']) : null,
       pickupProof: json['pickup_proof'],
       cancelReason: json['cancel_reason'],
@@ -251,11 +271,11 @@ class DeliveryAddress {
   factory DeliveryAddress.fromJson(Map<String, dynamic> json) {
     return DeliveryAddress(
       id: json['id'] ?? 0,
-      addressLine1: json['address_line_1'] ?? '',
-      addressLine2: json['address_line_2'],
+      addressLine1: json['address_line_1'] ?? json['address'] ?? '',
+      addressLine2: json['address_line_2'] ?? json['area'],
       city: json['city'] ?? '',
       state: json['state'] ?? '',
-      postcode: json['postcode'] ?? '',
+      postcode: json['postcode'] ?? json['pincode'] ?? '',
       latitude: json['latitude']?.toString(),
       longitude: json['longitude']?.toString(),
     );

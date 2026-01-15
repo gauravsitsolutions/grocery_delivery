@@ -8,7 +8,7 @@ class CustomSnackBar {
       {String title = 'Success',
       Color? color,
       SnackBarAction? action,
-      bool centered = false}) {
+      bool centered = true}) {
     _show(
       context,
       title: title,
@@ -21,7 +21,7 @@ class CustomSnackBar {
   }
 
   static void showError(BuildContext context, String message,
-      {String title = 'Error', SnackBarAction? action, bool centered = false}) {
+      {String title = 'Error', SnackBarAction? action, bool centered = true}) {
     _show(
       context,
       title: title,
@@ -35,7 +35,7 @@ class CustomSnackBar {
   static void showWarning(BuildContext context, String message,
       {String title = 'Warning',
       SnackBarAction? action,
-      bool centered = false}) {
+      bool centered = true}) {
     _show(
       context,
       title: title,
@@ -47,7 +47,7 @@ class CustomSnackBar {
   }
 
   static void showInfo(BuildContext context, String message,
-      {String title = 'Help', SnackBarAction? action, bool centered = false}) {
+      {String title = 'Help', SnackBarAction? action, bool centered = true}) {
     _show(
       context,
       title: title,
@@ -89,32 +89,59 @@ class CustomSnackBar {
   }) {
     if (!context.mounted) return;
 
-    final snackBar = SnackBar(
-      elevation: 0,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
-      margin: centered
-          ? EdgeInsets.only(
-              bottom: MediaQuery.of(context).size.height / 2 - 50,
-              left: 20,
-              right: 20)
-          : const EdgeInsets.all(20),
-      duration: const Duration(seconds: 4),
-      action: action,
-      content: AwesomeSnackbarContent(
-        title: title,
-        message: message,
-        contentType: contentType,
-        color: color ??
-            (contentType == ContentType.success
-                ? AppColors.primaryGreen
-                : null),
-      ),
-    );
+    if (centered) {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        barrierColor: Colors.black12,
+        builder: (ctx) {
+          Future.delayed(const Duration(seconds: 2), () {
+            if (ctx.mounted && Navigator.canPop(ctx)) {
+              Navigator.pop(ctx);
+            }
+          });
+          return Material(
+            color: Colors.transparent,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: AwesomeSnackbarContent(
+                  title: title,
+                  message: message,
+                  contentType: contentType,
+                  color: color ??
+                      (contentType == ContentType.success
+                          ? AppColors.primaryGreen
+                          : null),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      final snackBar = SnackBar(
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        margin: const EdgeInsets.all(20),
+        duration: const Duration(seconds: 4),
+        action: action,
+        content: AwesomeSnackbarContent(
+          title: title,
+          message: message,
+          contentType: contentType,
+          color: color ??
+              (contentType == ContentType.success
+                  ? AppColors.primaryGreen
+                  : null),
+        ),
+      );
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(snackBar);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(snackBar);
+    }
   }
 
   static void _showBanner(

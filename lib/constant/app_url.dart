@@ -33,7 +33,7 @@ class AppUrls {
   static String cancelOrder(int id) =>
       '$baseUrl/api/delivery/orders/$id/cancel';
   static String orderDetails(int id) => '$baseUrl/api/orders/$id';
-  static const String currentOrder = '$baseUrl/api/orders/current';
+  static const String currentOrder = '$baseUrl/api/partner/orders/current';
   static String orderItems(int id) => '$baseUrl/api/orders/$id/items';
   static String pickupOrder(int id) =>
       '$baseUrl/api/orders/$id/pickup/complete';

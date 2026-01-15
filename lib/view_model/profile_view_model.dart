@@ -190,11 +190,11 @@ class ProfileViewModel extends ChangeNotifier {
         return false;
       }
 
-      final success =
+      final imageUrl =
           await _apiService.uploadProfileImage(token, File(image.path));
 
-      if (success) {
-        await fetchProfile(); // Refresh to get the new image URL if backend returns it
+      if (imageUrl != null) {
+        await fetchProfile();
         return true;
       } else {
         _error = 'Failed to upload profile image';

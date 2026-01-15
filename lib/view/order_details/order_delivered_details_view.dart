@@ -66,8 +66,8 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                 children: [
                   InkWell(
                     onTap: () => Navigator.pop(context),
-                    child: Icon(Icons.arrow_back_ios,
-                        color: Colors.white, size: R.sp(20)),
+                    child: Icon(Remix.arrow_left_line,
+                        color: Colors.white, size: R.sp(24)),
                   ),
                   SizedBox(width: R.w(8)),
                   Column(

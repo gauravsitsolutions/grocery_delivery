@@ -169,16 +169,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
       // 1. Check for active order first
       final activeOrderData = await _apiService.getCurrentOrder(token);
+
+      // We will use this active order as the primary dashboard card if it exists
+      Order? activeOrder;
+
       if (activeOrderData != null && mounted) {
-        final activeOrder = Order.fromJson(activeOrderData);
+        activeOrder = Order.fromJson(activeOrderData);
         log('Found active order: ${activeOrder.id}');
-        if (mounted) {
-          Navigator.pushNamed(
-            context,
-            AppRoutes.orderDetails,
-            arguments: activeOrder,
-          );
-        }
+
+        // Only auto-navigate if it's a fresh app launch or explicit refresh
+        // For now, let's prioritize showing it on dashboard cleanly
+        // If we want auto-nav, we can keep it, but let's make sure _currentOrder is set below
       }
 
       // Fetch new orders
@@ -201,8 +202,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           _hasMoreMyOrders = (myOrdersResponse.currentPage ?? 1) <
               (myOrdersResponse.lastPage ?? 1);
 
-          if (_myOrders.isNotEmpty) {
-            _currentOrder = _myOrders.first;
+          if (activeOrder != null) {
+            _currentOrder = activeOrder;
+            // Ensure this active order is also reflected in myOrders list if it matches
+            if (_myOrders.any((o) => o.id == activeOrder!.id)) {
+              final index =
+                  _myOrders.indexWhere((o) => o.id == activeOrder!.id);
+              _myOrders[index] = activeOrder;
+            }
           } else {
             _currentOrder = null;
           }
@@ -1010,13 +1017,27 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       final address = order.deliveryAddress!;
                       final fullAddress =
                           "${address.addressLine1}, ${address.city}, ${address.state} ${address.postcode}";
+
+                      // Debug Log
+                      print("DEBUG: Navigating to $fullAddress");
+
                       final Uri googleMapsUrl = Uri.parse(
                           "https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(fullAddress)}");
-                      await launchUrl(googleMapsUrl,
-                          mode: LaunchMode.externalApplication);
+
+                      if (await canLaunchUrl(googleMapsUrl)) {
+                        await launchUrl(googleMapsUrl,
+                            mode: LaunchMode.externalApplication);
+                      } else {
+                        print("DEBUG: Could not launch $googleMapsUrl");
+                        // Fallback or explain why
+                        CustomSnackBar.showError(
+                            context, "Could not launch Maps");
+                      }
                     } else {
-                      CustomSnackBar.showError(
-                          context, "Delivery coordinates missing");
+                      print(
+                          "DEBUG: Delivery Address is NULL for Order ${order.id}");
+                      CustomSnackBar.showError(context,
+                          "Delivery address missing (ID: ${order.id})");
                     }
                   },
                   style: ElevatedButton.styleFrom(

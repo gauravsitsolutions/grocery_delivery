@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -181,6 +182,38 @@ class _ProfileViewState extends State<ProfileView> {
       // SafeArea
     ); // Scaffold
   }
+
+  ImageProvider? _getProfileImage(String? url) {
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+    try {
+      if (url.startsWith('http') || url.startsWith('https')) {
+        return NetworkImage(url);
+      } else if (url.startsWith('file://')) {
+        debugPrint('Warning: Ignoring file URI from profile: $url');
+        return null;
+      } else {
+        // Handle relative path (e.g. /storage/...)
+        // Fix for 404: Ensure 'storage/' is present in the path for Laravel public storage
+        String path = url;
+        if (path.startsWith('/')) {
+          path = path.substring(1);
+        }
+
+        if (!path.startsWith('storage/')) {
+          path = 'storage/$path';
+        }
+
+        final fullUrl = '${AppUrls.baseUrl}/$path';
+        return NetworkImage(fullUrl);
+      }
+    } catch (e) {
+      debugPrint('Error creating image provider: $e');
+    }
+    return null;
+  }
+
   // ================= HEADER =================
 
   Widget _profileHeader(String name, String id, String role) {
@@ -201,7 +234,6 @@ class _ProfileViewState extends State<ProfileView> {
               ),
               Consumer<ProfileViewModel>(
                 builder: (context, viewModel, _) {
-                  final hasImage = viewModel.profile?.profilePhoto != null;
                   return GestureDetector(
                     onTap: viewModel.isLoading
                         ? null
@@ -223,11 +255,8 @@ class _ProfileViewState extends State<ProfileView> {
                         CircleAvatar(
                           radius: R.r(44),
                           backgroundColor: Colors.grey[200],
-                          backgroundImage: hasImage
-                              ? NetworkImage(viewModel.profile!.profilePhoto!)
-                              : const AssetImage(
-                                      'assets/images/profile_placeholder.png')
-                                  as ImageProvider,
+                          backgroundImage:
+                              _getProfileImage(viewModel.profile?.profilePhoto),
                           child: viewModel.isLoading
                               ? const CircularProgressIndicator()
                               : null,
