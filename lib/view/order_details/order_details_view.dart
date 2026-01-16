@@ -61,7 +61,7 @@ class OrderDetailsView extends StatelessWidget {
 
           // Fallback / Loading State for normal view (shouldn't really happen if logic is tight)
           return Scaffold(
-            backgroundColor: const Color(0xFFF8F9FA),
+            backgroundColor: AppColors.scaffoldBg,
             appBar: _buildAppBar(context, viewModel),
             body: _buildBody(context, viewModel),
             bottomNavigationBar: _buildBottomAction(context, viewModel),
@@ -81,8 +81,8 @@ class OrderDetailsView extends StatelessWidget {
       return AppBar(
         title: const Text("Order Details"),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.black,
       );
     }
 
@@ -92,8 +92,8 @@ class OrderDetailsView extends StatelessWidget {
     final order = viewModel.order!;
     return AppBar(
       elevation: 0,
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black,
+      backgroundColor: AppColors.white,
+      foregroundColor: AppColors.black,
       leading: IconButton(
         icon: const Icon(Remix.arrow_left_line),
         onPressed: () => Navigator.pop(context),
@@ -109,8 +109,8 @@ class OrderDetailsView extends StatelessWidget {
             return [
               const PopupMenuItem<String>(
                 value: 'cancel',
-                child:
-                    Text('Cancel Order', style: TextStyle(color: Colors.red)),
+                child: Text('Cancel Order',
+                    style: TextStyle(color: AppColors.error)),
               ),
             ];
           },
@@ -176,8 +176,8 @@ class OrderDetailsView extends StatelessWidget {
 
   Widget _buildLoadingShimmer() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.shimmerBase,
+      highlightColor: AppColors.shimmerHighlight,
       child: ListView.builder(
         itemCount: 5,
         itemBuilder: (_, __) => Padding(
@@ -189,7 +189,7 @@ class OrderDetailsView extends StatelessWidget {
                 width: double.infinity,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
@@ -197,7 +197,7 @@ class OrderDetailsView extends StatelessWidget {
               Container(
                 width: 150,
                 height: 20,
-                color: Colors.white,
+                color: AppColors.white,
               ),
             ],
           ),

@@ -25,19 +25,19 @@ class OrderDeliveryScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.softGreyBg,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFFF9FAFB),
+        backgroundColor: AppColors.softGreyBg,
         leading: Container(
           margin: EdgeInsets.all(R.w(8)),
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             shape: BoxShape.circle,
           ),
           child: IconButton(
             icon: Icon(Icons.arrow_back_ios_new,
-                color: Colors.black, size: R.sp(18)),
+                color: AppColors.black, size: R.sp(18)),
             padding: EdgeInsets.zero,
             onPressed: () => Navigator.pop(context),
           ),
@@ -46,7 +46,7 @@ class OrderDeliveryScreen extends StatelessWidget {
         title: Text(
           'Order #${order.orderNumber}',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontSize: R.sp(18),
             fontWeight: FontWeight.bold,
           ),
@@ -57,14 +57,14 @@ class OrderDeliveryScreen extends StatelessWidget {
             padding:
                 EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(6)),
             decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7), // Light green
+              color: AppColors.softGreenBg, // Light green
               borderRadius: BorderRadius.circular(R.r(20)),
             ),
             alignment: Alignment.center,
             child: Text(
               'ACTIVE',
               style: TextStyle(
-                color: const Color(0xFF16A34A),
+                color: AppColors.green,
                 fontWeight: FontWeight.bold,
                 fontSize: R.sp(12),
               ),
@@ -81,7 +81,7 @@ class OrderDeliveryScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(R.w(20)),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(R.r(30)),
               ),
               child: Column(
@@ -111,7 +111,7 @@ class OrderDeliveryScreen extends StatelessWidget {
             Text(
               'CUSTOMER DETAILS',
               style: TextStyle(
-                color: const Color(0xFF6B7280),
+                color: AppColors.bodyText,
                 fontSize: R.sp(14),
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.0,
@@ -121,7 +121,7 @@ class OrderDeliveryScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(R.w(20)),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(R.r(30)),
               ),
               child: Column(
@@ -133,10 +133,10 @@ class OrderDeliveryScreen extends StatelessWidget {
                         height: R.w(50),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                          border: Border.all(color: AppColors.white, width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.black.withOpacity(0.1),
                               blurRadius: 8,
                             ),
                           ],
@@ -167,7 +167,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: R.sp(18),
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1F2937),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             // Optional: Premium Member badge if needed, skipping for dynamic data
@@ -177,7 +177,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                                   ? '${order.deliveryAddress!.addressLine1}, ${order.deliveryAddress!.city}, ${order.deliveryAddress!.state} ${order.deliveryAddress!.postcode}'
                                   : 'No Address Provided',
                               style: TextStyle(
-                                color: const Color(0xFF6B7280),
+                                color: AppColors.bodyText,
                                 fontSize: R.sp(13),
                               ),
                               maxLines: 2,
@@ -209,8 +209,8 @@ class OrderDeliveryScreen extends StatelessWidget {
                         child: _actionButton(
                           icon: Remix.message_2_fill,
                           label: 'Message',
-                          color: const Color(0xFFECFDF5), // Light Green bg
-                          iconColor: const Color(0xFF10B981), // Dark Green text
+                          color: AppColors.softGreenBg, // Light Green bg
+                          iconColor: AppColors.green, // Dark Green text
                           onTap: () async {
                             if (order.user?.mobile != null) {
                               final uri =
@@ -234,7 +234,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                 Text(
                   'ORDER MANIFEST',
                   style: TextStyle(
-                    color: const Color(0xFF6B7280),
+                    color: AppColors.bodyText,
                     fontSize: R.sp(14),
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.0,
@@ -244,7 +244,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(
                       horizontal: R.w(8), vertical: R.h(4)),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
+                    color: AppColors.divider,
                     borderRadius: BorderRadius.circular(R.r(8)),
                   ),
                   child: Text(
@@ -252,7 +252,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: R.sp(11),
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF4B5563),
+                      color: AppColors.bodyText,
                     ),
                   ),
                 ),
@@ -261,7 +261,7 @@ class OrderDeliveryScreen extends StatelessWidget {
             SizedBox(height: R.h(12)),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(R.r(30)),
               ),
               child: ListView.separated(
@@ -270,7 +270,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                 padding: EdgeInsets.all(R.w(20)),
                 itemCount: order.orderItems.length,
                 separatorBuilder: (ctx, index) =>
-                    Divider(height: R.h(32), color: Colors.grey[100]),
+                    Divider(height: R.h(32), color: AppColors.grey200),
                 itemBuilder: (ctx, index) {
                   final item = order.orderItems[index];
                   final product = item.product;
@@ -280,7 +280,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                         width: R.w(56),
                         height: R.w(56),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
+                          color: AppColors.softGreyBg,
                           shape: BoxShape.circle,
                         ),
                         child: ClipRRect(
@@ -294,9 +294,9 @@ class OrderDeliveryScreen extends StatelessWidget {
                                   fit: BoxFit.cover,
                                   errorWidget: (_, __, ___) => Icon(
                                       Remix.image_line,
-                                      color: Colors.grey),
+                                      color: AppColors.grey),
                                 )
-                              : Icon(Remix.gift_fill, color: Colors.grey),
+                              : Icon(Remix.gift_fill, color: AppColors.grey),
                         ),
                       ),
                       SizedBox(width: R.w(16)),
@@ -309,7 +309,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: R.sp(16),
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1F2937),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             if (product?.description != null) // Or unit
@@ -317,7 +317,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                                 '${product?.stock ?? ''} Unit',
                                 style: TextStyle(
                                   fontSize: R.sp(13),
-                                  color: const Color(0xFF9CA3AF),
+                                  color: AppColors.hintText,
                                 ),
                               ),
                           ],
@@ -327,7 +327,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                         padding: EdgeInsets.symmetric(
                             horizontal: R.w(12), vertical: R.h(6)),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
+                          color: AppColors.softGreenBg,
                           borderRadius: BorderRadius.circular(R.r(20)),
                         ),
                         child: Text(
@@ -335,7 +335,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: R.sp(14),
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF10B981),
+                            color: AppColors.green,
                           ),
                         ),
                       ),
@@ -350,10 +350,9 @@ class OrderDeliveryScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(R.w(20)),
               decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5), // Light green background
+                color: AppColors.softGreenBg, // Light green background
                 borderRadius: BorderRadius.circular(R.r(30)),
-                border:
-                    Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                border: Border.all(color: AppColors.green.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +363,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                       Text(
                         'Total to Collect',
                         style: TextStyle(
-                          color: const Color(0xFF374151),
+                          color: AppColors.textPrimary,
                           fontSize: R.sp(14),
                         ),
                       ),
@@ -372,13 +371,13 @@ class OrderDeliveryScreen extends StatelessWidget {
                         padding: EdgeInsets.symmetric(
                             horizontal: R.w(10), vertical: R.h(4)),
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: AppColors.black,
                           borderRadius: BorderRadius.circular(R.r(8)),
                         ),
                         child: Text(
                           'COD',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: R.sp(12),
                           ),
@@ -393,21 +392,21 @@ class OrderDeliveryScreen extends StatelessWidget {
                       fontFamily: 'Inter',
                       fontSize: R.sp(32),
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1F2937),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   SizedBox(height: R.h(12)),
                   Row(
                     children: [
                       Icon(Remix.money_dollar_circle_line,
-                          color: const Color(0xFF10B981), size: R.sp(18)),
+                          color: AppColors.green, size: R.sp(18)),
                       SizedBox(width: R.w(6)),
                       Text(
                         'CASH ON DELIVERY REQUIRED',
                         style: TextStyle(
                           fontSize: R.sp(12),
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF10B981),
+                          color: AppColors.green,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -423,7 +422,7 @@ class OrderDeliveryScreen extends StatelessWidget {
       bottomNavigationBar: Container(
         padding: EdgeInsets.all(R.w(20)),
         decoration: BoxDecoration(
-          color: Colors.transparent, // Or gradient
+          color: AppColors.transparent, // Or gradient
         ),
         child: SafeArea(
           child: SizedBox(
@@ -444,7 +443,7 @@ class OrderDeliveryScreen extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen, // Bright green
-                foregroundColor: Colors.black,
+                foregroundColor: AppColors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(R.r(30)),
                 ),
@@ -486,9 +485,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: 2,
-                    color: isCompleted
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFE5E7EB),
+                    color: isCompleted ? AppColors.green : AppColors.divider,
                   ),
                 ),
             ],
@@ -504,7 +501,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: R.sp(16),
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1F2937),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 SizedBox(height: R.h(4)),
@@ -514,9 +511,7 @@ class OrderDeliveryScreen extends StatelessWidget {
                     fontSize: R.sp(13),
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                     fontStyle: isActive ? FontStyle.italic : FontStyle.normal,
-                    color: isActive
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFF6B7280),
+                    color: isActive ? AppColors.green : AppColors.bodyText,
                   ),
                 ),
               ],
@@ -532,11 +527,10 @@ class OrderDeliveryScreen extends StatelessWidget {
       width: R.w(28),
       height: R.w(28),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7),
+        color: AppColors.softGreenBg,
         shape: BoxShape.circle,
       ),
-      child: Icon(Remix.check_fill,
-          color: const Color(0xFF16A34A), size: R.sp(16)),
+      child: Icon(Remix.check_fill, color: AppColors.green, size: R.sp(16)),
     );
   }
 
@@ -545,19 +539,19 @@ class OrderDeliveryScreen extends StatelessWidget {
       width: R.w(28),
       height: R.w(28),
       decoration: BoxDecoration(
-        color: active ? const Color(0xFF10B981) : const Color(0xFFF3F4F6),
+        color: active ? AppColors.green : AppColors.softGreyBg,
         shape: BoxShape.circle,
         boxShadow: active
             ? [
                 BoxShadow(
-                  color: const Color(0xFF10B981).withOpacity(0.4),
+                  color: AppColors.green.withOpacity(0.4),
                   blurRadius: 8,
                   offset: Offset(0, 4),
                 )
               ]
             : null,
       ),
-      child: Icon(Remix.truck_fill, color: Colors.white, size: R.sp(14)),
+      child: Icon(Remix.truck_fill, color: AppColors.white, size: R.sp(14)),
     );
   }
 
@@ -573,21 +567,21 @@ class OrderDeliveryScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: R.h(12)),
         decoration: BoxDecoration(
-          color: color ?? const Color(0xFFF3F4F6),
+          color: color ?? AppColors.softGreyBg,
           borderRadius: BorderRadius.circular(R.r(16)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
-                size: R.sp(18), color: iconColor ?? const Color(0xFF1F2937)),
+                size: R.sp(18), color: iconColor ?? AppColors.textPrimary),
             SizedBox(width: R.w(8)),
             Text(
               label,
               style: TextStyle(
                 fontSize: R.sp(14),
                 fontWeight: FontWeight.w600,
-                color: iconColor ?? const Color(0xFF1F2937),
+                color: iconColor ?? AppColors.textPrimary,
               ),
             ),
           ],

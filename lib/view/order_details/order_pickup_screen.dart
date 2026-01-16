@@ -29,11 +29,11 @@ class OrderPickupScreen extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -63,14 +63,14 @@ class OrderPickupScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
+                        color: AppColors.headingText,
                       ),
                     ),
                     Text(
                       "Sector 5, HSR Layout, Bangalore",
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppColors.bodyText,
                       ),
                     ),
                   ],
@@ -93,7 +93,7 @@ class OrderPickupScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[500],
+                      color: AppColors.grey,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -150,9 +150,9 @@ class OrderPickupScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffoldBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppColors.grey200!),
       ),
       child: Row(
         children: [
@@ -169,7 +169,7 @@ class OrderPickupScreen extends StatelessWidget {
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: AppColors.black,
             ),
           ),
         ],
@@ -186,20 +186,20 @@ class OrderPickupScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: AppColors.grey300!),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: Colors.grey[700]),
+            Icon(icon, size: 16, color: AppColors.bodyText),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
+                color: AppColors.bodyText,
               ),
             ),
           ],
@@ -224,13 +224,13 @@ class OrderPickupScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: Colors.grey[800],
+                      color: AppColors.headingText,
                       letterSpacing: 0.5,
                     ),
                   ),
                   Text(
                     "${viewModel.checkedItems.length}/${viewModel.orderItems.length} items verified",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12, color: AppColors.bodyText),
                   ),
                 ],
               ),
@@ -238,16 +238,19 @@ class OrderPickupScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7E6),
+                  color: AppColors.summaryOrangeBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFFD591)),
+                  border: Border.all(
+                      color: const Color(
+                          0xFFFFD591)), // Keep specific orange border or add to AppColors
                 ),
                 child: const Text(
                   "READY FOR PICKUP",
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFD48806),
+                    color: AppColors
+                        .warning, // Using warning which is FF8A00, close to D48806
                   ),
                 ),
               ),
@@ -275,17 +278,17 @@ class OrderPickupScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isChecked
               ? AppColors.primaryGreen.withValues(alpha: 0.3)
-              : Colors.grey[200]!,
+              : AppColors.grey200!,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -300,7 +303,7 @@ class OrderPickupScreen extends StatelessWidget {
             width: 70,
             height: 70,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.grey100,
               borderRadius: BorderRadius.circular(12),
             ),
             child: item.product?.productImages != null &&
@@ -311,16 +314,16 @@ class OrderPickupScreen extends StatelessWidget {
                       imageUrl: item.product!.productImages[0],
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Shimmer.fromColors(
-                        baseColor: Colors.grey[300]!,
-                        highlightColor: Colors.grey[100]!,
-                        child: Container(color: Colors.white),
+                        baseColor: AppColors.shimmerBase,
+                        highlightColor: AppColors.shimmerHighlight,
+                        child: Container(color: AppColors.white),
                       ),
                       errorWidget: (context, url, error) =>
                           const Icon(Icons.image_not_supported_outlined),
                     ),
                   )
                 : const Icon(Icons.shopping_basket_outlined,
-                    color: Colors.grey),
+                    color: AppColors.grey),
           ),
           const SizedBox(width: 12),
           // Details
@@ -352,7 +355,7 @@ class OrderPickupScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE6F7ED),
+                        color: AppColors.softGreenBg,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -360,7 +363,7 @@ class OrderPickupScreen extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF00A355),
+                          color: AppColors.primaryGreen,
                         ),
                       ),
                     ),
@@ -370,7 +373,7 @@ class OrderPickupScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey[600],
+                        color: AppColors.bodyText,
                       ),
                     ),
                     const Spacer(),
@@ -382,7 +385,7 @@ class OrderPickupScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(4),
                         child: Icon(Remix.error_warning_line,
-                            size: 18, color: Colors.grey[400]),
+                            size: 18, color: AppColors.grey400),
                       ),
                     ),
                   ],
@@ -409,7 +412,7 @@ class OrderPickupScreen extends StatelessWidget {
                     activeColor: AppColors.primaryGreen,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(4)),
-                    side: BorderSide(color: Colors.grey[300]!, width: 2),
+                    side: BorderSide(color: AppColors.grey300!, width: 2),
                     onChanged: (value) => viewModel.toggleItem(item.id),
                   ),
           )
@@ -429,7 +432,7 @@ class OrderPickupScreen extends StatelessWidget {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) {
           return Dialog(
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             insetPadding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
               constraints: BoxConstraints(
@@ -437,7 +440,7 @@ class OrderPickupScreen extends StatelessWidget {
               ),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: SingleChildScrollView(
@@ -507,18 +510,19 @@ class OrderPickupScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFA6E9C4)),
-                        color: Colors.white,
+                        border: Border.all(
+                            color: AppColors.primaryGreen.withOpacity(0.4)),
+                        color: AppColors.white,
                       ),
                       child: TextField(
                         controller: descriptionController,
                         maxLines: null,
                         expands: true,
                         style: const TextStyle(
-                            fontSize: 14, color: Color(0xFF00A355)),
+                            fontSize: 14, color: AppColors.primaryGreen),
                         decoration: const InputDecoration(
                           hintText: 'Describe the issue',
-                          hintStyle: TextStyle(color: Color(0xFF00A355)),
+                          hintStyle: TextStyle(color: AppColors.primaryGreen),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -545,8 +549,8 @@ class OrderPickupScreen extends StatelessWidget {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00C853),
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: AppColors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -566,8 +570,8 @@ class OrderPickupScreen extends StatelessWidget {
                       child: TextButton(
                         onPressed: () => Navigator.pop(dialogContext),
                         style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8F5E9),
-                          foregroundColor: Colors.black87,
+                          backgroundColor: AppColors.paleGreen,
+                          foregroundColor: AppColors.black87,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -599,15 +603,14 @@ class OrderPickupScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F5E9),
+          color: AppColors.paleGreen,
           borderRadius: BorderRadius.circular(8),
-          border:
-              isSelected ? Border.all(color: const Color(0xFF00C853)) : null,
+          border: isSelected ? Border.all(color: AppColors.primaryGreen) : null,
         ),
         child: Text(
           label,
           style: const TextStyle(
-            color: Colors.black87,
+            color: AppColors.black87,
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),

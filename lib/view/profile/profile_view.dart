@@ -14,8 +14,8 @@ import 'package:samrudhi_delivery_agent_app/view_model/profile_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/profile_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
-import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart';
-import 'package:samrudhi_delivery_agent_app/view/dashboard/performance_graph_card.dart';
+import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart'; // Restore Import
+import 'package:fl_chart/fl_chart.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -29,12 +29,13 @@ class _ProfileViewState extends State<ProfileView> {
   String? _userName;
   String? _userId;
   List<DailyPerformance> _performanceData = [];
+  String? _graphError;
 
   @override
   void initState() {
     super.initState();
     _loadSPData();
-    _fetchPerformanceGraph();
+    _fetchPerformanceGraph(); // Restore API call
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProfileViewModel>().fetchProfile();
     });
@@ -42,6 +43,9 @@ class _ProfileViewState extends State<ProfileView> {
 
   Future<void> _fetchPerformanceGraph() async {
     try {
+      setState(() {
+        _graphError = null;
+      });
       final token = await SharedPrefsUtil.getToken();
       if (token != null) {
         final data = await ApiService().getPartnerPerformanceGraph(token);
@@ -53,6 +57,15 @@ class _ProfileViewState extends State<ProfileView> {
       }
     } catch (e) {
       log('Error fetching performance graph: $e');
+      if (mounted) {
+        setState(() {
+          if (e.toString().contains('Agent profile not found')) {
+            _graphError = 'Agent profile not found';
+          } else {
+            _graphError = 'Could not load performance data';
+          }
+        });
+      }
     }
   }
 
@@ -359,8 +372,198 @@ class _ProfileViewState extends State<ProfileView> {
           ],
         ),
         SizedBox(height: R.h(24)),
-        PerformanceGraphCard(data: _performanceData),
+        _barChartSection(),
       ],
+    );
+  }
+
+  Widget _barChartSection() {
+    // Colors
+    final Color barColor = AppColors.primaryGreen;
+    final Color cardBg = const Color(0xFF051F1A); // Dark Green Background
+
+    // Determine Logic based on data availability
+    // If no data, show empty state or mock zeros
+    final List<DailyPerformance> displayData = _performanceData.isNotEmpty
+        ? _performanceData
+        : []; // Or handle empty state visibly
+
+    // Max Y for scale
+    double maxY = 10;
+    if (displayData.isNotEmpty) {
+      final maxOrders = displayData
+          .map((e) => e.totalOrders)
+          .reduce((a, b) => a > b ? a : b)
+          .toDouble();
+      maxY = maxOrders + 5;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(R.w(20)),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(R.r(24)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Activity',
+                style: TextStyle(
+                  fontSize: R.sp(20),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              // Dropdown omitted for simplicity with API data alignment
+            ],
+          ),
+          SizedBox(height: R.h(32)),
+          if (_graphError != null)
+            SizedBox(
+              height: R.h(200),
+              child: Center(
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(RemixIcons.error_warning_line,
+                      color: Colors.white54, size: R.sp(24)),
+                  SizedBox(height: R.h(8)),
+                  Text(_graphError!,
+                      style:
+                          TextStyle(color: Colors.white54, fontSize: R.sp(13))),
+                ],
+              )),
+            )
+          else if (displayData.isEmpty)
+            SizedBox(
+              height: R.h(200),
+              child: const Center(
+                  child: Text('No activity data available',
+                      style: TextStyle(color: Colors.white54))),
+            )
+          else
+            SizedBox(
+              height: R.h(220),
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: maxY,
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) => const Color(0xFF2D3249),
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final item = displayData[group.x.toInt()];
+                        return BarTooltipItem(
+                            '${item.date}\n',
+                            const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14),
+                            children: [
+                              TextSpan(
+                                text: 'Orders: ${item.totalOrders}\n',
+                                style: TextStyle(
+                                    color: AppColors.primaryGreen,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              TextSpan(
+                                text: 'Hours: ${item.totalHours}h',
+                                style: const TextStyle(
+                                    color: Colors.orangeAccent,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ]);
+                      },
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          if (value < 0 || value >= displayData.length)
+                            return const SizedBox();
+                          // Assuming Date format is "Day" or simple string.
+                          // Extract Day short form if needed.
+                          final dateStr = displayData[value.toInt()].date;
+                          // Just take first 3 chars if long
+                          final label = dateStr.length > 3
+                              ? dateStr.substring(0, 3)
+                              : dateStr;
+
+                          return SideTitleWidget(
+                            meta: meta,
+                            space: 12,
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                color: const Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
+                                fontSize: R.sp(12),
+                              ),
+                            ),
+                          );
+                        },
+                        reservedSize: 32,
+                      ),
+                    ),
+                    leftTitles:
+                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles:
+                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles:
+                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  gridData: FlGridData(
+                    show: true,
+                    checkToShowHorizontalLine: (value) => value % 5 == 0,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: Colors.white.withOpacity(0.05),
+                      strokeWidth: 1,
+                      dashArray: [6, 6],
+                    ),
+                    drawVerticalLine: false,
+                  ),
+                  borderData: FlBorderData(show: false),
+                  barGroups: List.generate(displayData.length, (index) {
+                    final item = displayData[index];
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: item.totalOrders.toDouble(),
+                          width: R.w(12),
+                          color: barColor,
+                          borderRadius: BorderRadius.circular(6),
+                          backDrawRodData: BackgroundBarChartRodData(
+                              show: true,
+                              toY: maxY,
+                              color: Colors.white.withOpacity(0.05)),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 

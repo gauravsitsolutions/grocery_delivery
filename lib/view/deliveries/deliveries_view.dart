@@ -451,7 +451,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
               },
               child: Icon(
                 Icons.close,
-                color: Colors.grey,
+                color: AppColors.grey,
                 size: R.w(20),
               ),
             ),
@@ -681,7 +681,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                             Hero(
                               tag: 'order_number_${order.id}',
                               child: Material(
-                                color: Colors.transparent,
+                                color: AppColors.transparent,
                                 child: Text(
                                   order.orderNumber,
                                   style: TextStyle(
@@ -780,7 +780,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
         borderRadius: BorderRadius.circular(R.r(22)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -823,7 +823,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                       child: Hero(
                         tag: 'order_number_${order.id}',
                         child: Material(
-                          color: Colors.transparent,
+                          color: AppColors.transparent,
                           child: Text(
                             order.orderNumber,
                             style: TextStyle(

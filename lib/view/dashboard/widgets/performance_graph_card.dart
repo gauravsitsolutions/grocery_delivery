@@ -61,30 +61,34 @@ class _PerformanceGraphCardState extends State<PerformanceGraphCard> {
                   ),
                 ],
               ),
-              Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(6)),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(R.r(8)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.trending_up,
+              DropdownButtonHideUnderline(
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: R.w(12), vertical: R.h(4)),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(R.r(20)),
+                    border: Border.all(
+                        color: AppColors.primaryGreen.withOpacity(0.2)),
+                  ),
+                  child: DropdownButton<String>(
+                    value: 'Last 7 Days',
+                    icon: Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.primaryGreen, size: R.sp(18)),
+                    style: TextStyle(
+                      fontSize: R.sp(12),
+                      fontWeight: FontWeight.w600,
                       color: AppColors.primaryGreen,
-                      size: R.sp(16),
                     ),
-                    SizedBox(width: R.w(4)),
-                    Text(
-                      '+12.5%',
-                      style: TextStyle(
-                        fontSize: R.sp(12),
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primaryGreen,
-                      ),
-                    ),
-                  ],
+                    isDense: true,
+                    items: ['Last 7 Days', 'Last 30 Days'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (_) {},
+                  ),
                 ),
               ),
             ],

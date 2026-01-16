@@ -14,19 +14,20 @@ class PickupSuccessView extends StatelessWidget {
   Widget build(BuildContext context) {
     R.init(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.softGreyBg,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.black, size: R.sp(20)),
+          icon: Icon(Icons.arrow_back_ios,
+              color: AppColors.black, size: R.sp(20)),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: Text(
           'Pickup Status',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontSize: R.sp(18),
             fontWeight: FontWeight.bold,
           ),
@@ -52,7 +53,7 @@ class PickupSuccessView extends StatelessWidget {
                 ),
                 child: Icon(
                   Remix.check_line,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: R.sp(48),
                 ),
               ),
@@ -63,7 +64,7 @@ class PickupSuccessView extends StatelessWidget {
               style: TextStyle(
                 fontSize: R.sp(24),
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1F2937),
+                color: AppColors.textPrimary,
               ),
             ),
             SizedBox(height: R.h(8)),
@@ -82,11 +83,11 @@ class PickupSuccessView extends StatelessWidget {
               padding:
                   EdgeInsets.symmetric(horizontal: R.w(20), vertical: R.h(16)),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(R.r(24)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.black.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -102,7 +103,7 @@ class PickupSuccessView extends StatelessWidget {
                         style: TextStyle(
                           fontSize: R.sp(16),
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1F2937),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: R.h(4)),
@@ -125,7 +126,7 @@ class PickupSuccessView extends StatelessWidget {
                     ),
                     child: Icon(
                       Remix.shopping_bag_3_fill,
-                      color: const Color(0xFF1F2937),
+                      color: AppColors.textPrimary,
                       size: R.sp(20),
                     ),
                   ),
@@ -142,7 +143,7 @@ class PickupSuccessView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: R.sp(18),
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1F2937),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -151,11 +152,11 @@ class PickupSuccessView extends StatelessWidget {
             // Next Destination Card
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(R.r(24)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.black.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -170,7 +171,7 @@ class PickupSuccessView extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius:
                           BorderRadius.vertical(top: Radius.circular(R.r(24))),
-                      color: Colors.grey[200], // Placeholder color
+                      color: AppColors.grey200, // Placeholder color
                       image: const DecorationImage(
                         image: AssetImage(
                             'assets/images/map_placeholder.png'), // Ensure this asset exists or use a network placeholder
@@ -204,14 +205,14 @@ class PickupSuccessView extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: R.sp(18),
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1F2937),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             Container(
                               padding: EdgeInsets.symmetric(
                                   horizontal: R.w(12), vertical: R.h(6)),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7), // Light green
+                                color: AppColors.softGreenBg, // Light green
                                 borderRadius: BorderRadius.circular(R.r(20)),
                               ),
                               child: Column(
@@ -221,14 +222,14 @@ class PickupSuccessView extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: R.sp(12),
                                       fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF1F2937),
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                   Text(
                                     '1.2 km', // Placeholder
                                     style: TextStyle(
                                       fontSize: R.sp(10),
-                                      color: const Color(0xFF4B5563),
+                                      color: AppColors.bodyText,
                                     ),
                                   ),
                                 ],
@@ -240,7 +241,7 @@ class PickupSuccessView extends StatelessWidget {
                         Row(
                           children: [
                             Icon(Remix.navigation_fill,
-                                size: R.sp(14), color: const Color(0xFF6B7280)),
+                                size: R.sp(14), color: AppColors.bodyText),
                             SizedBox(width: R.w(4)),
                             Expanded(
                               child: Text(
@@ -248,7 +249,7 @@ class PickupSuccessView extends StatelessWidget {
                                     'Delivery Address',
                                 style: TextStyle(
                                   fontSize: R.sp(14),
-                                  color: const Color(0xFF6B7280),
+                                  color: AppColors.bodyText,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -261,7 +262,7 @@ class PickupSuccessView extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.all(R.w(12)),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF3F4F6),
+                            color: AppColors.softGreyBg,
                             borderRadius: BorderRadius.circular(R.r(12)),
                           ),
                           child: Row(
@@ -281,7 +282,7 @@ class PickupSuccessView extends StatelessWidget {
                                   '"Please leave at the front door and ring bell."', // Static placeholder for now as per mockup
                                   style: TextStyle(
                                     fontStyle: FontStyle.italic,
-                                    color: Color(0xFF6B7280),
+                                    color: AppColors.bodyText,
                                   ),
                                 ),
                               ),
@@ -318,7 +319,7 @@ class PickupSuccessView extends StatelessWidget {
                   style: TextStyle(
                     fontSize: R.sp(16),
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: AppColors.black,
                   ),
                 ),
               ),

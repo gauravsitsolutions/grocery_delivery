@@ -16,7 +16,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: AppColors.scaffoldBg,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -67,7 +67,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                   InkWell(
                     onTap: () => Navigator.pop(context),
                     child: Icon(Remix.arrow_left_line,
-                        color: Colors.white, size: R.sp(24)),
+                        color: AppColors.white, size: R.sp(24)),
                   ),
                   SizedBox(width: R.w(8)),
                   Column(
@@ -76,7 +76,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                       Text(
                         'ORDER DETAILS',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: AppColors.white.withOpacity(0.8),
                           fontSize: R.sp(10),
                           fontWeight: FontWeight.w600,
                         ),
@@ -84,7 +84,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                       Text(
                         '#${order.orderNumber}',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: R.sp(16),
                           fontWeight: FontWeight.bold,
                         ),
@@ -98,7 +98,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                   DateFormat('MMM dd, h:mm a')
                       .format(order.deliveredAt!.toLocal()),
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: AppColors.white.withOpacity(0.8),
                     fontSize: R.sp(12),
                     fontWeight: FontWeight.w500,
                   ),
@@ -110,13 +110,13 @@ class OrderDeliveredDetailsView extends StatelessWidget {
             padding: EdgeInsets.all(R.w(12)),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
+              color: AppColors.white.withOpacity(0.2),
             ),
             child: Icon(
               order.status.toLowerCase() == 'cancelled'
                   ? Remix.close_circle_fill
                   : Remix.check_double_fill,
-              color: Colors.white,
+              color: AppColors.white,
               size: R.sp(24),
             ),
           ),
@@ -124,7 +124,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
           Text(
             order.status.toUpperCase(),
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: R.sp(24),
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
@@ -136,7 +136,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                 ? 'Order was cancelled'
                 : 'Successfully dropped off at ${order.deliveredAt != null ? DateFormat('h:mm a').format(order.deliveredAt!.toLocal()) : ''}',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: AppColors.white.withOpacity(0.9),
               fontSize: R.sp(13),
               fontWeight: FontWeight.w400,
             ),
@@ -170,18 +170,18 @@ class OrderDeliveredDetailsView extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(8)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(20)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: const Color(0xFF6B7280), size: R.sp(14)),
+          Icon(icon, color: AppColors.bodyText, size: R.sp(14)),
           SizedBox(width: R.w(6)),
           Text(
             label,
             style: TextStyle(
-              color: const Color(0xFF374151),
+              color: AppColors.textPrimary,
               fontSize: R.sp(13),
               fontWeight: FontWeight.w600,
             ),
@@ -196,7 +196,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
       ),
       child: Row(
@@ -205,7 +205,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
             width: R.w(50),
             height: R.w(50),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: AppColors.grey200,
               borderRadius: BorderRadius.circular(R.r(16)),
             ),
             child: order.user?.profilePhoto != null
@@ -218,12 +218,12 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorWidget: (context, url, error) => Icon(
                           Remix.user_fill,
-                          color: Colors.grey[400],
+                          color: AppColors.grey400,
                           size: R.sp(24)),
                     ),
                   )
                 : Icon(Remix.user_fill,
-                    color: Colors.grey[400], size: R.sp(24)),
+                    color: AppColors.grey400, size: R.sp(24)),
           ),
           SizedBox(width: R.w(16)),
           Expanded(
@@ -233,7 +233,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                 Text(
                   'CUSTOMER',
                   style: TextStyle(
-                    color: const Color(0xFF9CA3AF),
+                    color: AppColors.hintText,
                     fontSize: R.sp(10),
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.0,
@@ -243,7 +243,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                 Text(
                   order.user?.fullName ?? 'Customer',
                   style: TextStyle(
-                    color: const Color(0xFF1F2937),
+                    color: AppColors.textPrimary,
                     fontSize: R.sp(16),
                     fontWeight: FontWeight.bold,
                   ),
@@ -264,7 +264,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.all(R.w(10)),
               decoration: const BoxDecoration(
-                color: Color(0xFFDCFCE7), // Light green
+                color: AppColors.paleGreen, // Light green
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -284,7 +284,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
       ),
       child: Column(
@@ -293,7 +293,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
           Text(
             'DELIVERY ROUTE',
             style: TextStyle(
-              color: const Color(0xFF9CA3AF),
+              color: AppColors.hintText,
               fontSize: R.sp(11),
               fontWeight: FontWeight.w700,
               letterSpacing: 1.0,
@@ -322,7 +322,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                     Text(
                       'PICKUP LOCATION',
                       style: TextStyle(
-                        color: const Color(0xFF9CA3AF),
+                        color: AppColors.hintText,
                         fontSize: R.sp(10),
                         fontWeight: FontWeight.w600,
                       ),
@@ -331,7 +331,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                     Text(
                       order.vendor?.storeName ?? 'Warehouse Hub',
                       style: TextStyle(
-                        color: const Color(0xFF1F2937),
+                        color: AppColors.textPrimary,
                         fontSize: R.sp(14),
                         fontWeight: FontWeight.bold,
                       ),
@@ -340,7 +340,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                       order.vendor?.address ??
                           'Avenue 5, Logistics Park, Sector 12',
                       style: TextStyle(
-                          color: const Color(0xFF6B7280), fontSize: R.sp(13)),
+                          color: AppColors.bodyText, fontSize: R.sp(13)),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -362,7 +362,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                     Text(
                       'DROP LOCATION',
                       style: TextStyle(
-                        color: const Color(0xFF9CA3AF),
+                        color: AppColors.hintText,
                         fontSize: R.sp(10),
                         fontWeight: FontWeight.w600,
                       ),
@@ -371,7 +371,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                     Text(
                       order.user?.fullName ?? 'Valued Customer',
                       style: TextStyle(
-                        color: const Color(0xFF1F2937),
+                        color: AppColors.textPrimary,
                         fontSize: R.sp(14),
                         fontWeight: FontWeight.bold,
                       ),
@@ -381,7 +381,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                           ? '${order.deliveryAddress!.addressLine1}, ${order.deliveryAddress!.city}'
                           : 'Customer Address',
                       style: TextStyle(
-                          color: const Color(0xFF6B7280), fontSize: R.sp(13)),
+                          color: AppColors.bodyText, fontSize: R.sp(13)),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -402,7 +402,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
       ),
       child: Column(
@@ -410,13 +410,12 @@ class OrderDeliveredDetailsView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Remix.image_fill,
-                  color: const Color(0xFF9CA3AF), size: R.sp(16)),
+              Icon(Remix.image_fill, color: AppColors.hintText, size: R.sp(16)),
               SizedBox(width: R.w(8)),
               Text(
                 'PICKUP PROOF',
                 style: TextStyle(
-                  color: const Color(0xFF9CA3AF),
+                  color: AppColors.hintText,
                   fontSize: R.sp(11),
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
@@ -437,11 +436,11 @@ class OrderDeliveredDetailsView extends StatelessWidget {
               width: double.infinity,
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(
-                color: Colors.grey[200],
+                color: AppColors.grey200,
                 child: const Center(child: CircularProgressIndicator()),
               ),
               errorWidget: (context, url, error) => Container(
-                color: Colors.grey[200],
+                color: AppColors.grey200,
                 child: const Center(child: Icon(Icons.error)),
               ),
             ),
@@ -455,7 +454,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
       ),
       child: Column(
@@ -464,7 +463,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
           Text(
             'MANIFEST',
             style: TextStyle(
-              color: const Color(0xFF9CA3AF),
+              color: AppColors.hintText,
               fontSize: R.sp(11),
               fontWeight: FontWeight.w700,
               letterSpacing: 1.0,
@@ -486,7 +485,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                     width: R.w(48),
                     height: R.w(48),
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: AppColors.grey200,
                       borderRadius: BorderRadius.circular(R.r(8)),
                       image: productImage != null
                           ? DecorationImage(
@@ -500,14 +499,14 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                     ),
                     child: productImage == null
                         ? Icon(Remix.image_line,
-                            size: R.sp(20), color: Colors.grey)
+                            size: R.sp(20), color: AppColors.grey)
                         : null,
                   ),
                   SizedBox(width: R.w(12)),
                   Container(
                     padding: EdgeInsets.all(R.w(8)),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
+                      color: AppColors.softGreyBg,
                       borderRadius: BorderRadius.circular(R.r(8)),
                     ),
                     child: Text(
@@ -521,7 +520,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                     child: Text(
                       item.product?.name ?? 'Item',
                       style: TextStyle(
-                        color: const Color(0xFF1F2937),
+                        color: AppColors.textPrimary,
                         fontSize: R.sp(14),
                         fontWeight: FontWeight.w500,
                       ),
@@ -540,7 +539,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
       ),
       child: Column(
@@ -553,7 +552,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
           _buildRow('Delivery', '₹${order.deliveryCharge}'),
           Padding(
             padding: EdgeInsets.symmetric(vertical: R.h(12)),
-            child: Divider(color: Colors.grey[200], height: 1),
+            child: Divider(color: AppColors.grey200, height: 1),
           ),
           _buildRow('Total Amount', '₹${order.totalAmount}',
               isBold: true, size: 16),
@@ -570,14 +569,14 @@ class OrderDeliveredDetailsView extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: const Color(0xFF6B7280),
+            color: AppColors.bodyText,
             fontSize: R.sp(14),
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            color: color ?? const Color(0xFF1F2937),
+            color: color ?? AppColors.textPrimary,
             fontSize: R.sp(size ?? 14),
             fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
           ),

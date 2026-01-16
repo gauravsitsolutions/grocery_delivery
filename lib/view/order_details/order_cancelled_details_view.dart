@@ -5,6 +5,7 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 
 class OrderCancelledDetailsView extends StatelessWidget {
   final Order order;
@@ -14,7 +15,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: AppColors.softGreyBg,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -46,7 +47,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFEF4444), // Red color
+      color: AppColors.error, // Red color
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + R.h(10),
         bottom: R.h(60),
@@ -64,7 +65,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                   InkWell(
                     onTap: () => Navigator.pop(context),
                     child: Icon(RemixIcons.arrow_left_line,
-                        color: Colors.white, size: R.sp(24)),
+                        color: AppColors.white, size: R.sp(24)),
                   ),
                   SizedBox(width: R.w(8)),
                   Column(
@@ -73,7 +74,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                       Text(
                         'ORDER DETAILS',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: AppColors.white.withOpacity(0.8),
                           fontSize: R.sp(10),
                           fontWeight: FontWeight.w600,
                         ),
@@ -81,7 +82,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                       Text(
                         '#${order.orderNumber}',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: R.sp(16),
                           fontWeight: FontWeight.bold,
                         ),
@@ -93,7 +94,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
               Text(
                 DateFormat('MMM dd, h:mm a').format(order.createdAt.toLocal()),
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: AppColors.white.withOpacity(0.8),
                   fontSize: R.sp(12),
                   fontWeight: FontWeight.w500,
                 ),
@@ -107,11 +108,11 @@ class OrderCancelledDetailsView extends StatelessWidget {
             padding: EdgeInsets.all(R.w(12)),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
+              color: AppColors.white.withOpacity(0.2),
             ),
             child: Icon(
               RemixIcons.close_fill,
-              color: Colors.white,
+              color: AppColors.white,
               size: R.sp(24),
             ),
           ),
@@ -121,7 +122,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
           Text(
             'CANCELLED',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: R.sp(24),
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
@@ -131,7 +132,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
           Text(
             'Refund will be processed within 24-48 hours',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: AppColors.white.withOpacity(0.9),
               fontSize: R.sp(13),
               fontWeight: FontWeight.w400,
             ),
@@ -146,7 +147,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
         boxShadow: [
           BoxShadow(
@@ -168,7 +169,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                 ),
                 child: Icon(
                   RemixIcons.error_warning_fill,
-                  color: const Color(0xFFEF4444),
+                  color: AppColors.error,
                   size: R.sp(20),
                 ),
               ),
@@ -180,7 +181,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                     Text(
                       'REASON FOR CANCELLATION',
                       style: TextStyle(
-                        color: const Color(0xFFEF4444),
+                        color: AppColors.error,
                         fontSize: R.sp(11),
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.5,
@@ -190,7 +191,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                     Text(
                       order.cancelReason ?? 'Cancelled by vendor',
                       style: TextStyle(
-                        color: const Color(0xFF1F2937),
+                        color: AppColors.textPrimary,
                         fontSize: R.sp(16),
                         fontWeight: FontWeight.bold,
                       ),
@@ -201,19 +202,19 @@ class OrderCancelledDetailsView extends StatelessWidget {
             ],
           ),
           SizedBox(height: R.h(16)),
-          Divider(color: Colors.grey[200], height: 1),
+          Divider(color: AppColors.grey200, height: 1),
           SizedBox(height: R.h(16)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(RemixIcons.user_fill,
-                  color: const Color(0xFF6B7280), size: R.sp(14)),
+                  color: AppColors.bodyText, size: R.sp(14)),
               SizedBox(width: R.w(6)),
               RichText(
                 text: TextSpan(
                   text: 'Initiated by ',
                   style: TextStyle(
-                    color: const Color(0xFF6B7280),
+                    color: AppColors.bodyText,
                     fontSize: R.sp(13),
                     fontFamily: 'Inter', // Assuming Inter or default
                   ),
@@ -222,7 +223,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                       text:
                           'Delivery Agent', // Since this is the agent app context usually
                       style: TextStyle(
-                        color: const Color(0xFF1F2937),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: R.sp(13),
                       ),
@@ -242,7 +243,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
       ),
       child: Column(
@@ -251,7 +252,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
           Text(
             'DELIVERY ROUTE',
             style: TextStyle(
-              color: const Color(0xFF9CA3AF),
+              color: AppColors.hintText,
               fontSize: R.sp(11),
               fontWeight: FontWeight.w700,
               letterSpacing: 1.0,
@@ -266,11 +267,11 @@ class OrderCancelledDetailsView extends StatelessWidget {
               Column(
                 children: [
                   Icon(RemixIcons.checkbox_blank_circle_fill,
-                      color: const Color(0xFF111827), size: R.sp(16)),
+                      color: AppColors.textPrimary, size: R.sp(16)),
                   Container(
                     width: 1,
                     height: R.h(40),
-                    color: const Color(0xFFE5E7EB),
+                    color: AppColors.divider,
                   ),
                 ],
               ),
@@ -282,7 +283,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                     Text(
                       'PICKUP LOCATION',
                       style: TextStyle(
-                        color: const Color(0xFF9CA3AF),
+                        color: AppColors.hintText,
                         fontSize: R.sp(10),
                         fontWeight: FontWeight.w600,
                       ),
@@ -291,7 +292,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                     Text(
                       'Central Warehouse Hub',
                       style: TextStyle(
-                        color: const Color(0xFF1F2937),
+                        color: AppColors.textPrimary,
                         fontSize: R.sp(14),
                         fontWeight: FontWeight.bold,
                       ),
@@ -301,7 +302,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: const Color(0xFF6B7280),
+                        color: AppColors.bodyText,
                         fontSize: R.sp(13),
                       ),
                     ),
@@ -316,7 +317,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(RemixIcons.checkbox_blank_circle_fill,
-                  color: const Color(0xFFEF4444), size: R.sp(16)),
+                  color: AppColors.error, size: R.sp(16)),
               SizedBox(width: R.w(12)),
               Expanded(
                 child: Column(
@@ -325,7 +326,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                     Text(
                       'INTENDED DROP-OFF',
                       style: TextStyle(
-                        color: const Color(0xFFEF4444),
+                        color: AppColors.error,
                         fontSize: R.sp(10),
                         fontWeight: FontWeight.w600,
                       ),
@@ -334,7 +335,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                     Text(
                       'Home • ${order.deliveryAddress?.addressLine1 ?? ''}',
                       style: TextStyle(
-                        color: const Color(0xFF1F2937),
+                        color: AppColors.textPrimary,
                         fontSize: R.sp(14),
                         fontWeight: FontWeight.bold,
                       ),
@@ -345,7 +346,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: const Color(0xFF6B7280),
+                          color: AppColors.bodyText,
                           fontSize: R.sp(13),
                         ),
                       ),
@@ -364,7 +365,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
       ),
       child: Column(
@@ -375,7 +376,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
               Text(
                 'ORDER MANIFEST (${order.orderItems.length})',
                 style: TextStyle(
-                  color: const Color(0xFF9CA3AF),
+                  color: AppColors.hintText,
                   fontSize: R.sp(11),
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
@@ -385,13 +386,13 @@ class OrderCancelledDetailsView extends StatelessWidget {
                 padding:
                     EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: AppColors.softGreyBg,
                   borderRadius: BorderRadius.circular(R.r(6)),
                 ),
                 child: Text(
                   '\$${order.totalAmount}',
                   style: TextStyle(
-                    color: const Color(0xFF1F2937),
+                    color: AppColors.textPrimary,
                     fontSize: R.sp(12),
                     fontWeight: FontWeight.bold,
                   ),
@@ -430,7 +431,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                               errorWidget: (context, url, error) =>
                                   const Icon(Icons.image),
                             )
-                          : const Icon(Icons.image, color: Colors.grey),
+                          : Icon(Icons.image, color: AppColors.grey),
                     ),
                   ),
                   SizedBox(width: R.w(16)),
@@ -441,7 +442,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                         Text(
                           item.product?.name ?? 'Product',
                           style: TextStyle(
-                            color: const Color(0xFF1F2937),
+                            color: AppColors.textPrimary,
                             fontSize: R.sp(14),
                             fontWeight: FontWeight.bold,
                           ),
@@ -450,7 +451,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                         Text(
                           '${item.quantity} unit • \$${item.price}',
                           style: TextStyle(
-                            color: const Color(0xFF6B7280),
+                            color: AppColors.bodyText,
                             fontSize: R.sp(13),
                           ),
                         ),
@@ -460,7 +461,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                   Text(
                     'x${item.quantity}',
                     style: TextStyle(
-                      color: const Color(0xFF1F2937),
+                      color: AppColors.textPrimary,
                       fontSize: R.sp(16),
                       fontWeight: FontWeight.bold,
                     ),
@@ -479,7 +480,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: R.w(20), vertical: R.h(16)),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4), // Light green
+        color: AppColors.softGreenBg, // Light green
         borderRadius: BorderRadius.circular(R.r(16)),
         border: Border.all(color: const Color(0xFFDCFCE7)),
       ),
@@ -502,7 +503,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
               Text(
                 'Refund Processed Successfully',
                 style: TextStyle(
-                  color: const Color(0xFF166534),
+                  color: AppColors.green,
                   fontSize: R.sp(13),
                   fontWeight: FontWeight.w600,
                 ),
@@ -516,7 +517,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
               color: Color(0xFF22C55E),
             ),
             child: Icon(RemixIcons.check_line,
-                color: Colors.white, size: R.sp(12)),
+                color: AppColors.white, size: R.sp(12)),
           ),
         ],
       ),

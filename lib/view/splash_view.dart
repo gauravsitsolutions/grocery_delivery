@@ -119,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor: AppColors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ));
 
@@ -191,7 +191,7 @@ class _SplashScreenState extends State<SplashScreen>
                       style: TextStyle(
                         fontSize: R.sp(30),
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.white,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -276,24 +276,24 @@ class _FeatureItem extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(R.w(12)),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: AppColors.white.withValues(alpha: 0.5),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: AppColors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Icon(icon, color: Colors.blue, size: R.sp(22)),
+          child: Icon(icon, color: AppColors.blue, size: R.sp(22)),
         ),
         SizedBox(height: R.h(8)),
         Text(
           text,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.blue,
+            color: AppColors.blue,
             fontSize: R.sp(14),
             fontWeight: FontWeight.w600,
           ),

@@ -56,13 +56,13 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 viewModel.pickupProofImage != null;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB), // Light gray background
+          backgroundColor: AppColors.scaffoldBg, // Light gray background
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.white,
             elevation: 0,
             leading: IconButton(
               icon: Icon(Icons.arrow_back_ios,
-                  color: Colors.black, size: R.sp(20)),
+                  color: AppColors.black, size: R.sp(20)),
               onPressed: () => Navigator.pop(context),
             ),
             centerTitle: true,
@@ -71,7 +71,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 Text(
                   'PICKUP TASK',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: AppColors.black,
                     fontSize: R.sp(16),
                     fontWeight: FontWeight.bold,
                   ),
@@ -120,10 +120,10 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                         MediaQuery.of(context).padding.bottom, // Safe Area
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: AppColors.black.withOpacity(0.05),
                         blurRadius: 10,
                         offset: const Offset(0, -4),
                       ),
@@ -150,7 +150,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
+                                  color: AppColors.white, strokeWidth: 2),
                             )
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -160,13 +160,13 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                                   style: TextStyle(
                                     fontSize: R.sp(16),
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                   ),
                                 ),
                                 if (canProceed) ...[
                                   SizedBox(width: R.w(8)),
                                   Icon(RemixIcons.checkbox_circle_fill,
-                                      color: Colors.white, size: R.sp(20)),
+                                      color: AppColors.white, size: R.sp(20)),
                                 ],
                               ],
                             ),
@@ -185,11 +185,11 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: AppColors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -216,7 +216,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 Text(
                   order.vendor?.storeName ?? 'Warehouse Bay 4B',
                   style: TextStyle(
-                    color: const Color(0xFF1F2937),
+                    color: AppColors.textPrimary,
                     fontSize: R.sp(18),
                     fontWeight: FontWeight.bold,
                   ),
@@ -226,7 +226,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                   order.vendor?.address ??
                       'Avenue 5, Logistics Park, Sector 12',
                   style: TextStyle(
-                    color: const Color(0xFF6B7280),
+                    color: AppColors.bodyText,
                     fontSize: R.sp(14),
                   ),
                 ),
@@ -245,7 +245,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                         label: const Text('Show on Map'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryGreen,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.white,
                           elevation: 0,
                           padding: EdgeInsets.symmetric(vertical: R.h(12)),
                           shape: RoundedRectangleBorder(
@@ -266,17 +266,17 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                           _makePhoneCall(order.vendor?.mobile ?? '1234567890');
                         },
                         icon: Icon(RemixIcons.phone_fill,
-                            color: const Color(0xFF1F2937), size: R.sp(18)),
+                            color: AppColors.textPrimary, size: R.sp(18)),
                         label: Text(
                           'Call Manager',
                           style: TextStyle(
-                            color: const Color(0xFF1F2937),
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
                             fontSize: R.sp(14),
                           ),
                         ),
                         style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFFF3F4F6),
+                          backgroundColor: AppColors.softGreyBg,
                           padding: EdgeInsets.symmetric(vertical: R.h(12)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(R.r(30)),
@@ -304,9 +304,9 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                      color: Colors.grey[200],
-                      child:
-                          Center(child: Icon(Icons.map, color: Colors.grey)));
+                      color: AppColors.grey200,
+                      child: Center(
+                          child: Icon(Icons.map, color: AppColors.grey)));
                 },
               ),
             ),
@@ -325,7 +325,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
             Text(
               'ITEM CHECKLIST',
               style: TextStyle(
-                color: const Color(0xFF1F2937),
+                color: AppColors.textPrimary,
                 fontSize: R.sp(16),
                 fontWeight: FontWeight.bold,
               ),
@@ -334,13 +334,13 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               padding:
                   EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
+                color: AppColors.softGreyBg,
                 borderRadius: BorderRadius.circular(R.r(6)),
               ),
               child: Text(
                 '${viewModel.orderItems.length} ITEMS',
                 style: TextStyle(
-                  color: const Color(0xFF6B7280),
+                  color: AppColors.bodyText,
                   fontSize: R.sp(11),
                   fontWeight: FontWeight.bold,
                 ),
@@ -359,11 +359,11 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               data: ThemeData(
                   checkboxTheme: const CheckboxThemeData(
                 shape: CircleBorder(),
-                side: BorderSide(color: Color(0xFFE5E7EB), width: 2),
+                side: BorderSide(color: AppColors.borderLight, width: 2),
               )),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(R.r(16)),
                   border: isSelected
                       ? Border.all(
@@ -376,7 +376,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                       ? null
                       : (val) => viewModel.toggleItem(item.id),
                   activeColor: AppColors.primaryGreen,
-                  checkColor: Colors.white,
+                  checkColor: AppColors.white,
                   contentPadding: EdgeInsets.symmetric(
                       horizontal: R.w(16), vertical: R.h(6)),
                   secondary: isVerifying
@@ -387,10 +387,10 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                               strokeWidth: 2, color: AppColors.primaryGreen),
                         )
                       : CircleAvatar(
-                          backgroundColor: Colors.grey[100],
+                          backgroundColor: AppColors.softGreyBg,
                           radius: R.r(24),
                           child: Icon(RemixIcons.shopping_bag_3_fill,
-                              color: Colors.grey[400], size: R.sp(20)),
+                              color: AppColors.grey400, size: R.sp(20)),
                         ),
                   title: Text(
                     item.product?.name ?? 'Product Item',
@@ -425,7 +425,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
         Text(
           'PICKUP PROOF',
           style: TextStyle(
-            color: const Color(0xFF1F2937),
+            color: AppColors.textPrimary,
             fontSize: R.sp(16),
             fontWeight: FontWeight.bold,
           ),
@@ -438,10 +438,10 @@ class _PickupTaskViewState extends State<PickupTaskView> {
             width: double.infinity,
             height: R.h(180),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(R.r(24)),
               border: Border.all(
-                color: const Color(0xFFE5E7EB), // Grey 200
+                color: AppColors.borderLight, // Grey 200
                 style: BorderStyle.solid,
               ),
             ),
@@ -461,7 +461,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                         Container(
                           padding: EdgeInsets.all(R.w(16)),
                           decoration: const BoxDecoration(
-                            color: Color(0xFFECFDF5), // Light green
+                            color: AppColors.softGreenBg, // Light green
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -474,7 +474,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                         Text(
                           'Take Photo of Items',
                           style: TextStyle(
-                            color: const Color(0xFF1F2937),
+                            color: AppColors.textPrimary,
                             fontSize: R.sp(14),
                             fontWeight: FontWeight.bold,
                           ),
@@ -483,7 +483,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                         Text(
                           'Required to start delivery',
                           style: TextStyle(
-                            color: const Color(0xFF9CA3AF),
+                            color: AppColors.hintText,
                             fontSize: R.sp(12),
                           ),
                         ),
@@ -523,7 +523,7 @@ class DottedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFD1D5DB) // Grey 300
+      ..color = AppColors.borderLight // Grey 300
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 

@@ -1,6 +1,7 @@
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
@@ -55,7 +56,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   List<Order> _myOrders = []; // Full list of accepted orders
   Order? _currentOrder; // The first one in the queue
   bool _isLoading = true;
+
   String? _error;
+
+  // Timer State
+  Timer? _dutyTimer;
+  int _secondsOnDuty = 0;
+  bool _isTimerPaused = false;
 
   // Pagination State
   int _availablePage = 1;
@@ -80,6 +87,53 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   void initState() {
     super.initState();
     _initDashboard();
+    // Initialize timer state based on initial props
+    if (widget.isOnline) {
+      _startTimer();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AgentDashboardView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isOnline != oldWidget.isOnline) {
+      if (widget.isOnline) {
+        _isTimerPaused = false; // Reset pause state when going online
+        _startTimer();
+      } else {
+        _stopTimer();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _dutyTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _stopTimer(); // Ensure no duplicate timers
+    _dutyTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!_isTimerPaused) {
+        if (mounted) {
+          setState(() {
+            _secondsOnDuty++;
+          });
+        }
+      }
+    });
+  }
+
+  void _stopTimer() {
+    _dutyTimer?.cancel();
+    _dutyTimer = null;
+  }
+
+  void _toggleTimerPause() {
+    setState(() {
+      _isTimerPaused = !_isTimerPaused;
+    });
   }
 
   Future<void> _initDashboard() async {
@@ -136,6 +190,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         if (mounted) {
           setState(() {
             _partnerSummary = summary;
+            // Sync local timer with server time if not already wildly different?
+            // Or just trust server time is the baseline for "today"
+            // Only update if we are not currently ticking to avoid jumpiness, or always update?
+            // best to update baseline.
+            _secondsOnDuty = summary.todayDutyTime ?? 0;
           });
         }
       }
@@ -499,11 +558,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     Row(
                       children: [
                         Icon(RemixIcons.timer_line,
-                            size: R.sp(16), color: Colors.orange),
+                            size: R.sp(16), color: AppColors.warning),
                         SizedBox(width: R.w(4)),
                         Text('45s',
                             style: TextStyle(
-                                color: Colors.orange,
+                                color: AppColors.warning,
                                 fontWeight: FontWeight.w800,
                                 fontSize: R.sp(14)))
                       ],
@@ -577,7 +636,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         child: ElevatedButton(
                           onPressed: () => _rejectOrder(orderId),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFFF3F4F6),
+                            backgroundColor: AppColors.softGreyBg,
                             foregroundColor: AppColors.headingText,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
@@ -602,7 +661,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           onPressed: () => _acceptOrder(orderId),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryGreen,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(R.r(12)),
@@ -685,7 +744,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   : RemixIcons.home_smile_fill,
               color: isPickup
                   ? AppColors.primaryGreen
-                  : Color(0xFF2563EB), // Blue for Drop
+                  : AppColors.info, // Blue for Drop
               size: R.sp(24),
             ),
           ),
@@ -720,7 +779,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             decoration: BoxDecoration(
               color: isPickup
                   ? AppColors.softGreenBg
-                  : Color(0xFFEFF6FF), // Soft Blue
+                  : AppColors.summaryBlueBg, // Soft Blue
               borderRadius: BorderRadius.circular(R.r(6)),
             ),
             child: Text(
@@ -728,7 +787,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               style: TextStyle(
                 fontSize: R.sp(11),
                 fontWeight: FontWeight.w700,
-                color: isPickup ? AppColors.primaryGreen : Color(0xFF2563EB),
+                color: isPickup ? AppColors.primaryGreen : AppColors.info,
               ),
             ),
           ),
@@ -1197,6 +1256,42 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (widget.isOnline && _isTimerPaused)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: R.h(16)),
+                    child: GestureDetector(
+                      onTap: _toggleTimerPause,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: R.w(16), vertical: R.h(12)),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(R.r(12)),
+                          border: Border.all(
+                              color: AppColors.warning.withOpacity(0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(RemixIcons.pause_circle_fill,
+                                color: AppColors.warning, size: R.sp(20)),
+                            SizedBox(width: R.w(12)),
+                            Expanded(
+                              child: Text(
+                                'Timer is paused. Tap to resume.',
+                                style: TextStyle(
+                                  fontSize: R.sp(14),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.warning,
+                                ),
+                              ),
+                            ),
+                            Icon(RemixIcons.arrow_right_s_line,
+                                color: AppColors.warning, size: R.sp(18)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 AbsorbPointer(
                   absorbing: !isOnline,
                   child: ColorFiltered(
@@ -1420,8 +1515,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                 horizontal: R.w(12),
                                                 vertical: R.h(6)),
                                             decoration: BoxDecoration(
-                                                color: Color(
-                                                    0xFFE6F7EF), // Light Green
+                                                color: AppColors
+                                                    .softGreenBg, // Light Green
                                                 borderRadius:
                                                     BorderRadius.circular(100)),
                                             child: Row(
@@ -1559,9 +1654,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 height: R.h(32), // Reduced height
                 padding: EdgeInsets.all(R.w(4)),
                 decoration: BoxDecoration(
-                  color: isOnline
-                      ? const Color(0xFF22C55E)
-                      : const Color(0xFFE5E7EB),
+                  color: isOnline ? AppColors.success : AppColors.borderLight,
                   borderRadius: BorderRadius.circular(100),
                 ),
                 child: AnimatedAlign(
@@ -1577,12 +1670,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         boxShadow: [
                           if (isOnline)
                             BoxShadow(
-                                color: Colors.black12,
+                                color: AppColors.black12,
                                 blurRadius: 4,
                                 offset: Offset(0, 2))
                         ]),
                     child: isOnline
-                        ? Icon(Icons.check, size: R.sp(16), color: Colors.white)
+                        ? Icon(Icons.check,
+                            size: R.sp(16), color: AppColors.white)
                         : null,
                   ),
                 ),
@@ -1621,33 +1715,61 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         ),
       ),
       actions: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: R.w(22),
-              height: R.w(22),
-              decoration: const BoxDecoration(
-                color: Color(0xFF22C55E),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                RemixIcons.time_fill,
-                size: R.sp(14),
-                color: Colors.white,
-              ),
+        // ✅ Duty Time Pill
+        GestureDetector(
+          onTap: isOnline ? _toggleTimerPause : null,
+          child: Container(
+            padding:
+                EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
+            decoration: BoxDecoration(
+              color: isOnline && _isTimerPaused
+                  ? AppColors.warning.withOpacity(0.1)
+                  : AppColors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(R.r(20)),
+              border: Border.all(
+                  color: isOnline && _isTimerPaused
+                      ? AppColors.warning
+                      : AppColors.borderLight,
+                  width: 1),
             ),
-            SizedBox(width: R.w(8)),
-            Text(
-              _formatDutyTime(_partnerSummary?.todayDutyTime ?? 0),
-              style: TextStyle(
-                fontSize: R.sp(14),
-                fontWeight: FontWeight.w800,
-                color: AppColors.headingText,
-                letterSpacing: 0.5,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: R.w(20),
+                  height: R.w(20),
+                  decoration: BoxDecoration(
+                    color: isOnline
+                        ? (_isTimerPaused
+                            ? AppColors.warning
+                            : AppColors.success)
+                        : AppColors.grey,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isOnline
+                        ? (_isTimerPaused
+                            ? RemixIcons.play_fill
+                            : RemixIcons.pause_fill)
+                        : RemixIcons.time_fill,
+                    size: R.sp(12),
+                    color: AppColors.white,
+                  ),
+                ),
+                SizedBox(width: R.w(8)),
+                Text(
+                  _formatDutyTime(_secondsOnDuty),
+                  style: TextStyle(
+                    fontSize: R.sp(13),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.headingText,
+                    letterSpacing: 0.5,
+                    height: 1.1,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
 
         SizedBox(width: R.w(16)),
@@ -1668,7 +1790,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     width: R.w(40),
                     height: R.w(40),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -1693,7 +1815,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         decoration: BoxDecoration(
                           color: AppColors.error,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
+                          border:
+                              Border.all(color: AppColors.white, width: 1.5),
                         ),
                         constraints: BoxConstraints(
                           minWidth: R.w(16),
@@ -1703,7 +1826,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           child: Text(
                             '${notificationsVM.unreadCount}',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontSize: R.sp(9),
                               fontWeight: FontWeight.bold,
                               height: 1.0,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
@@ -19,63 +20,99 @@ class PerformanceStatsRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Today's Performance",
-          style: TextStyle(
-            fontSize: R.sp(16),
-            fontWeight: FontWeight.w800,
-            color: AppColors.headingText,
-            letterSpacing: 0.5,
-          ),
-        ),
-        SizedBox(height: R.h(12)),
         Row(
           children: [
-            Expanded(child: _statCard('Pending', pending, Colors.orange)),
-            SizedBox(width: R.w(12)),
-            Expanded(
-                child:
-                    _statCard('Completed', completed, AppColors.primaryGreen)),
-            SizedBox(width: R.w(12)),
-            Expanded(child: _statCard('Cancelled', cancelled, AppColors.error)),
+            Container(
+              padding: EdgeInsets.all(R.w(8)),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.analytics_rounded,
+                color: AppColors.primaryGreen,
+                size: R.sp(18),
+              ),
+            ),
+            SizedBox(width: R.w(8)),
+            Text(
+              "Today's Performance",
+              style: TextStyle(
+                fontSize: R.sp(16),
+                fontWeight: FontWeight.w700,
+                color: AppColors.headingText,
+              ),
+            ),
           ],
+        ),
+        SizedBox(height: R.h(12)),
+        IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(child: _statCard('Pending', pending, Remix.time_line)),
+              SizedBox(width: R.w(12)),
+              Expanded(
+                  child: _statCard(
+                      'Completed', completed, Remix.checkbox_circle_line)),
+              SizedBox(width: R.w(12)),
+              Expanded(
+                  child: _statCard(
+                      'Cancelled', cancelled, Remix.close_circle_line)),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _statCard(String label, int count, Color color) {
+  Widget _statCard(String label, int count, IconData icon) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: R.h(12), horizontal: R.w(8)),
+      padding: EdgeInsets.fromLTRB(R.w(6), R.h(12), R.w(6), R.h(8)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(16)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.05),
+            color: AppColors.primaryGreen.withOpacity(0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
+            spreadRadius: 0,
           ),
         ],
-        border: Border.all(color: color.withOpacity(0.1), width: 1),
+        border: Border.all(
+            color: AppColors.primaryGreen.withOpacity(0.1), width: 1),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Container(
+            padding: EdgeInsets.all(R.w(8)),
+            decoration: BoxDecoration(
+              color: AppColors.softGreenBg,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.primaryGreen,
+              size: R.sp(18),
+            ),
+          ),
+          SizedBox(height: R.h(6)),
           Text(
             count.toString(),
             style: TextStyle(
               fontSize: R.sp(20),
               fontWeight: FontWeight.w800,
-              color: color,
+              color: AppColors.headingText,
             ),
           ),
-          SizedBox(height: R.h(4)),
+          SizedBox(height: R.h(2)),
           Text(
             label,
             style: TextStyle(
-              fontSize: R.sp(12),
+              fontSize: R.sp(11),
               fontWeight: FontWeight.w600,
-              color: AppColors.bodyText.withOpacity(0.7),
+              color: AppColors.bodyText.withOpacity(0.8),
             ),
             textAlign: TextAlign.center,
           ),

@@ -89,7 +89,7 @@ class _LoginViewState extends State<LoginView> {
       child: Consumer<AuthViewModel>(builder: (context, viewModel, child) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: const SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
+            statusBarColor: AppColors.transparent,
             statusBarIconBrightness: Brightness.dark,
           ),
           child: Scaffold(
@@ -381,7 +381,7 @@ class _LoginViewState extends State<LoginView> {
                 height: R.h(24),
                 width: R.h(24),
                 child: const CircularProgressIndicator(
-                  color: Colors.white,
+                  color: AppColors.white,
                   strokeWidth: 2,
                 ),
               )
