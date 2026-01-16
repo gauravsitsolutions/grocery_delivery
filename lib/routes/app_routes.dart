@@ -16,4 +16,5 @@ class AppRoutes {
   static const navigationView = '/navigation-view';
   static const verificationView = '/verification-view';
   static const orderDetails = '/order-details';
+  static const notificationView = '/notification-view';
 }

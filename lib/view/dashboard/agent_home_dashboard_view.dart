@@ -23,12 +23,14 @@ import 'package:samrudhi_delivery_agent_app/widget/dashboard_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/dashboard_waiting_state.dart';
-import 'package:samrudhi_delivery_agent_app/view/dashboard/available_orders_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/daily_goal_card.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
+import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
+
 import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
 
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
 
 class AgentDashboardView extends StatefulWidget {
@@ -68,11 +70,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   ProfileModel? _userProfile;
   PartnerSummary? _partnerSummary;
 
-  // Dashboard Stats (Mock Data for now)
-  // Dashboard Stats
+  // Stats
   int _completedDeliveries = 0;
-  int _pendingDeliveries = 0;
-  int _cancelledDeliveries = 0;
+  int _pendingOrders = 0;
+  int _cancelledOrders = 0;
+  final int _dailyGoal = 15; // Hardcoded goal for now
 
   @override
   void initState() {
@@ -91,8 +93,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       // Re-fetch everything with the token
       _fetchOrders(refresh: true);
       _fetchProfile();
-      _fetchStats();
       _fetchPartnerSummary();
+      _fetchDeliveryStats();
 
       // Fetch notifications for badge
       if (mounted) {
@@ -149,28 +151,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
     final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
     return '$hours:$minutes:$seconds';
-  }
-
-  Future<void> _fetchStats() async {
-    try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token != null) {
-        final deliveryStatusInfo = await _apiService.getDeliveryStatus(token);
-        // final orders = await _apiService.getTotalOrders(token); // Replaced by getDeliveryStatus
-
-        if (mounted) {
-          setState(() {
-            _completedDeliveries =
-                deliveryStatusInfo.data?.deliveredOrders ?? 0;
-            _pendingDeliveries = deliveryStatusInfo.data?.pendingOrders ?? 0;
-            _cancelledDeliveries =
-                deliveryStatusInfo.data?.cancelledOrders ?? 0;
-          });
-        }
-      }
-    } catch (e) {
-      log('Error fetching stats: $e');
-    }
   }
 
   Future<void> _fetchOrders({bool refresh = true}) async {
@@ -262,6 +242,27 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           });
         }
       }
+    }
+  }
+
+  Future<void> _fetchDeliveryStats() async {
+    try {
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
+      if (token == null) return;
+
+      final deliveryStatus = await _apiService.getDeliveryStatus(token);
+      if (deliveryStatus.status && deliveryStatus.data != null) {
+        if (mounted) {
+          setState(() {
+            _completedDeliveries = deliveryStatus.data!.deliveredOrders;
+            _pendingOrders = deliveryStatus.data!.pendingOrders;
+            _cancelledOrders = deliveryStatus.data!.cancelledOrders;
+            // If API returns target, set it here. For now using hardcoded _dailyGoal.
+          });
+        }
+      }
+    } catch (e) {
+      log('Error fetching delivery stats: $e');
     }
   }
 
@@ -429,38 +430,31 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       margin: EdgeInsets.symmetric(horizontal: R.w(4)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius:
-            BorderRadius.circular(R.r(24)), // Consistent with summary cards
+        borderRadius: BorderRadius.circular(R.r(24)),
+        border: Border.all(
+            color: AppColors.primaryGreen.withOpacity(0.3),
+            width: 1.5), // Subtle green border
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.1),
+            color: AppColors.shadow.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Top Progress Bar
+          // Top Accent Line
           Positioned(
             top: 0,
-            left: 0,
-            right: 0,
+            left: 20,
+            right: 150, // Partial width
             child: Container(
               height: 4,
-              width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen
-                    .withValues(alpha: 0.2), // Light green bg
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  width: R.w(150), // Mock progress
                   color: AppColors.primaryGreen,
-                ),
-              ),
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(4))),
             ),
           ),
 
@@ -472,54 +466,54 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: R.w(8), vertical: R.h(4)),
-                      decoration: BoxDecoration(
-                        color: AppColors.softGreenBg,
-                        borderRadius: BorderRadius.circular(R.r(4)),
-                      ),
-                      child: Text(
-                        'NEW REQUEST',
-                        style: TextStyle(
-                          color: AppColors.primaryGreen,
-                          fontWeight: FontWeight.w800,
-                          fontSize: R.sp(12),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
                     Row(
                       children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: R.w(8), vertical: R.h(4)),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(R.r(4)),
+                          ),
+                          child: Text(
+                            'NEW REQUEST',
+                            style: TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w800,
+                              fontSize: R.sp(12),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: R.w(10)),
                         Text(
                           'ID: #ORD-$orderId',
                           style: TextStyle(
-                            color: AppColors.bodyText.withValues(alpha: 0.5),
+                            color: AppColors.bodyText.withOpacity(0.5),
                             fontSize: R.sp(13),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        /* 
-                        SizedBox(width: R.w(12)),
-                        Icon(RemixIcons.timer_2_fill,
-                            size: R.sp(16), color: AppColors.warning),
-                        SizedBox(width: R.w(4)),
-                        Text(
-                          '45s',
-                          style: TextStyle(
-                            color: AppColors.warning,
-                            fontWeight: FontWeight.w800,
-                            fontSize: R.sp(15),
-                          ),
-                        ),
-                        */
                       ],
                     ),
+                    Row(
+                      children: [
+                        Icon(RemixIcons.timer_line,
+                            size: R.sp(16), color: Colors.orange),
+                        SizedBox(width: R.w(4)),
+                        Text('45s',
+                            style: TextStyle(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.w800,
+                                fontSize: R.sp(14)))
+                      ],
+                    )
                   ],
                 ),
-                SizedBox(height: R.h(16)),
+                SizedBox(height: R.h(20)),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.end, // Align text bottom
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
@@ -528,16 +522,18 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         Text(
                           price,
                           style: TextStyle(
-                            fontSize: R.sp(28),
+                            fontSize: R.sp(32),
                             fontWeight: FontWeight.w800,
                             color: AppColors.headingText,
+                            height: 1.0,
                           ),
                         ),
+                        SizedBox(height: R.h(4)),
                         Text(
                           'Estimated Earnings',
                           style: TextStyle(
                             fontSize: R.sp(13),
-                            color: AppColors.bodyText.withValues(alpha: 0.7),
+                            color: AppColors.bodyText.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -547,8 +543,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.near_me,
-                                size: R.sp(16), color: AppColors.bodyText),
+                            Icon(RemixIcons.navigation_fill,
+                                size: R.sp(16), color: AppColors.headingText),
                             SizedBox(width: R.w(4)),
                             Text(
                               '3.2 km', // Mock distance
@@ -560,12 +556,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                             ),
                           ],
                         ),
-                        SizedBox(height: R.h(2)),
+                        SizedBox(height: R.h(4)),
                         Text(
                           'Total Distance',
                           style: TextStyle(
                             fontSize: R.sp(13),
-                            color: AppColors.bodyText.withValues(alpha: 0.7),
+                            color: AppColors.bodyText.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -576,44 +572,48 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => _rejectOrder(orderId),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.softGreyBg,
-                          foregroundColor: AppColors.headingText,
-                          elevation: 0,
-                          padding: EdgeInsets.symmetric(vertical: R.h(14)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(R.r(12)),
+                      child: SizedBox(
+                        height: R.h(50),
+                        child: ElevatedButton(
+                          onPressed: () => _rejectOrder(orderId),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFFF3F4F6),
+                            foregroundColor: AppColors.headingText,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(R.r(12)),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          'Decline',
-                          style: TextStyle(
-                            fontSize: R.sp(16),
-                            fontWeight: FontWeight.w700,
+                          child: Text(
+                            'Decline',
+                            style: TextStyle(
+                                fontSize: R.sp(16),
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.bodyText.withOpacity(0.8)),
                           ),
                         ),
                       ),
                     ),
                     SizedBox(width: R.w(16)),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => _acceptOrder(orderId),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: EdgeInsets.symmetric(vertical: R.h(14)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(R.r(12)),
+                      child: SizedBox(
+                        height: R.h(50),
+                        child: ElevatedButton(
+                          onPressed: () => _acceptOrder(orderId),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(R.r(12)),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          'Accept Order',
-                          style: TextStyle(
-                            fontSize: R.sp(16),
-                            fontWeight: FontWeight.w700,
+                          child: Text(
+                            'Accept Order',
+                            style: TextStyle(
+                              fontSize: R.sp(16),
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
@@ -650,16 +650,19 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   Widget _myQueueItem(Order order) {
     // Logic for icon/badge
     // Ideally use order.status or order.type.
-    // Mocking for visual match: Even ID = Pickup, Odd ID = Drop (Just for demo/match)
-    // Or use real logic if available.
-    bool isPickup = order.status.toLowerCase().contains('accept') ||
-        order.status.toLowerCase().contains('pickup'); // Simple heuristic
+    // Mocking for visual match.
+    // We can assume first item is 'Pickup' and second is 'Drop' for visual demo as user requested "make like this"
+    // Using even/odd id or just forcing it for now.
+    bool isPickup = order.id % 2 != 0;
+
+    // In real app, check order status e.g.
+    // isPickup = order.status == 'accepted' || order.status == 'arrived_at_pickup';
 
     return Container(
       padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(16)), // increased radius
+        borderRadius: BorderRadius.circular(R.r(16)),
         boxShadow: [
           BoxShadow(
             color: AppColors.shadow.withValues(alpha: 0.05),
@@ -671,16 +674,18 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(R.w(12)),
+            padding: EdgeInsets.all(R.w(10)),
             decoration: BoxDecoration(
               color: AppColors.scaffoldBg,
               borderRadius: BorderRadius.circular(R.r(12)),
             ),
             child: Icon(
-              isPickup ? Icons.shopping_bag : Icons.home_filled, // Icon match
+              isPickup
+                  ? RemixIcons.shopping_bag_3_fill
+                  : RemixIcons.home_smile_fill,
               color: isPickup
                   ? AppColors.primaryGreen
-                  : AppColors.info, // Green vs Blue
+                  : Color(0xFF2563EB), // Blue for Drop
               size: R.sp(24),
             ),
           ),
@@ -699,10 +704,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 ),
                 SizedBox(height: R.h(4)),
                 Text(
-                  '${order.orderItems.length} Items • Ready in 2 mins', // Mock extra details
+                  '${order.orderItems.length} Items • Ready in 2 mins',
                   style: TextStyle(
                     fontSize: R.sp(13),
-                    color: AppColors.bodyText.withValues(alpha: 0.6),
+                    color: AppColors.bodyText.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -715,21 +720,21 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             decoration: BoxDecoration(
               color: isPickup
                   ? AppColors.softGreenBg
-                  : AppColors.summaryBlueBg, // Light Green vs Light Blue
+                  : Color(0xFFEFF6FF), // Soft Blue
               borderRadius: BorderRadius.circular(R.r(6)),
             ),
             child: Text(
               isPickup ? 'PICKUP' : 'DROP',
               style: TextStyle(
                 fontSize: R.sp(11),
-                fontWeight: FontWeight.w800,
-                color: isPickup ? AppColors.primaryGreen : AppColors.info,
+                fontWeight: FontWeight.w700,
+                color: isPickup ? AppColors.primaryGreen : Color(0xFF2563EB),
               ),
             ),
           ),
-          SizedBox(width: R.w(8)),
+          SizedBox(width: R.w(12)),
           Icon(Icons.chevron_right,
-              size: R.sp(20), color: AppColors.bodyText.withValues(alpha: 0.4)),
+              size: R.sp(20), color: AppColors.bodyText.withOpacity(0.4)),
         ],
       ),
     );
@@ -741,7 +746,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(16)),
+        borderRadius: BorderRadius.circular(R.r(20)),
         boxShadow: [
           BoxShadow(
             color: AppColors.shadow.withValues(alpha: 0.05),
@@ -756,6 +761,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              /* 
               Container(
                 width: R.w(48),
                 height: R.w(48),
@@ -775,6 +781,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 ),
               ),
               SizedBox(width: R.w(12)),
+              */
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -783,26 +790,26 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       order.orderNumber, // e.g. Gourmet Grocery
                       style: TextStyle(
                         fontSize: R.sp(16),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                         color: AppColors.headingText,
                       ),
                     ),
-                    SizedBox(height: R.h(4)),
+                    SizedBox(height: R.h(6)),
                     Row(
                       children: [
                         Text(
                           '0.8 km away', // Mock
                           style: TextStyle(
                             fontSize: R.sp(13),
-                            color: AppColors.bodyText.withValues(alpha: 0.7),
+                            color: AppColors.bodyText.withOpacity(0.7),
                           ),
                         ),
                         SizedBox(width: R.w(8)),
                         Container(
-                          width: 4,
-                          height: 4,
+                          width: 3,
+                          height: 3,
                           decoration: BoxDecoration(
-                            color: AppColors.borderLight,
+                            color: AppColors.bodyText.withOpacity(0.5),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -810,8 +817,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         Text(
                           '₹${order.totalAmount}',
                           style: TextStyle(
-                            fontSize: R.sp(13),
-                            color: AppColors.bodyText.withValues(alpha: 0.7),
+                            fontSize: R.sp(14),
+                            color: AppColors.bodyText.withOpacity(0.7),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -825,9 +832,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.primaryGreen),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(R.r(8)),
+                    borderRadius: BorderRadius.circular(R.r(10)),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: R.w(20)),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: R.w(24), vertical: R.h(10)),
                 ),
                 child: Text(
                   'Add',
@@ -1123,69 +1131,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  Widget _statCard({
-    required String label,
-    required String value,
-    required String footer,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(R.w(12)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(16)),
-        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: R.sp(10),
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.bodyText.withValues(alpha: 0.6),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              Icon(icon, color: AppColors.primaryGreen, size: R.sp(16)),
-            ],
-          ),
-          SizedBox(height: R.h(8)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: R.sp(22),
-              fontWeight: FontWeight.w800,
-              color: AppColors.headingText,
-            ),
-          ),
-          SizedBox(height: R.h(4)),
-          Text(
-            footer,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: R.sp(9),
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryGreen,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _sectionHeader({required String title, Widget? action, int? count}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1288,11 +1233,30 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   _myOrders.isEmpty &&
                                   _currentOrder == null &&
                                   !_isLoading)
-                              ? DashboardWaitingState(isOnline: isOnline)
+                              ? DashboardWaitingState(
+                                  isOnline: isOnline,
+                                  completedToday: _completedDeliveries,
+                                  dailyGoal: _dailyGoal,
+                                  pendingOrders: _pendingOrders,
+                                  cancelledOrders: _cancelledOrders,
+                                )
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     // Stats Cards Row
+                                    DailyGoalCard(
+                                      completedToday: _completedDeliveries,
+                                      dailyGoal: _dailyGoal,
+                                    ),
+                                    SizedBox(height: R.h(24)),
+
+                                    // Today's Performance Row
+                                    PerformanceStatsRow(
+                                      pending: _pendingOrders,
+                                      completed: _completedDeliveries,
+                                      cancelled: _cancelledOrders,
+                                    ),
+                                    SizedBox(height: R.h(24)),
 
                                     if (_currentOrder != null) ...[
                                       _currentTaskCard(_currentOrder!),
@@ -1451,29 +1415,34 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                       children: [
                                         _sectionHeader(
                                           title: 'Nearby Available',
-                                          action: Row(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const AvailableOrdersView(),
-                                                    ),
-                                                  ).then((_) => _fetchOrders());
-                                                },
-                                                child: Text(
-                                                  'See all',
+                                          action: Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: R.w(12),
+                                                vertical: R.h(6)),
+                                            decoration: BoxDecoration(
+                                                color: Color(
+                                                    0xFFE6F7EF), // Light Green
+                                                borderRadius:
+                                                    BorderRadius.circular(100)),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                    RemixIcons.sparkling_2_fill,
+                                                    size: R.sp(14),
+                                                    color:
+                                                        AppColors.primaryGreen),
+                                                SizedBox(width: R.w(6)),
+                                                Text(
+                                                  'Batch All',
                                                   style: TextStyle(
-                                                    fontSize: R.sp(14),
+                                                    fontSize: R.sp(13),
                                                     color:
                                                         AppColors.primaryGreen,
-                                                    fontWeight: FontWeight.w600,
+                                                    fontWeight: FontWeight.w700,
                                                   ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                         SizedBox(height: R.h(12)),
@@ -1527,46 +1496,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   ],
                                 ),
 
-                          // Today Performance Row
-                          SizedBox(height: R.h(24)),
-                          _sectionHeader(
-                            title: 'Today Performance',
-                            count: null,
-                          ),
-                          SizedBox(height: R.h(12)),
-                          Padding(
-                            padding: EdgeInsets.only(bottom: R.h(24)),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _statCard(
-                                    label: 'Delivered',
-                                    value: _completedDeliveries.toString(),
-                                    footer: 'Orders',
-                                    icon: RemixIcons.check_double_line,
-                                  ),
-                                ),
-                                SizedBox(width: R.w(12)),
-                                Expanded(
-                                  child: _statCard(
-                                    label: 'Pending',
-                                    value: _pendingDeliveries.toString(),
-                                    footer: 'Orders',
-                                    icon: RemixIcons.time_line,
-                                  ),
-                                ),
-                                SizedBox(width: R.w(12)),
-                                Expanded(
-                                  child: _statCard(
-                                    label: 'Cancelled',
-                                    value: _cancelledDeliveries.toString(),
-                                    footer: 'Orders',
-                                    icon: RemixIcons.close_circle_line,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          // Bottom Spacing
+                          SizedBox(height: R.h(40)),
                         ],
                       ),
                     ),
@@ -1617,144 +1548,152 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       title: Padding(
         padding: EdgeInsets.only(left: R.w(16)),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // ✅ Toggle (compact)
             GestureDetector(
               onTap: () => widget.onStatusChanged(!isOnline),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: R.w(50),
-                height: R.h(28),
-                padding: EdgeInsets.symmetric(horizontal: R.w(3)),
+                duration: const Duration(milliseconds: 250),
+                width: R.w(58),
+                height: R.h(32), // Reduced height
+                padding: EdgeInsets.all(R.w(4)),
                 decoration: BoxDecoration(
                   color: isOnline
-                      ? const Color(0xFF10C971)
-                      : const Color(0xFFE2E2E2),
-                  borderRadius: BorderRadius.circular(R.r(30)),
+                      ? const Color(0xFF22C55E)
+                      : const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(100),
                 ),
-                child: Stack(
-                  children: [
-                    AnimatedAlign(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      alignment: isOnline
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Container(
-                        width: R.w(22),
-                        height: R.w(22),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 250),
+                  alignment:
+                      isOnline ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    width: R.w(26), // Larger knob
+                    height: R.w(26),
+                    decoration: BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          if (isOnline)
                             BoxShadow(
-                              color: AppColors.black12,
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: isOnline
-                            ? Icon(Icons.check,
-                                size: R.sp(14), color: const Color(0xFF10C971))
-                            : null,
-                      ),
-                    ),
-                  ],
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2))
+                        ]),
+                    child: isOnline
+                        ? Icon(Icons.check, size: R.sp(16), color: Colors.white)
+                        : null,
+                  ),
                 ),
               ),
             ),
-            SizedBox(width: R.w(8)),
-            Text(
-              isOnline ? 'Online' : 'Offline',
-              style: TextStyle(
-                fontSize: R.sp(14),
-                fontWeight: FontWeight.bold,
-                color: isOnline
-                    ? const Color(0xFF10C971)
-                    : AppColors.bodyText.withValues(alpha: 0.5),
-              ),
+
+            SizedBox(width: R.w(12)),
+
+            // ✅ Status text
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isOnline ? 'Online' : 'Offline',
+                  style: TextStyle(
+                    fontSize: R.sp(16),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.headingText,
+                    height: 1.0,
+                  ),
+                ),
+                SizedBox(height: R.h(2)),
+                Text(
+                  'DUTY MODE',
+                  style: TextStyle(
+                    fontSize: R.sp(10),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                    color: AppColors.bodyText.withOpacity(0.6),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
       actions: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(6)),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(R.r(20)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: R.w(22),
+              height: R.w(22),
+              decoration: const BoxDecoration(
+                color: Color(0xFF22C55E),
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(RemixIcons.time_fill,
-                  size: R.sp(14), color: const Color(0xFF10C971)),
-              SizedBox(width: R.w(4)),
-              Text(
-                _formatDutyTime(_partnerSummary?.todayDutyTime ?? 0),
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: R.sp(12),
-                  color: AppColors.headingText,
-                ),
+              child: Icon(
+                RemixIcons.time_fill,
+                size: R.sp(14),
+                color: Colors.white,
               ),
-            ],
-          ),
+            ),
+            SizedBox(width: R.w(8)),
+            Text(
+              _formatDutyTime(_partnerSummary?.todayDutyTime ?? 0),
+              style: TextStyle(
+                fontSize: R.sp(14),
+                fontWeight: FontWeight.w800,
+                color: AppColors.headingText,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: R.w(12)),
+
+        SizedBox(width: R.w(16)),
+
+        // ✅ Notification icon (Matched Size)
+        // ✅ Notification icon (Matched Size)
         Consumer<NotificationsViewModel>(
           builder: (context, notificationsVM, child) {
             return GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationsView(),
-                  ),
-                ).then((_) {
-                  if (mounted) {
-                    notificationsVM.fetchNotifications(refresh: true);
-                  }
-                });
+                Navigator.of(context, rootNavigator: true)
+                    .pushNamed(AppRoutes.notificationView);
               },
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    width: R.h(34),
-                    height: R.h(34),
+                    width: R.w(40),
+                    height: R.w(40),
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: Colors.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.shadow.withValues(alpha: 0.05),
                           blurRadius: 10,
-                          offset: Offset(0, 2),
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Icon(
-                      RemixIcons.notification_2_line,
-                      size: R.sp(20),
+                      RemixIcons.notification_4_line,
+                      size: R.sp(24),
                       color: AppColors.headingText,
                     ),
                   ),
                   if (notificationsVM.unreadCount > 0)
                     Positioned(
-                      top: -2,
-                      right: -2,
+                      top: 0,
+                      right: 0,
                       child: Container(
                         padding: EdgeInsets.all(R.w(4)),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
+                        decoration: BoxDecoration(
+                          color: AppColors.error,
                           shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
                         ),
                         constraints: BoxConstraints(
                           minWidth: R.w(16),
@@ -1762,13 +1701,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         ),
                         child: Center(
                           child: Text(
-                            '${notificationsVM.unreadCount > 99 ? '99+' : notificationsVM.unreadCount}',
+                            '${notificationsVM.unreadCount}',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: R.sp(10),
+                              fontSize: R.sp(9),
                               fontWeight: FontWeight.bold,
+                              height: 1.0,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
@@ -1778,6 +1717,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             );
           },
         ),
+
         SizedBox(width: R.w(16)),
       ],
     );

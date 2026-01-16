@@ -3,11 +3,14 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:avatar_glow/avatar_glow.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
 
 class DashboardWaitingState extends StatelessWidget {
   final bool isGoalMet;
   final int completedToday;
   final int dailyGoal;
+  final int pendingOrders;
+  final int cancelledOrders;
   final int onTimePercentage;
   final double loginHours;
   final bool isOnline; // Added parameter
@@ -17,6 +20,8 @@ class DashboardWaitingState extends StatelessWidget {
     this.isGoalMet = false,
     this.completedToday = 8, // Default value for now
     this.dailyGoal = 12, // Default value for now
+    this.pendingOrders = 0,
+    this.cancelledOrders = 0,
     this.onTimePercentage = 95, // Default value
     this.loginHours = 0.0,
     this.isOnline = true, // Default to true
@@ -336,7 +341,7 @@ class DashboardWaitingState extends StatelessWidget {
 
         SizedBox(height: R.h(40)),
 
-        // 3. Waiting Indicator (Ripple)
+        // 4. Waiting Indicator (Ripple)
         Center(
           child: AvatarGlow(
             glowColor: AppColors.primaryGreen,
@@ -382,6 +387,15 @@ class DashboardWaitingState extends StatelessWidget {
             fontSize: R.sp(14),
             color: AppColors.bodyText,
           ),
+        ),
+
+        SizedBox(height: R.h(30)),
+
+        // Today's Performance
+        PerformanceStatsRow(
+          pending: pendingOrders,
+          completed: completedToday,
+          cancelled: cancelledOrders,
         ),
 
         SizedBox(height: R.h(40)),
