@@ -372,6 +372,7 @@ class Product {
   final String gstPercentage;
   final int stock;
   final List<String> productImages;
+  final List<String> productImageUrls; // New field for full URLs
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -394,18 +395,20 @@ class Product {
     required this.gstPercentage,
     required this.stock,
     required this.productImages,
+    this.productImageUrls = const [], // Default empty
     required this.createdAt,
     required this.updatedAt,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     List<String> images = [];
+    List<String> imageUrls = [];
 
+    // Parse product_images (filenames)
     if (json['product_images'] is String) {
       try {
-        log('Raw product_images string: ${json['product_images']}'); // Debug log
+        log('Raw product_images string: ${json['product_images']}');
         final decoded = jsonDecode(json['product_images']);
-        log('Decoded product_images: $decoded (${decoded.runtimeType})'); // Debug log
         if (decoded is List) {
           images = List<String>.from(decoded);
         }
@@ -414,18 +417,23 @@ class Product {
         images = [];
       }
     } else if (json['product_images'] is List) {
-      log('Raw product_images list: ${json['product_images']}'); // Debug log
       try {
         images = List<String>.from(json['product_images']);
       } catch (e) {
         log('Error parsing product_images list: $e');
         images = [];
       }
-    } else {
-      log('product_images is ${json['product_images']?.runtimeType}');
     }
 
-    log('Final parsed images: $images'); // Debug log
+    // Parse product_image_urls (full URLs)
+    if (json['product_image_urls'] is List) {
+      try {
+        imageUrls = List<String>.from(json['product_image_urls']);
+        log('Parsed product_image_urls: $imageUrls');
+      } catch (e) {
+        log('Error parsing product_image_urls: $e');
+      }
+    }
 
     return Product(
       id: json['id'] ?? 0,
@@ -446,6 +454,7 @@ class Product {
       gstPercentage: json['gst_percentage']?.toString() ?? '0.00',
       stock: json['stock'] ?? 0,
       productImages: images,
+      productImageUrls: imageUrls,
       createdAt: _parseDate(json['created_at']),
       updatedAt: _parseDate(json['updated_at']),
     );

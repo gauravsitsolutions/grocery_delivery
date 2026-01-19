@@ -1,6 +1,7 @@
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
+
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
@@ -8,10 +9,9 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart'; // Added shimmer import
+import 'package:shimmer/shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
-// import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
@@ -24,12 +24,7 @@ import 'package:samrudhi_delivery_agent_app/widget/dashboard_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/dashboard_waiting_state.dart';
-import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/daily_goal_card.dart';
-import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
-import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
-
 import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
-
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
@@ -277,6 +272,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   _myOrders.indexWhere((o) => o.id == activeOrder!.id);
               _myOrders[index] = activeOrder;
             }
+          } else if (_myOrders.isNotEmpty) {
+            // If no "active" order from partner/orders/current, check queue
+            // The first order in queue is effectively the current task
+            _currentOrder = _myOrders.first;
           } else {
             _currentOrder = null;
           }
@@ -427,13 +426,21 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         ),
       );
 
-      await _apiService.acceptOrder(token, orderId);
+      final response = await _apiService.acceptOrder(token, orderId);
 
       if (!mounted) return;
 
-      if (!context.mounted) return;
-
-      _showAcceptSuccessDialog(orderToAccept);
+      if (response['status'] == true || response['status'] == 'success') {
+        if (!context.mounted) return;
+        _showAcceptSuccessDialog(orderToAccept);
+      } else {
+        if (!context.mounted) return;
+        CustomSnackBar.showError(
+            context, response['message'] ?? 'Failed to accept order');
+        setState(() {
+          _removingOrderIds.remove(orderId);
+        });
+      }
     } catch (e) {
       if (mounted) {
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
@@ -461,13 +468,21 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         CustomSnackBar.showError(context, 'Rejecting order...');
       }
 
-      await _apiService.rejectOrder(token, orderId);
+      final response = await _apiService.rejectOrder(token, orderId);
 
       if (!mounted) return;
 
-      if (!context.mounted) return;
-
-      _showRejectSuccessDialog(orderId);
+      if (response['status'] == true || response['status'] == 'success') {
+        if (!context.mounted) return;
+        _showRejectSuccessDialog(orderId);
+      } else {
+        if (!context.mounted) return;
+        CustomSnackBar.showError(
+            context, response['message'] ?? 'Failed to reject order');
+        setState(() {
+          _removingOrderIds.remove(orderId);
+        });
+      }
     } catch (e) {
       if (mounted) {
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
@@ -569,7 +584,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     )
                   ],
                 ),
-                SizedBox(height: R.h(20)),
+                SizedBox(height: R.h(8)),
                 Row(
                   crossAxisAlignment:
                       CrossAxisAlignment.end, // Align text bottom
@@ -923,12 +938,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Widget _currentTaskCard(Order order) {
     // Determine image URL
-    final String? imageUrl = order.orderItems.isNotEmpty &&
-            order.orderItems.first.product != null &&
-            order.orderItems.first.product!.productImages.isNotEmpty
-        ? AppUrls.productImages +
-            order.orderItems.first.product!.productImages.first
-        : null;
+    String? imageUrl;
+    if (order.orderItems.isNotEmpty && order.orderItems.first.product != null) {
+      final product = order.orderItems.first.product!;
+      if (product.productImageUrls.isNotEmpty) {
+        imageUrl = product.productImageUrls.first;
+      } else if (product.productImages.isNotEmpty) {
+        imageUrl = AppUrls.productImages + product.productImages.first;
+      }
+    }
 
     return AnimatedOrderCard(
       key: ValueKey(order.id),
@@ -1052,7 +1070,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               // 2. Green Dropoff Box
               Container(
                 padding: EdgeInsets.symmetric(
-                    horizontal: R.w(16), vertical: R.h(14)),
+                    horizontal: R.w(16), vertical: R.h(12)),
                 decoration: BoxDecoration(
                   color: AppColors.paleGreen, // Light green bg
                   borderRadius: BorderRadius.circular(R.r(12)),
@@ -1107,32 +1125,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: () {
+                    // Map functionality removed as per request
                     if (order.deliveryAddress != null) {
-                      final address = order.deliveryAddress!;
-                      final fullAddress =
-                          "${address.addressLine1}, ${address.city}, ${address.state} ${address.postcode}";
-
-                      // Debug Log
-                      print("DEBUG: Navigating to $fullAddress");
-
-                      final Uri googleMapsUrl = Uri.parse(
-                          "https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(fullAddress)}");
-
-                      if (await canLaunchUrl(googleMapsUrl)) {
-                        await launchUrl(googleMapsUrl,
-                            mode: LaunchMode.externalApplication);
-                      } else {
-                        print("DEBUG: Could not launch $googleMapsUrl");
-                        // Fallback or explain why
-                        CustomSnackBar.showError(
-                            context, "Could not launch Maps");
-                      }
-                    } else {
-                      print(
-                          "DEBUG: Delivery Address is NULL for Order ${order.id}");
-                      CustomSnackBar.showError(context,
-                          "Delivery address missing (ID: ${order.id})");
+                      CustomSnackBar.showSuccess(
+                          context, "Navigation not available");
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -1241,7 +1238,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
-      appBar: _buildAppBar(context, isOnline),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -1256,6 +1252,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _dashboardHeader(isOnline),
+                SizedBox(height: R.h(12)),
                 if (widget.isOnline && _isTimerPaused)
                   Padding(
                     padding: EdgeInsets.only(bottom: R.h(16)),
@@ -1328,37 +1326,84 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   _myOrders.isEmpty &&
                                   _currentOrder == null &&
                                   !_isLoading)
-                              ? DashboardWaitingState(
-                                  isOnline: isOnline,
-                                  completedToday: _completedDeliveries,
-                                  dailyGoal: _dailyGoal,
-                                  pendingOrders: _pendingOrders,
-                                  cancelledOrders: _cancelledOrders,
+                              ? Padding(
+                                  padding: EdgeInsets.only(
+                                      top: R.h(8), bottom: R.h(12)),
+                                  child: DashboardWaitingState(
+                                    isOnline: isOnline,
+                                    completedToday: _completedDeliveries,
+                                    dailyGoal: _dailyGoal,
+                                    pendingOrders: _pendingOrders,
+                                    cancelledOrders: _cancelledOrders,
+                                  ),
                                 )
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Stats Cards Row
-                                    DailyGoalCard(
-                                      completedToday: _completedDeliveries,
-                                      dailyGoal: _dailyGoal,
-                                    ),
-                                    SizedBox(height: R.h(24)),
-
-                                    // Today's Performance Row
-                                    PerformanceStatsRow(
-                                      pending: _pendingOrders,
-                                      completed: _completedDeliveries,
-                                      cancelled: _cancelledOrders,
-                                    ),
-                                    SizedBox(height: R.h(24)),
-
+                                    // Current Task (Priority)
                                     if (_currentOrder != null) ...[
                                       _currentTaskCard(_currentOrder!),
                                       SizedBox(height: R.h(24)),
                                     ],
 
+                                    // Delivery Queue (Priority)
+                                    if (_myOrders.length > 1) ...[
+                                      _sectionHeader(
+                                        title: 'My Queue',
+                                        count: _myOrders.length - 1,
+                                        action: GestureDetector(
+                                          onTap: widget.onViewDeliveries,
+                                          child: Text(
+                                            '${_myOrders.length - 1} more',
+                                            style: TextStyle(
+                                              fontSize: R.sp(14),
+                                              color: AppColors.primaryGreen,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: R.h(12)),
+                                      Column(
+                                        children: _myOrders
+                                            .skip(1)
+                                            .take(2)
+                                            .map((order) {
+                                          return Padding(
+                                            padding: EdgeInsets.only(
+                                                bottom: R.h(12)),
+                                            child: AnimatedOrderCard(
+                                              key: ValueKey(order.id),
+                                              child: _myQueueItem(order),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                      if (_hasMoreMyOrders)
+                                        Padding(
+                                          padding: EdgeInsets.only(top: R.h(8)),
+                                          child: Center(
+                                            child: TextButton(
+                                              onPressed: _isMyOrdersLoadingMore
+                                                  ? null
+                                                  : _loadMoreMyOrders,
+                                              child: _isMyOrdersLoadingMore
+                                                  ? SizedBox(
+                                                      width: R.w(20),
+                                                      height: R.w(20),
+                                                      child:
+                                                          const CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    )
+                                                  : const Text('Load More'),
+                                            ),
+                                          ),
+                                        ),
+                                      SizedBox(height: R.h(24)),
+                                    ],
+
                                     // New Order Request
+
                                     Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -1446,62 +1491,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                       ],
                                     ),
                                     SizedBox(height: R.h(24)),
-
-                                    // Delivery Queue (Shows if more than 1 accepted order)
-                                    if (_myOrders.length > 1) ...[
-                                      _sectionHeader(
-                                        title: 'My Queue',
-                                        count: _myOrders.length - 1,
-                                        action: GestureDetector(
-                                          onTap: widget.onViewDeliveries,
-                                          child: Text(
-                                            '${_myOrders.length - 1} more',
-                                            style: TextStyle(
-                                              fontSize: R.sp(14),
-                                              color: AppColors.primaryGreen,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: R.h(12)),
-                                      Column(
-                                        children: _myOrders
-                                            .skip(1)
-                                            .take(2)
-                                            .map((order) {
-                                          return Padding(
-                                            padding: EdgeInsets.only(
-                                                bottom: R.h(12)),
-                                            child: AnimatedOrderCard(
-                                              key: ValueKey(order.id),
-                                              child: _myQueueItem(order),
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                      if (_hasMoreMyOrders)
-                                        Padding(
-                                          padding: EdgeInsets.only(top: R.h(8)),
-                                          child: Center(
-                                            child: TextButton(
-                                              onPressed: _isMyOrdersLoadingMore
-                                                  ? null
-                                                  : _loadMoreMyOrders,
-                                              child: _isMyOrdersLoadingMore
-                                                  ? SizedBox(
-                                                      width: R.w(20),
-                                                      height: R.w(20),
-                                                      child:
-                                                          const CircularProgressIndicator(
-                                                              strokeWidth: 2),
-                                                    )
-                                                  : const Text('Load More'),
-                                            ),
-                                          ),
-                                        ),
-                                      SizedBox(height: R.h(24)),
-                                    ],
 
                                     // Available Orders
                                     Column(
@@ -1592,13 +1581,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                 ),
 
                           // Bottom Spacing
-                          SizedBox(height: R.h(40)),
+                          SizedBox(height: R.h(8)),
                         ],
                       ),
                     ),
                   ),
                 ),
-                SizedBox(height: R.h(20)),
+                SizedBox(height: R.h(8)),
               ],
             ),
           ),
@@ -1634,215 +1623,196 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _fetchOrders(refresh: false);
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, bool isOnline) {
-    return AppBar(
-      backgroundColor: AppColors.scaffoldBg,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      titleSpacing: 0,
-      title: Padding(
-        padding: EdgeInsets.only(left: R.w(16)),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // ✅ Toggle (compact)
-            GestureDetector(
-              onTap: () => widget.onStatusChanged(!isOnline),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: R.w(58),
-                height: R.h(32), // Reduced height
-                padding: EdgeInsets.all(R.w(4)),
-                decoration: BoxDecoration(
-                  color: isOnline ? AppColors.success : AppColors.borderLight,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: AnimatedAlign(
+  Widget _dashboardHeader(bool isOnline) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(R.w(4), R.h(6), R.w(4), R.h(12)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          /// LEFT SIDE
+          Row(
+            children: [
+              // Toggle
+              GestureDetector(
+                onTap: () => widget.onStatusChanged(!isOnline),
+                child: AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
-                  alignment:
-                      isOnline ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    width: R.w(26), // Larger knob
-                    height: R.w(26),
-                    decoration: BoxDecoration(
-                        color: AppColors.white,
+                  width: R.w(58),
+                  height: R.h(30),
+                  padding: EdgeInsets.all(R.w(3)),
+                  decoration: BoxDecoration(
+                    color: isOnline
+                        ? AppColors.primaryGreen
+                        : AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: AnimatedAlign(
+                    duration: const Duration(milliseconds: 250),
+                    alignment:
+                        isOnline ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      width: R.w(26),
+                      height: R.w(26),
+                      decoration: BoxDecoration(
+                        color: isOnline ? AppColors.white : AppColors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
-                          if (isOnline)
-                            BoxShadow(
-                                color: AppColors.black12,
-                                blurRadius: 4,
-                                offset: Offset(0, 2))
-                        ]),
-                    child: isOnline
-                        ? Icon(Icons.check,
-                            size: R.sp(16), color: AppColors.white)
-                        : null,
+                          BoxShadow(
+                            color: AppColors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: isOnline
+                          ? Icon(Icons.check,
+                              size: R.sp(16), color: AppColors.white)
+                          : null,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            SizedBox(width: R.w(12)),
+              SizedBox(width: R.w(12)),
 
-            // ✅ Status text
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isOnline ? 'Online' : 'Offline',
-                  style: TextStyle(
-                    fontSize: R.sp(16),
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.headingText,
-                    height: 1.0,
-                  ),
-                ),
-                SizedBox(height: R.h(2)),
-                Text(
-                  'DUTY MODE',
-                  style: TextStyle(
-                    fontSize: R.sp(10),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
-                    color: AppColors.bodyText.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        // ✅ Duty Time Pill
-        GestureDetector(
-          onTap: isOnline ? _toggleTimerPause : null,
-          child: Container(
-            padding:
-                EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
-            decoration: BoxDecoration(
-              color: isOnline && _isTimerPaused
-                  ? AppColors.warning.withOpacity(0.1)
-                  : AppColors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(R.r(20)),
-              border: Border.all(
-                  color: isOnline && _isTimerPaused
-                      ? AppColors.warning
-                      : AppColors.borderLight,
-                  width: 1),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: R.w(20),
-                  height: R.w(20),
-                  decoration: BoxDecoration(
-                    color: isOnline
-                        ? (_isTimerPaused
-                            ? AppColors.warning
-                            : AppColors.success)
-                        : AppColors.grey,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isOnline
-                        ? (_isTimerPaused
-                            ? RemixIcons.play_fill
-                            : RemixIcons.pause_fill)
-                        : RemixIcons.time_fill,
-                    size: R.sp(12),
-                    color: AppColors.white,
-                  ),
-                ),
-                SizedBox(width: R.w(8)),
-                Text(
-                  _formatDutyTime(_secondsOnDuty),
-                  style: TextStyle(
-                    fontSize: R.sp(13),
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.headingText,
-                    letterSpacing: 0.5,
-                    height: 1.1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        SizedBox(width: R.w(16)),
-
-        // ✅ Notification icon (Matched Size)
-        // ✅ Notification icon (Matched Size)
-        Consumer<NotificationsViewModel>(
-          builder: (context, notificationsVM, child) {
-            return GestureDetector(
-              onTap: () {
-                Navigator.of(context, rootNavigator: true)
-                    .pushNamed(AppRoutes.notificationView);
-              },
-              child: Stack(
-                clipBehavior: Clip.none,
+              // Status Text
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: R.w(40),
-                    height: R.w(40),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.shadow.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      RemixIcons.notification_4_line,
-                      size: R.sp(24),
+                  Text(
+                    isOnline ? 'Online' : 'Offline',
+                    style: TextStyle(
+                      fontSize: R.sp(16),
+                      fontWeight: FontWeight.w800,
                       color: AppColors.headingText,
                     ),
                   ),
-                  if (notificationsVM.unreadCount > 0)
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Container(
-                        padding: EdgeInsets.all(R.w(4)),
+                  Text(
+                    'DUTY MODE',
+                    style: TextStyle(
+                      fontSize: R.sp(10),
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.bodyText.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          /// RIGHT SIDE
+          Row(
+            children: [
+              // Timer Pill
+              GestureDetector(
+                onTap: isOnline ? _toggleTimerPause : null,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: R.w(16), vertical: R.h(10)),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(100),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: R.w(18),
+                        height: R.w(18),
                         decoration: BoxDecoration(
-                          color: AppColors.error,
+                          color: isOnline
+                              ? (_isTimerPaused
+                                  ? AppColors.warning
+                                  : AppColors.primaryGreen)
+                              : AppColors.grey,
                           shape: BoxShape.circle,
-                          border:
-                              Border.all(color: AppColors.white, width: 1.5),
                         ),
-                        constraints: BoxConstraints(
-                          minWidth: R.w(16),
-                          minHeight: R.w(16),
+                        child: Icon(
+                          isOnline
+                              ? (_isTimerPaused
+                                  ? RemixIcons.play_fill
+                                  : RemixIcons.time_line)
+                              : RemixIcons.time_fill,
+                          size: R.sp(11),
+                          color: AppColors.white,
                         ),
-                        child: Center(
-                          child: Text(
-                            '${notificationsVM.unreadCount}',
-                            style: TextStyle(
-                              color: AppColors.white,
-                              fontSize: R.sp(9),
-                              fontWeight: FontWeight.bold,
-                              height: 1.0,
+                      ),
+                      SizedBox(width: R.w(6)),
+                      Text(
+                        _formatDutyTime(_secondsOnDuty),
+                        style: TextStyle(
+                          fontSize: R.sp(13),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              SizedBox(width: R.w(12)),
+
+              // Notification
+              Consumer<NotificationsViewModel>(
+                builder: (context, vm, _) {
+                  return Stack(
+                    children: [
+                      Container(
+                        width: R.w(40),
+                        height: R.w(40),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.shadow.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NotificationsView(),
+                              ),
+                            );
+                          },
+                          icon: Icon(RemixIcons.notification_4_line,
+                              size: R.sp(22)),
+                        ),
+                      ),
+                      if (vm.unreadCount > 0)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: R.w(8),
+                            height: R.w(8),
+                            decoration: const BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  );
+                },
               ),
-            );
-          },
-        ),
-
-        SizedBox(width: R.w(16)),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

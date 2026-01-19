@@ -34,17 +34,6 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     }
   }
 
-  Future<void> _openMap(String address) async {
-    // Encode the address for the query parameter
-    final query = Uri.encodeComponent(address);
-    final googleMapsUrl =
-        "https://www.google.com/maps/search/?api=1&query=$query";
-
-    if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
-      await launchUrl(Uri.parse(googleMapsUrl));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     R.init(context); // Initialize Responsive Utils
@@ -113,59 +102,65 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 right: 0,
                 child: Container(
                   padding: EdgeInsets.fromLTRB(
+                    R.w(20),
                     R.w(16),
-                    R.w(16),
-                    R.w(16),
-                    R.w(16) +
-                        MediaQuery.of(context).padding.bottom, // Safe Area
+                    R.w(20),
+                    R.w(16) + MediaQuery.of(context).padding.bottom,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -4),
+                        color: AppColors.black.withOpacity(0.08),
+                        blurRadius: 20,
+                        offset: const Offset(0, -5),
                       ),
                     ],
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(R.r(24)),
+                      topRight: Radius.circular(R.r(24)),
+                    ),
                   ),
                   child: SizedBox(
                     width: double.infinity,
-                    height: R.h(50),
+                    height: R.h(56),
                     child: ElevatedButton(
                       onPressed: canProceed && !viewModel.isPickupLoading
                           ? () => _handleConfirmPickup(viewModel)
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
-                        disabledBackgroundColor:
-                            AppColors.primaryGreen.withOpacity(0.5),
+                        disabledBackgroundColor: AppColors.grey300,
+                        elevation: canProceed ? 8 : 0,
+                        shadowColor: AppColors.primaryGreen.withOpacity(0.4),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(R.r(25)),
+                          borderRadius: BorderRadius.circular(R.r(16)),
                         ),
-                        elevation: 0,
                       ),
                       child: viewModel.isPickupLoading
                           ? const SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                  color: AppColors.white, strokeWidth: 2),
+                                  color: AppColors.white, strokeWidth: 2.5),
                             )
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  'Confirm & Start Delivery',
+                                  'Confirm Pickup',
                                   style: TextStyle(
                                     fontSize: R.sp(16),
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.white,
+                                    color: canProceed
+                                        ? AppColors.white
+                                        : AppColors.grey500,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                                 if (canProceed) ...[
-                                  SizedBox(width: R.w(8)),
-                                  Icon(RemixIcons.checkbox_circle_fill,
+                                  SizedBox(width: R.w(10)),
+                                  Icon(RemixIcons.arrow_right_line,
                                       color: AppColors.white, size: R.sp(20)),
                                 ],
                               ],
@@ -183,131 +178,102 @@ class _PickupTaskViewState extends State<PickupTaskView> {
 
   Widget _buildLocationCard(Order order) {
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(20)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
+      padding: EdgeInsets.all(R.w(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.all(R.w(16)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'PICKUP LOCATION',
-                  style: TextStyle(
-                    color: AppColors.primaryGreen,
-                    fontSize: R.sp(11),
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
-                  ),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(R.w(10)),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                SizedBox(height: R.h(8)),
-                Text(
-                  order.vendor?.storeName ?? 'Warehouse Bay 4B',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: R.sp(18),
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Icon(RemixIcons.store_2_fill,
+                    color: AppColors.primaryGreen, size: R.sp(24)),
+              ),
+              SizedBox(width: R.w(12)),
+              Text(
+                'PICKUP LOCATION',
+                style: TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontSize: R.sp(12),
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
                 ),
-                SizedBox(height: R.h(4)),
-                Text(
-                  order.vendor?.address ??
-                      'Avenue 5, Logistics Park, Sector 12',
-                  style: TextStyle(
-                    color: AppColors.bodyText,
-                    fontSize: R.sp(14),
-                  ),
-                ),
-                SizedBox(height: R.h(16)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          // Use vendor address or a default one
-                          final address = order.vendor?.address ??
-                              'Avenue 5, Logistics Park, Sector 12';
-                          _openMap(address);
-                        },
-                        icon: Icon(RemixIcons.map_2_fill, size: R.sp(18)),
-                        label: const Text('Show on Map'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          foregroundColor: AppColors.white,
-                          elevation: 0,
-                          padding: EdgeInsets.symmetric(vertical: R.h(12)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(R.r(30)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: R.h(12)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          // Use vendor mobile or a default
-                          _makePhoneCall(order.vendor?.mobile ?? '1234567890');
-                        },
-                        icon: Icon(RemixIcons.phone_fill,
-                            color: AppColors.textPrimary, size: R.sp(18)),
-                        label: Text(
-                          'Call Manager',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: R.sp(14),
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: AppColors.softGreyBg,
-                          padding: EdgeInsets.symmetric(vertical: R.h(12)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(R.r(30)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
+            ],
+          ),
+          SizedBox(height: R.h(16)),
+          Text(
+            order.vendor?.storeName ?? 'Warehouse Bay 4B',
+            style: TextStyle(
+              color: AppColors.headingText,
+              fontSize: R.sp(22), // Larger font
+              fontWeight: FontWeight.w800,
+              height: 1.2,
             ),
           ),
-
-          // Map Placeholder Image
-          ClipRRect(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(R.r(20)),
-              bottomRight: Radius.circular(R.r(20)),
-            ),
-            child: SizedBox(
-              height: R.h(120),
-              width: double.infinity,
-              child: Image.asset(
-                'assets/images/map_placeholder.png', // Needs to be generated/added
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                      color: AppColors.grey200,
-                      child: Center(
-                          child: Icon(Icons.map, color: AppColors.grey)));
-                },
+          SizedBox(height: R.h(8)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: R.h(2)),
+                child: Icon(RemixIcons.map_pin_line,
+                    color: AppColors.bodyText, size: R.sp(16)),
+              ),
+              SizedBox(width: R.w(8)),
+              Expanded(
+                child: Text(
+                  order.vendor?.address ??
+                      'Avenue 5, Logistics Park, Sector 12, Bengaluru',
+                  style: TextStyle(
+                    color: AppColors.bodyText,
+                    fontSize: R.sp(15),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: R.h(24)),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _makePhoneCall(order.vendor?.mobile ?? '1234567890');
+              },
+              icon: Icon(RemixIcons.phone_fill, size: R.sp(20)),
+              label: Text(
+                'Call Store Manager',
+                style: TextStyle(
+                  fontSize: R.sp(15),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.white,
+                foregroundColor: AppColors.primaryGreen,
+                elevation: 0,
+                side:
+                    const BorderSide(color: AppColors.primaryGreen, width: 1.5),
+                padding: EdgeInsets.symmetric(vertical: R.h(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(R.r(12)),
+                ),
               ),
             ),
           ),
@@ -327,22 +293,23 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: R.sp(16),
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
               ),
             ),
             Container(
               padding:
-                  EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
+                  EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(6)),
               decoration: BoxDecoration(
-                color: AppColors.softGreyBg,
-                borderRadius: BorderRadius.circular(R.r(6)),
+                color: AppColors.softGreenBg,
+                borderRadius: BorderRadius.circular(R.r(20)),
               ),
               child: Text(
-                '${viewModel.orderItems.length} ITEMS',
+                '${viewModel.checkedItems.length}/${viewModel.orderItems.length} VERIFIED',
                 style: TextStyle(
-                  color: AppColors.bodyText,
+                  color: AppColors.primaryGreen,
                   fontSize: R.sp(11),
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -355,60 +322,126 @@ class _PickupTaskViewState extends State<PickupTaskView> {
 
           return Padding(
             padding: EdgeInsets.only(bottom: R.h(12)),
-            child: Theme(
-              data: ThemeData(
-                  checkboxTheme: const CheckboxThemeData(
-                shape: CircleBorder(),
-                side: BorderSide(color: AppColors.borderLight, width: 2),
-              )),
-              child: Container(
+            child: GestureDetector(
+              onTap: isVerifying ? null : () => viewModel.toggleItem(item.id),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: isSelected
+                      ? AppColors.primaryGreen.withOpacity(0.04)
+                      : AppColors.white,
                   borderRadius: BorderRadius.circular(R.r(16)),
-                  border: isSelected
-                      ? Border.all(
-                          color: AppColors.primaryGreen.withOpacity(0.5))
-                      : null,
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.primaryGreen
+                        : AppColors.borderLight,
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: AppColors.black.withOpacity(0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
-                child: CheckboxListTile(
-                  value: isSelected,
-                  onChanged: isVerifying
-                      ? null
-                      : (val) => viewModel.toggleItem(item.id),
-                  activeColor: AppColors.primaryGreen,
-                  checkColor: AppColors.white,
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: R.w(16), vertical: R.h(6)),
-                  secondary: isVerifying
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppColors.primaryGreen),
-                        )
-                      : CircleAvatar(
-                          backgroundColor: AppColors.softGreyBg,
-                          radius: R.r(24),
-                          child: Icon(RemixIcons.shopping_bag_3_fill,
-                              color: AppColors.grey400, size: R.sp(20)),
-                        ),
-                  title: Text(
-                    item.product?.name ?? 'Product Item',
-                    style: TextStyle(
-                      fontSize: R.sp(14),
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1F2937),
+                padding: EdgeInsets.all(R.w(12)),
+                child: Row(
+                  children: [
+                    // Product Icon Image
+                    Container(
+                      width: R.w(56),
+                      height: R.w(56),
+                      decoration: BoxDecoration(
+                        color: AppColors.softGreyBg,
+                        borderRadius: BorderRadius.circular(R.r(12)),
+                      ),
+                      child: Center(
+                        child: Icon(RemixIcons.shopping_bag_3_fill,
+                            color: isSelected
+                                ? AppColors.primaryGreen
+                                : AppColors.grey400,
+                            size: R.sp(24)),
+                      ),
                     ),
-                  ),
-                  subtitle: Text(
-                    'Qty: ${item.quantity}',
-                    style: TextStyle(
-                      fontSize: R.sp(13),
-                      color: AppColors.primaryGreen,
-                      fontWeight: FontWeight.w600,
+                    SizedBox(width: R.w(16)),
+
+                    // Product Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.product?.name ?? 'Product Item',
+                            style: TextStyle(
+                              fontSize: R.sp(15),
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: isSelected
+                                  ? AppColors.headingText
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: R.h(4)),
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: R.w(8), vertical: R.h(2)),
+                                decoration: BoxDecoration(
+                                  color: AppColors.softGreenBg,
+                                  borderRadius: BorderRadius.circular(R.r(4)),
+                                ),
+                                child: Text(
+                                  'QTY: ${item.quantity}',
+                                  style: TextStyle(
+                                    fontSize: R.sp(12),
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryGreen,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  controlAffinity: ListTileControlAffinity.trailing,
+
+                    // Checkbox
+                    SizedBox(width: R.w(12)),
+                    isVerifying
+                        ? SizedBox(
+                            width: R.w(24),
+                            height: R.w(24),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.primaryGreen,
+                            ),
+                          )
+                        : Container(
+                            width: R.w(28),
+                            height: R.w(28),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected
+                                  ? AppColors.primaryGreen
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primaryGreen
+                                    : AppColors.grey300!,
+                                width: 2,
+                              ),
+                            ),
+                            child: isSelected
+                                ? Icon(Icons.check,
+                                    color: AppColors.white, size: R.sp(16))
+                                : null,
+                          ),
+                  ],
                 ),
               ),
             ),
@@ -422,13 +455,31 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'PICKUP PROOF',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: R.sp(16),
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'PICKUP PROOF',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: R.sp(16),
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
+            ),
+            if (viewModel.pickupProofImage != null)
+              GestureDetector(
+                onTap: () => viewModel.pickProofImage(ImageSource.camera),
+                child: Text(
+                  'Retake Photo',
+                  style: TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontSize: R.sp(13),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+          ],
         ),
         SizedBox(height: R.h(16)),
         InkWell(
@@ -436,21 +487,74 @@ class _PickupTaskViewState extends State<PickupTaskView> {
           borderRadius: BorderRadius.circular(R.r(24)),
           child: Container(
             width: double.infinity,
-            height: R.h(180),
+            height: R.h(200),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(R.r(24)),
-              border: Border.all(
-                color: AppColors.borderLight, // Grey 200
-                style: BorderStyle.solid,
-              ),
+              border: viewModel.pickupProofImage != null
+                  ? Border.all(color: AppColors.primaryGreen, width: 2)
+                  : Border.all(color: AppColors.borderLight, width: 1.5),
+              boxShadow: viewModel.pickupProofImage != null
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primaryGreen.withOpacity(0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      )
+                    ]
+                  : [
+                      BoxShadow(
+                        color: AppColors.black.withOpacity(0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
             ),
             child: viewModel.pickupProofImage != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(R.r(24)),
-                    child: Image.file(
-                      viewModel.pickupProofImage!,
-                      fit: BoxFit.cover,
+                    borderRadius: BorderRadius.circular(R.r(22)),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.file(
+                          viewModel.pickupProofImage!,
+                          fit: BoxFit.cover,
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.0),
+                                Colors.black.withOpacity(0.4),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Padding(
+                            padding: EdgeInsets.only(bottom: R.h(16)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle,
+                                    color: Colors.white, size: R.sp(20)),
+                                SizedBox(width: R.w(8)),
+                                Text(
+                                  'Photo Captured',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: R.sp(14),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : CustomPaint(
@@ -459,32 +563,33 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: EdgeInsets.all(R.w(16)),
-                          decoration: const BoxDecoration(
-                            color: AppColors.softGreenBg, // Light green
+                          width: R.w(64),
+                          height: R.w(64),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withOpacity(0.08),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            RemixIcons.camera_fill,
+                            RemixIcons.camera_lens_line,
                             color: AppColors.primaryGreen,
                             size: R.sp(32),
                           ),
                         ),
-                        SizedBox(height: R.h(12)),
+                        SizedBox(height: R.h(16)),
                         Text(
-                          'Take Photo of Items',
+                          'Tap to Capture Items',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: R.sp(14),
-                            fontWeight: FontWeight.bold,
+                            color: AppColors.headingText,
+                            fontSize: R.sp(16),
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(height: R.h(4)),
+                        SizedBox(height: R.h(6)),
                         Text(
-                          'Required to start delivery',
+                          'Ensure all items are clearly visible',
                           style: TextStyle(
-                            color: AppColors.hintText,
-                            fontSize: R.sp(12),
+                            color: AppColors.bodyText,
+                            fontSize: R.sp(13),
                           ),
                         ),
                       ],
@@ -523,21 +628,19 @@ class DottedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.borderLight // Grey 300
+      ..color = AppColors.primaryGreen.withOpacity(0.3)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    const double dashWidth = 8;
-    const double dashSpace = 6;
-    const double r = 24.0; // Radius matching container
+    const double dashWidth = 6;
+    const double dashSpace = 4;
+    const double r = 24.0;
 
-    // Start top center
     path.addRRect(RRect.fromRectAndRadius(
         Rect.fromLTWH(0, 0, size.width, size.height),
         const Radius.circular(r)));
 
-    // Draw dashed path
     final Path dashedPath = Path();
     for (PathMetric pathMetric in path.computeMetrics()) {
       double distance = 0.0;
