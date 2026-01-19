@@ -145,7 +145,7 @@ class OrderPickupScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: AppColors.grey600,
             ),
           ),
           Text(
@@ -224,9 +224,7 @@ class OrderPickupScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.summaryOrangeBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: const Color(
-                          0xFFFFD591)), // Keep specific orange border or add to AppColors
+                  border: Border.all(color: AppColors.orangeBorder),
                 ),
                 child: const Text(
                   "READY FOR PICKUP",

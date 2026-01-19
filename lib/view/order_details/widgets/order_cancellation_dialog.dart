@@ -18,12 +18,12 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -34,7 +34,7 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -45,7 +45,7 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
               children: [
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: Icon(Icons.close, color: Colors.grey[400], size: 24),
+                  child: Icon(Icons.close, color: AppColors.grey400, size: 24),
                 ),
                 Expanded(
                   child: Center(
@@ -54,7 +54,7 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: AppColors.black,
                       ),
                     ),
                   ),
@@ -70,7 +70,7 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppColors.grey600,
                 height: 1.5,
               ),
             ),
@@ -99,11 +99,11 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
                                   horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: Colors.grey[200]!,
+                                  color: AppColors.grey200!,
                                   width: 1,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
-                                color: Colors.white,
+                                color: AppColors.white,
                               ),
                               child: Row(
                                 mainAxisAlignment:
@@ -114,7 +114,7 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
+                                      color: AppColors.black87,
                                     ),
                                   ),
                                   Container(
@@ -124,8 +124,8 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: isSelected
-                                            ? Colors.red
-                                            : Colors.grey[300]!,
+                                            ? AppColors.error
+                                            : AppColors.grey300!,
                                         width: isSelected ? 6 : 1,
                                       ),
                                     ),
@@ -150,9 +150,10 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
                         Navigator.pop(context, _selectedReasonId);
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.red.withValues(alpha: 0.5),
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
+                  disabledBackgroundColor:
+                      AppColors.error.withValues(alpha: 0.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -176,8 +177,8 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
-                  backgroundColor: Colors.grey[100],
-                  foregroundColor: Colors.black87,
+                  backgroundColor: AppColors.grey100,
+                  foregroundColor: AppColors.black87,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),

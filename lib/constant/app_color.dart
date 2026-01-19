@@ -49,6 +49,7 @@ class AppColors {
   static const Color summaryBlueIcon = Color(0xFF2F6BFF);
   static const Color summaryOrangeIcon = Color(0xFFFF8A00);
   static const Color summaryPurpleIcon = Color(0xFF7B4EFF);
+  static const Color orangeBorder = Color(0xFFFFD591);
 
   // Additional
   static const Color softGreenBg = Color(0xFFEAFBF0);

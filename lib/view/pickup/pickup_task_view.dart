@@ -431,7 +431,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                               shape: BoxShape.circle,
                               color: isSelected
                                   ? AppColors.primaryGreen
-                                  : Colors.transparent,
+                                  : AppColors.transparent,
                               border: Border.all(
                                 color: isSelected
                                     ? AppColors.primaryGreen
@@ -529,8 +529,8 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withOpacity(0.0),
-                                Colors.black.withOpacity(0.4),
+                                AppColors.black.withOpacity(0.0),
+                                AppColors.black.withOpacity(0.4),
                               ],
                             ),
                           ),
@@ -543,12 +543,12 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.check_circle,
-                                    color: Colors.white, size: R.sp(20)),
+                                    color: AppColors.white, size: R.sp(20)),
                                 SizedBox(width: R.w(8)),
                                 Text(
                                   'Photo Captured',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     fontSize: R.sp(14),
                                     fontWeight: FontWeight.bold,
                                   ),
