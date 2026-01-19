@@ -45,7 +45,7 @@ class AppUrls {
   static String reportItemIssue(int orderId, int itemId) =>
       '$baseUrl/api/orders/$orderId/items/$itemId/issue';
   static String sendDeliveryOtp(int id) =>
-      '$baseUrl/api/partner/orders/$id/delivery/send-otp'; // Keeping partner/orders as per likely structure, or should this change too? User didn't specify. Sticking to 'delivery/orders' removal for now.
+      '$baseUrl/api/partner/orders/$id/delivery/send-otp';
   static String resendDeliveryOtp(int id) =>
       '$baseUrl/api/partner/orders/$id/delivery/resend-otp';
   static String completeDelivery(int id) =>

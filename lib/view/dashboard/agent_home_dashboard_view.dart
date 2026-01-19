@@ -28,6 +28,7 @@ import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -1126,11 +1127,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Map functionality removed as per request
-                    if (order.deliveryAddress != null) {
-                      CustomSnackBar.showSuccess(
-                          context, "Navigation not available");
-                    }
+                    PersistentNavBarNavigator.pushNewScreen(
+                      context,
+                      screen: PickupTaskView(order: order),
+                      withNavBar: false,
+                      pageTransitionAnimation:
+                          PageTransitionAnimation.cupertino,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
@@ -1144,7 +1147,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Navigate to Dropoff',
+                        'Navigate to Pickup',
                         style: TextStyle(
                           fontSize: R.sp(16),
                           fontWeight: FontWeight.w700,

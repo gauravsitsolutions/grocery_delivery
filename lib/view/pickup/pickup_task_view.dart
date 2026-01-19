@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -50,8 +51,10 @@ class _PickupTaskViewState extends State<PickupTaskView> {
             backgroundColor: AppColors.white,
             elevation: 0,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios,
-                  color: AppColors.black, size: R.sp(20)),
+              icon: Icon(
+                  Platform.isIOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  color: AppColors.black,
+                  size: R.sp(20)),
               onPressed: () => Navigator.pop(context),
             ),
             centerTitle: true,

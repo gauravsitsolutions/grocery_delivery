@@ -20,11 +20,16 @@ class OrderResponse {
   });
 
   factory OrderResponse.fromJson(Map<String, dynamic> json) {
-    final rawData = json['data'];
+    var rawData = json['data'];
     List<Order> orders = [];
     int? current;
     int? last;
     int? totalCount;
+
+    // Check if 'data' is null but 'orders' exists at root level
+    if (rawData == null && json['orders'] != null) {
+      rawData = json['orders'];
+    }
 
     if (rawData is List) {
       orders = rawData.map((e) => Order.fromJson(e)).toList();
