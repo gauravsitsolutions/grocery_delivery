@@ -387,6 +387,13 @@ class _ProfileViewState extends State<ProfileView> {
     final List<DailyPerformance> displayData =
         _performanceData.isNotEmpty ? _performanceData : [];
 
+    log('Graph Debug: Data Length: ${displayData.length}');
+    if (displayData.isNotEmpty) {
+      for (var e in displayData) {
+        log('Date: ${e.date}, Orders: ${e.totalOrders}, Hours: ${e.totalHours}');
+      }
+    }
+
     // Max Y for scale
     double maxY = 10;
     if (displayData.isNotEmpty) {
@@ -401,6 +408,7 @@ class _ProfileViewState extends State<ProfileView> {
       // Use the larger of the two maxes for the scale
       final overallMax = maxOrders > maxHours ? maxOrders : maxHours;
       maxY = overallMax + 5;
+      log('Graph Debug: MaxY Calculated: $maxY (MaxOrders: $maxOrders, MaxHours: $maxHours)');
     }
 
     return Container(
