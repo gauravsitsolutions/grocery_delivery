@@ -105,6 +105,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         _startTimer();
       } else {
         _stopTimer();
+        // Reset timer when explicitly stopping duty (User Request)
+        setState(() {
+          _secondsOnDuty = 0;
+        });
       }
     }
   }
@@ -151,11 +155,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         }
       } else {
         // PAUSE
-        // We use pauseDuty if available, or just update status?
-        // Assuming updateAgentStatus handles 'online'/'offline', we need specific 'pause'
-        // If apiService.pauseAgentDuty exists (not yet created in implementation plan Step 4?)
-        // Wait, I haven't created resumeAgentDuty either in ApiService yet!
-        // I need to update ApiService NEXT. For now, I'll write the calls assuming they will exist.
         await _apiService.pauseAgentDuty(token);
         if (mounted) {
           setState(() {
@@ -165,7 +164,29 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         }
       }
     } catch (e) {
-      if (mounted) CustomSnackBar.showError(context, 'Action failed: $e');
+      if (!mounted) return;
+
+      // Handle "Already active" or "Already paused" as success state sync
+      final msg = e.toString().toLowerCase();
+      if (e is ValidationException &&
+          (msg.contains('active') || msg.contains('paused'))) {
+        // Correct the state based on message to match server reality
+        if (msg.contains('active')) {
+          // Server says active, so Ensure UI is Resumed
+          setState(() {
+            _isTimerPaused = false;
+          });
+          CustomSnackBar.showSuccess(context, 'Duty is Active');
+        } else if (msg.contains('paused')) {
+          // Server says paused, Ensure UI is Paused
+          setState(() {
+            _isTimerPaused = true;
+          });
+          CustomSnackBar.showSuccess(context, 'Duty is Paused');
+        }
+      } else {
+        CustomSnackBar.showError(context, 'Action failed: $e');
+      }
     }
   }
 
@@ -184,7 +205,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       _fetchOrders(refresh: true);
       _fetchProfile();
       _fetchPartnerSummary();
-      _fetchDeliveryStats();
       _fetchDeliveryStats();
 
       // Fetch notifications for badge
@@ -227,11 +247,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         if (mounted) {
           setState(() {
             _partnerSummary = summary;
-            // Sync local timer with server time if not already wildly different?
-            // Or just trust server time is the baseline for "today"
-            // Only update if we are not currently ticking to avoid jumpiness, or always update?
-            // best to update baseline.
-            _secondsOnDuty = summary.todayDutyTime ?? 0;
+            // Sync local timer with server time ONLY if valid to avoid unwanted resets
+            // User requested: "Timer reset only when stop duty"
+            // So if server returns 0 or negative (invalid), ignore it to keep local count.
+            if (summary.todayDutyTime > 0) {
+              _secondsOnDuty = summary.todayDutyTime;
+            }
           });
         }
       }
@@ -1872,11 +1893,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         ),
                         child: IconButton(
                           onPressed: () {
-                            Navigator.push(
+                            PersistentNavBarNavigator.pushNewScreen(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => const NotificationsView(),
-                              ),
+                              screen: const NotificationsView(),
+                              withNavBar: false, // Hide bottom nav bar
+                              pageTransitionAnimation:
+                                  PageTransitionAnimation.cupertino,
                             );
                           },
                           icon: Icon(RemixIcons.notification_4_line,

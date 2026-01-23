@@ -10,8 +10,6 @@ import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
-import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
-
 class AgentBottomNavView extends StatefulWidget {
   const AgentBottomNavView({super.key});
 
@@ -92,11 +90,22 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
               isOnline: isOnline,
               dutyStatus: dutyStatus,
               onStatusChanged: (val) async {
+                // 1. Optimistic Update
+                setState(() {
+                  isOnline = val;
+                  dutyStatus = val ? 'online' : 'offline';
+                });
+
                 try {
                   final token = await SharedPrefsUtil.getToken();
 
                   if (token == null) {
                     if (!context.mounted) return;
+                    // Revert
+                    setState(() {
+                      isOnline = !val;
+                      dutyStatus = !val ? 'online' : 'offline';
+                    });
                     CustomSnackBar.showError(
                         context, 'Error: Authentication token not found');
                     return;
@@ -106,16 +115,9 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   await apiService.updateAgentStatus(token, val);
 
                   if (!context.mounted) return;
-                  setState(() {
-                    isOnline = val;
-                    // Optimistically update dutyStatus for UI responsiveness
-                    if (val) {
-                      dutyStatus = 'online';
-                    } else {
-                      dutyStatus = 'offline';
-                    }
-                  });
 
+                  // Success - State is already updated optimistically.
+                  // Just show snackbar.
                   if (val) {
                     CustomSnackBar.showSuccess(context, 'You are now Online');
                   } else {
@@ -124,6 +126,22 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   }
                 } catch (e) {
                   if (!context.mounted) return;
+
+                  // Check if it's an "Already online" validation error
+                  final errorMessage = e.toString().toLowerCase();
+                  if (val && errorMessage.contains('already online')) {
+                    // It's actually a success state (we are online), so don't revert.
+                    // Just show a message to align with reality.
+                    CustomSnackBar.showSuccess(
+                        context, 'You are already Online');
+                    return;
+                  }
+
+                  // 2. Revert on Failure for other errors
+                  setState(() {
+                    isOnline = !val;
+                    dutyStatus = !val ? 'online' : 'offline';
+                  });
                   CustomSnackBar.showError(
                       context, e.toString().replaceAll('Exception: ', ''));
                 }

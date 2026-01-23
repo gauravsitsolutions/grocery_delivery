@@ -6,7 +6,9 @@ class AppException implements Exception {
 
   @override
   String toString() {
-    return '${prefix ?? ""}$message';
+    // Only show prefix if it adds value, but for UI we want clean messages
+    // return '${prefix ?? ""}$message';
+    return message;
   }
 }
 

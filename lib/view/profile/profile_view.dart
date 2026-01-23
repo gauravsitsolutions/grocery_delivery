@@ -380,20 +380,18 @@ class _ProfileViewState extends State<ProfileView> {
   Widget _barChartSection() {
     // Colors
     final Color barColor = AppColors.primaryGreen;
-    final Color cardBg = const Color(0xFF051F1A); // Dark Green Background
+    final Color cardBg = AppColors.white; // Changed to white
 
     // Determine Logic based on data availability
-    // If no data, show empty state or mock zeros
-    final List<DailyPerformance> displayData = _performanceData.isNotEmpty
-        ? _performanceData
-        : []; // Or handle empty state visibly
+    final List<DailyPerformance> displayData =
+        _performanceData.isNotEmpty ? _performanceData : [];
 
     // Max Y for scale
     double maxY = 10;
     if (displayData.isNotEmpty) {
       final maxOrders = displayData
           .map((e) => e.totalOrders)
-          .reduce((a, b) => a > b ? a : b)
+          .fold(0, (prev, e) => prev > e ? prev : e) // Fixed reduce logic
           .toDouble();
       maxY = maxOrders + 5;
     }
@@ -406,9 +404,9 @@ class _ProfileViewState extends State<ProfileView> {
         borderRadius: BorderRadius.circular(R.r(24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withOpacity(0.1),
+            color: AppColors.shadow.withValues(alpha: 0.08),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -419,14 +417,14 @@ class _ProfileViewState extends State<ProfileView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Activity',
+                'Weekly Activity',
                 style: TextStyle(
-                  fontSize: R.sp(20),
+                  fontSize: R.sp(18),
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppColors.headingText, // Specific Text Color
                 ),
               ),
-              // Dropdown omitted for simplicity with API data alignment
+              // Optional: Add a "This Week" tag or dropdown if needed
             ],
           ),
           SizedBox(height: R.h(32)),
@@ -438,20 +436,26 @@ class _ProfileViewState extends State<ProfileView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(RemixIcons.error_warning_line,
-                      color: Colors.white54, size: R.sp(24)),
+                      color: AppColors.error, size: R.sp(24)),
                   SizedBox(height: R.h(8)),
-                  Text(_graphError!,
-                      style:
-                          TextStyle(color: Colors.white54, fontSize: R.sp(13))),
+                  Text(
+                    _graphError!,
+                    style: TextStyle(
+                        color: AppColors.bodyText, fontSize: R.sp(13)),
+                  ),
                 ],
               )),
             )
           else if (displayData.isEmpty)
             SizedBox(
               height: R.h(200),
-              child: const Center(
-                  child: Text('No activity data available',
-                      style: TextStyle(color: Colors.white54))),
+              child: Center(
+                  child: Text(
+                'No activity data available',
+                style: TextStyle(
+                    color: AppColors.bodyText.withValues(alpha: 0.5),
+                    fontStyle: FontStyle.italic),
+              )),
             )
           else
             SizedBox(
@@ -463,29 +467,27 @@ class _ProfileViewState extends State<ProfileView> {
                   barTouchData: BarTouchData(
                     enabled: true,
                     touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (_) => const Color(0xFF2D3249),
+                      getTooltipColor: (_) => AppColors.headingText,
+                      tooltipPadding: EdgeInsets.symmetric(
+                          horizontal: R.w(12), vertical: R.h(8)),
+                      tooltipMargin: 8,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final item = displayData[group.x.toInt()];
                         return BarTooltipItem(
                             '${item.date}\n',
                             const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14),
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                             children: [
                               TextSpan(
-                                text: 'Orders: ${item.totalOrders}\n',
-                                style: TextStyle(
-                                    color: AppColors.primaryGreen,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                              TextSpan(
-                                text: 'Hours: ${item.totalHours}h',
+                                text: '${item.totalOrders} Orders',
                                 style: const TextStyle(
-                                    color: Colors.orangeAccent,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600),
+                                  color: AppColors.primaryGreen,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ]);
                       },
@@ -497,12 +499,10 @@ class _ProfileViewState extends State<ProfileView> {
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (double value, TitleMeta meta) {
-                          if (value < 0 || value >= displayData.length)
+                          if (value < 0 || value >= displayData.length) {
                             return const SizedBox();
-                          // Assuming Date format is "Day" or simple string.
-                          // Extract Day short form if needed.
+                          }
                           final dateStr = displayData[value.toInt()].date;
-                          // Just take first 3 chars if long
                           final label = dateStr.length > 3
                               ? dateStr.substring(0, 3)
                               : dateStr;
@@ -513,9 +513,9 @@ class _ProfileViewState extends State<ProfileView> {
                             child: Text(
                               label,
                               style: TextStyle(
-                                color: const Color(0xFF64748B),
+                                color: AppColors.bodyText,
                                 fontWeight: FontWeight.w600,
-                                fontSize: R.sp(12),
+                                fontSize: R.sp(11),
                               ),
                             ),
                           );
@@ -534,9 +534,9 @@ class _ProfileViewState extends State<ProfileView> {
                     show: true,
                     checkToShowHorizontalLine: (value) => value % 5 == 0,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.white.withOpacity(0.05),
+                      color: AppColors.grey.withValues(alpha: 0.1),
                       strokeWidth: 1,
-                      dashArray: [6, 6],
+                      dashArray: [5, 5],
                     ),
                     drawVerticalLine: false,
                   ),
@@ -548,13 +548,23 @@ class _ProfileViewState extends State<ProfileView> {
                       barRods: [
                         BarChartRodData(
                           toY: item.totalOrders.toDouble(),
-                          width: R.w(12),
+                          width: R.w(16), // Slightly wider bars
                           color: barColor,
-                          borderRadius: BorderRadius.circular(6),
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primaryGreen,
+                              AppColors.primaryGreen.withValues(alpha: 0.7),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(R.r(6))),
                           backDrawRodData: BackgroundBarChartRodData(
-                              show: true,
-                              toY: maxY,
-                              color: Colors.white.withOpacity(0.05)),
+                            show: true,
+                            toY: maxY,
+                            color: AppColors.softGreyBg,
+                          ),
                         ),
                       ],
                     );

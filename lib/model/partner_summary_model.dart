@@ -14,12 +14,24 @@ class PartnerSummary {
   });
 
   factory PartnerSummary.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] ?? {};
+    // Check if 'data' exists, otherwise use json itself (handling flat structure)
+    final data =
+        json['data'] != null ? json['data'] as Map<String, dynamic> : json;
+
+    String? status = data['duty_status'];
+    if (status == null) {
+      // Infer from isOnline if available
+      if (data['isOnline'] == true) {
+        status = 'online';
+      } else if (data['isOnline'] == false) {
+        status = 'offline';
+      }
+    }
+
     return PartnerSummary(
       name: data['name'],
       imageUrl: data['imageUrl'],
-      dutyStatus: data['duty_status'] ??
-          data['status'], // Handling potential key variations from API
+      dutyStatus: status,
       totalDutyTime: (data['totalDutyTime'] as num?)?.toInt() ?? 0,
       todayDutyTime: (data['todayDutyTime'] as num?)?.toInt() ?? 0,
     );

@@ -13,6 +13,10 @@ import 'res/theme/app_theme.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/connection_status_wrapper.dart';
 
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:samrudhi_delivery_agent_app/services/navigation_service.dart';
+import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
+
 void main() {
   runApp(
     MultiProvider(
@@ -28,14 +32,33 @@ void main() {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen for global 401 Unauthorised events
+    ApiService.authErrorController.stream.listen((_) async {
+      await SharedPrefsUtil.clearSession();
+      // Navigate to login
+      NavigationService.navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        AppRoutes.login,
+        (route) => false,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      // theme: AppTheme.lightTheme, // Removed to avoid premature access
+      navigatorKey: NavigationService.navigatorKey, // Registered GlobalKey
       initialRoute: AppRoutes.splash,
       routes: AppPages.routes,
       builder: (context, child) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -51,6 +52,9 @@ class ApiService {
     }
   }
 
+  static final StreamController<void> authErrorController =
+      StreamController<void>.broadcast();
+
   dynamic _handleResponse(http.Response response) {
     log('API Response URL: ${response.request?.url}');
     log('API Response Status: ${response.statusCode}');
@@ -64,10 +68,12 @@ class ApiService {
         case 201:
           return jsonResponse;
         case 400:
+        case 422: // Handle Validation/Business Logic Errors
           throw ValidationException(
               jsonResponse['message'] ?? 'Invalid request');
         case 401:
         case 403:
+          authErrorController.add(null); // Trigger global logout
           throw UnauthorisedException(
               jsonResponse['message'] ?? 'Unauthorised');
         case 404:
@@ -269,7 +275,13 @@ class ApiService {
           uri,
           headers: await _getHeaders(token),
         ));
-    return response;
+
+    if (response['status'] == true) {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to update status');
+    }
   }
 
   Future<Map<String, dynamic>> pauseAgentDuty(String? token) async {
@@ -280,7 +292,12 @@ class ApiService {
           uri,
           headers: await _getHeaders(token),
         ));
-    return response;
+
+    if (response['status'] == true) {
+      return response;
+    } else {
+      throw ValidationException(response['message'] ?? 'Failed to pause duty');
+    }
   }
 
   Future<Map<String, dynamic>> resumeAgentDuty(String? token) async {
@@ -291,7 +308,12 @@ class ApiService {
           uri,
           headers: await _getHeaders(token),
         ));
-    return response;
+
+    if (response['status'] == true) {
+      return response;
+    } else {
+      throw ValidationException(response['message'] ?? 'Failed to resume duty');
+    }
   }
 
   Future<Map<String, dynamic>> stopAgentDuty(String? token) async {
@@ -302,7 +324,12 @@ class ApiService {
           uri,
           headers: await _getHeaders(token),
         ));
-    return response;
+
+    if (response['status'] == true) {
+      return response;
+    } else {
+      throw ValidationException(response['message'] ?? 'Failed to stop duty');
+    }
   }
 
   Future<ProfileResponse> getProfile(String? token) async {

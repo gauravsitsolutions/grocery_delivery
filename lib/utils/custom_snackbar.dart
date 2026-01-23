@@ -8,7 +8,7 @@ class CustomSnackBar {
       {String title = 'Success',
       Color? color,
       SnackBarAction? action,
-      bool centered = true}) {
+      bool centered = false}) {
     _show(
       context,
       title: title,
@@ -35,7 +35,7 @@ class CustomSnackBar {
   static void showWarning(BuildContext context, String message,
       {String title = 'Warning',
       SnackBarAction? action,
-      bool centered = true}) {
+      bool centered = false}) {
     _show(
       context,
       title: title,
