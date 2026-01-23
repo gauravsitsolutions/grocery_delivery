@@ -379,8 +379,9 @@ class _ProfileViewState extends State<ProfileView> {
 
   Widget _barChartSection() {
     // Colors
-    final Color barColor = AppColors.primaryGreen;
-    final Color cardBg = AppColors.white; // Changed to white
+    final Color ordersColor = AppColors.primaryGreen;
+    final Color hoursColor = AppColors.info; // Blue for hours
+    final Color cardBg = AppColors.white;
 
     // Determine Logic based on data availability
     final List<DailyPerformance> displayData =
@@ -391,9 +392,15 @@ class _ProfileViewState extends State<ProfileView> {
     if (displayData.isNotEmpty) {
       final maxOrders = displayData
           .map((e) => e.totalOrders)
-          .fold(0, (prev, e) => prev > e ? prev : e) // Fixed reduce logic
+          .fold(0, (prev, e) => prev > e ? prev : e)
           .toDouble();
-      maxY = maxOrders + 5;
+      final maxHours = displayData
+          .map((e) => e.totalHours)
+          .fold(0.0, (prev, e) => prev > e ? prev : e);
+
+      // Use the larger of the two maxes for the scale
+      final overallMax = maxOrders > maxHours ? maxOrders : maxHours;
+      maxY = overallMax + 5;
     }
 
     return Container(
@@ -413,6 +420,7 @@ class _ProfileViewState extends State<ProfileView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header with Legend
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -421,10 +429,17 @@ class _ProfileViewState extends State<ProfileView> {
                 style: TextStyle(
                   fontSize: R.sp(18),
                   fontWeight: FontWeight.w700,
-                  color: AppColors.headingText, // Specific Text Color
+                  color: AppColors.headingText,
                 ),
               ),
-              // Optional: Add a "This Week" tag or dropdown if needed
+              // Legend
+              Row(
+                children: [
+                  _chartLegendItem('Orders', ordersColor),
+                  SizedBox(width: R.w(12)),
+                  _chartLegendItem('Hours', hoursColor),
+                ],
+              )
             ],
           ),
           SizedBox(height: R.h(32)),
@@ -473,6 +488,8 @@ class _ProfileViewState extends State<ProfileView> {
                       tooltipMargin: 8,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final item = displayData[group.x.toInt()];
+                        // Provide tooltip for the specific rod hovered or a combined view?
+                        // Using a robust approach: show both values regardless of which bar is touched for clarity
                         return BarTooltipItem(
                             '${item.date}\n',
                             const TextStyle(
@@ -482,9 +499,17 @@ class _ProfileViewState extends State<ProfileView> {
                             ),
                             children: [
                               TextSpan(
-                                text: '${item.totalOrders} Orders',
-                                style: const TextStyle(
-                                  color: AppColors.primaryGreen,
+                                text: '${item.totalOrders} Orders\n',
+                                style: TextStyle(
+                                  color: ordersColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '${item.totalHours} Hours',
+                                style: TextStyle(
+                                  color: hoursColor, // Using hours color
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -545,25 +570,35 @@ class _ProfileViewState extends State<ProfileView> {
                     final item = displayData[index];
                     return BarChartGroupData(
                       x: index,
+                      barsSpace: 4, // Space between bars in the same group
                       barRods: [
+                        // Orders Rod
                         BarChartRodData(
                           toY: item.totalOrders.toDouble(),
-                          width: R.w(16), // Slightly wider bars
-                          color: barColor,
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primaryGreen,
-                              AppColors.primaryGreen.withValues(alpha: 0.7),
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
+                          width: R.w(8),
+                          color: ordersColor,
                           borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(R.r(6))),
+                              top: Radius.circular(R.r(4))),
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: maxY,
                             color: AppColors.softGreyBg,
+                          ),
+                        ),
+                        // Hours Rod
+                        BarChartRodData(
+                          toY: item.totalHours,
+                          width: R.w(8),
+                          color: hoursColor,
+                          borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(R.r(4))),
+                          // No background bar for second rod to avoid clutter or keep consistency?
+                          // Let's keep consistency but maybe faint? Or just hide it for second one.
+                          // Usually one bg is enough visual guide, or both. Let's do both for uniform look.
+                          backDrawRodData: BackgroundBarChartRodData(
+                            show: true,
+                            toY: maxY,
+                            color: AppColors.softGreyBg.withOpacity(0.5),
                           ),
                         ),
                       ],
@@ -574,6 +609,30 @@ class _ProfileViewState extends State<ProfileView> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _chartLegendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: R.w(8),
+          height: R.w(8),
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        SizedBox(width: R.w(4)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: R.sp(12),
+            fontWeight: FontWeight.w600,
+            color: AppColors.bodyText,
+          ),
+        ),
+      ],
     );
   }
 
