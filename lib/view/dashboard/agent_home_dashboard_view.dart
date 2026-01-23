@@ -32,12 +32,14 @@ import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
+  final String? dutyStatus; // Added parameter
   final ValueChanged<bool> onStatusChanged;
   final VoidCallback? onViewDeliveries;
 
   const AgentDashboardView({
     super.key,
     required this.isOnline,
+    this.dutyStatus,
     required this.onStatusChanged,
     this.onViewDeliveries,
   });
@@ -85,7 +87,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _initDashboard();
     // Initialize timer state based on initial props
     if (widget.isOnline) {
-      _startTimer();
+      if (widget.dutyStatus == 'paused') {
+        _isTimerPaused = true;
+        // Don't start timer ticking if paused
+      } else {
+        _startTimer();
+      }
     }
   }
 
@@ -126,10 +133,40 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _dutyTimer = null;
   }
 
-  void _toggleTimerPause() {
-    setState(() {
-      _isTimerPaused = !_isTimerPaused;
-    });
+  Future<void> _toggleTimerPause() async {
+    final token = _authToken ?? await SharedPrefsUtil.getToken();
+    if (token == null) return;
+
+    try {
+      if (_isTimerPaused) {
+        // RESUME
+        await _apiService.resumeAgentDuty(token);
+        if (mounted) {
+          setState(() {
+            _isTimerPaused = false;
+          });
+          CustomSnackBar.showSuccess(context, 'Duty Resumed');
+          // Optionally notify parent if needed, but we manage pause locally mostly
+          // widget.onStatusChanged(true);
+        }
+      } else {
+        // PAUSE
+        // We use pauseDuty if available, or just update status?
+        // Assuming updateAgentStatus handles 'online'/'offline', we need specific 'pause'
+        // If apiService.pauseAgentDuty exists (not yet created in implementation plan Step 4?)
+        // Wait, I haven't created resumeAgentDuty either in ApiService yet!
+        // I need to update ApiService NEXT. For now, I'll write the calls assuming they will exist.
+        await _apiService.pauseAgentDuty(token);
+        if (mounted) {
+          setState(() {
+            _isTimerPaused = true;
+          });
+          CustomSnackBar.showSuccess(context, 'Duty Paused');
+        }
+      }
+    } catch (e) {
+      if (mounted) CustomSnackBar.showError(context, 'Action failed: $e');
+    }
   }
 
   Future<void> _initDashboard() async {
@@ -140,10 +177,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           _authToken = token;
         });
       }
+      // If parent passed dutyStatus, use it to set timer state logic if needed
+      // Note: _secondsOnDuty is primarily updated by _fetchPartnerSummary below
+
       // Re-fetch everything with the token
       _fetchOrders(refresh: true);
       _fetchProfile();
       _fetchPartnerSummary();
+      _fetchDeliveryStats();
       _fetchDeliveryStats();
 
       // Fetch notifications for badge
@@ -1286,8 +1327,45 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                 ),
                               ),
                             ),
-                            Icon(RemixIcons.arrow_right_s_line,
-                                color: AppColors.warning, size: R.sp(18)),
+                            if (widget.dutyStatus ==
+                                'paused') // Only show resume button if strictly paused from API
+                              GestureDetector(
+                                  onTap: () async {
+                                    // TRIGGER RESUME API
+                                    try {
+                                      CustomSnackBar.showSuccess(
+                                          context, 'Resuming duty...');
+                                      await _apiService
+                                          .resumeAgentDuty(_authToken!);
+                                      if (!mounted) return;
+                                      setState(() {
+                                        _isTimerPaused = false;
+                                      });
+                                      // Propagate online status up just in case
+                                      widget.onStatusChanged(true);
+                                    } catch (e) {
+                                      if (mounted)
+                                        CustomSnackBar.showError(
+                                            context, 'Failed to resume: $e');
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: R.w(12), vertical: R.h(6)),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.warning,
+                                      borderRadius:
+                                          BorderRadius.circular(R.r(20)),
+                                    ),
+                                    child: Text('RESUME',
+                                        style: TextStyle(
+                                            color: AppColors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: R.sp(12))),
+                                  ))
+                            else
+                              Icon(RemixIcons.arrow_right_s_line,
+                                  color: AppColors.warning, size: R.sp(18)),
                           ],
                         ),
                       ),
@@ -1683,11 +1761,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isOnline ? 'Online' : 'Offline',
+                    _isTimerPaused || widget.dutyStatus == 'paused'
+                        ? 'Paused'
+                        : (isOnline ? 'Online' : 'Offline'),
                     style: TextStyle(
                       fontSize: R.sp(16),
                       fontWeight: FontWeight.w800,
-                      color: AppColors.headingText,
+                      color: (_isTimerPaused || widget.dutyStatus == 'paused')
+                          ? AppColors.warning
+                          : AppColors.headingText,
                     ),
                   ),
                   Text(
@@ -1709,7 +1791,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             children: [
               // Timer Pill
               GestureDetector(
-                onTap: isOnline ? _toggleTimerPause : null,
+                onTap: () {
+                  if (isOnline) {
+                    // If "Resume" is needed (i.e. paused), calling toggle might not be enough if we have a specific API
+                    // But for now, using the pause toggle logic
+                    _toggleTimerPause();
+                  }
+                },
                 child: Container(
                   padding: EdgeInsets.symmetric(
                       horizontal: R.w(16), vertical: R.h(10)),

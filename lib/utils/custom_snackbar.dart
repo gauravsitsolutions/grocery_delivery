@@ -21,7 +21,7 @@ class CustomSnackBar {
   }
 
   static void showError(BuildContext context, String message,
-      {String title = 'Error', SnackBarAction? action, bool centered = true}) {
+      {String title = 'Error', SnackBarAction? action, bool centered = false}) {
     _show(
       context,
       title: title,
@@ -47,7 +47,7 @@ class CustomSnackBar {
   }
 
   static void showInfo(BuildContext context, String message,
-      {String title = 'Help', SnackBarAction? action, bool centered = true}) {
+      {String title = 'Help', SnackBarAction? action, bool centered = false}) {
     _show(
       context,
       title: title,

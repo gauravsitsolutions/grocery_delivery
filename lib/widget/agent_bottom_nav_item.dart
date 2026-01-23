@@ -10,6 +10,8 @@ import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
+import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
+
 class AgentBottomNavView extends StatefulWidget {
   const AgentBottomNavView({super.key});
 
@@ -20,7 +22,39 @@ class AgentBottomNavView extends StatefulWidget {
 class _AgentBottomNavViewState extends State<AgentBottomNavView> {
   final PersistentTabController _controller =
       PersistentTabController(initialIndex: 0);
-  bool isOnline = true;
+  bool isOnline = false; // Default to false until we know status
+  bool isLoading = true;
+  String? dutyStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkInitialStatus();
+  }
+
+  Future<void> _checkInitialStatus() async {
+    try {
+      final token = await SharedPrefsUtil.getToken();
+      if (token != null) {
+        final apiService = ApiService();
+        final summary = await apiService.getPartnerProfileSummary(token);
+        if (mounted) {
+          setState(() {
+            // 'online' or 'paused' means the agent session is active (isOnline = true for UI lock purposes)
+            dutyStatus = summary.dutyStatus;
+            isOnline = summary.dutyStatus == 'online' ||
+                summary.dutyStatus == 'paused';
+            isLoading = false;
+          });
+        }
+      } else {
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      // Fallback or just stop loading
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
 
   PersistentBottomNavBarItem _navItem({
     required IconData icon,
@@ -56,6 +90,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
           screens: [
             AgentDashboardView(
               isOnline: isOnline,
+              dutyStatus: dutyStatus,
               onStatusChanged: (val) async {
                 try {
                   final token = await SharedPrefsUtil.getToken();
@@ -71,7 +106,15 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   await apiService.updateAgentStatus(token, val);
 
                   if (!context.mounted) return;
-                  setState(() => isOnline = val);
+                  setState(() {
+                    isOnline = val;
+                    // Optimistically update dutyStatus for UI responsiveness
+                    if (val) {
+                      dutyStatus = 'online';
+                    } else {
+                      dutyStatus = 'offline';
+                    }
+                  });
 
                   if (val) {
                     CustomSnackBar.showSuccess(context, 'You are now Online');

@@ -52,6 +52,7 @@ class ApiService {
   }
 
   dynamic _handleResponse(http.Response response) {
+    log('API Response URL: ${response.request?.url}');
     log('API Response Status: ${response.statusCode}');
     log('API Response Body: ${response.body}');
 
@@ -259,8 +260,42 @@ class ApiService {
 
   Future<Map<String, dynamic>> updateAgentStatus(
       String? token, bool isOnline) async {
-    final uri =
-        Uri.parse(isOnline ? AppUrls.partnerOnline : AppUrls.partnerOffline);
+    // isOnline = true -> Start Duty
+    // isOnline = false -> Stop Duty (Offline)
+    final uri = Uri.parse(isOnline ? AppUrls.startDuty : AppUrls.stopDuty);
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+    return response;
+  }
+
+  Future<Map<String, dynamic>> pauseAgentDuty(String? token) async {
+    final uri = Uri.parse(AppUrls.pauseDuty);
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+    return response;
+  }
+
+  Future<Map<String, dynamic>> resumeAgentDuty(String? token) async {
+    final uri = Uri.parse(AppUrls.resumeDuty);
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+    return response;
+  }
+
+  Future<Map<String, dynamic>> stopAgentDuty(String? token) async {
+    final uri = Uri.parse(AppUrls.stopDuty);
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
