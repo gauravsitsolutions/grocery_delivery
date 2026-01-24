@@ -127,6 +127,14 @@ class Order {
   final Vendor? vendor;
 
   final int? deliveryAgentId;
+  final int? warehouseId;
+  final int? createdBy;
+  final String? channel;
+  final String? paymentMethod;
+  final String? customerRating;
+  final String? customerRatingTags;
+  final String? paymentStatus;
+  final String? orderType;
   final String? pickupProof;
   final String? cancelReason;
   final String? cancelComment;
@@ -152,6 +160,14 @@ class Order {
     this.deliveryAddress,
     this.user,
     this.vendor,
+    this.warehouseId,
+    this.createdBy,
+    this.channel,
+    this.paymentMethod,
+    this.customerRating,
+    this.customerRatingTags,
+    this.paymentStatus,
+    this.orderType,
     this.pickupProof,
     this.cancelReason,
     this.cancelComment,
@@ -191,6 +207,14 @@ class Order {
               ? Customer.fromJson(json['customer'])
               : null,
       vendor: json['vendor'] != null ? Vendor.fromJson(json['vendor']) : null,
+      warehouseId: json['warehouse_id'],
+      createdBy: json['created_by'],
+      channel: json['channel'],
+      paymentMethod: json['payment_method'],
+      customerRating: json['customer_rating']?.toString(),
+      customerRatingTags: json['customer_rating_tags']?.toString(),
+      paymentStatus: json['payment_status']?.toString() ?? 'pending',
+      orderType: json['order_type']?.toString() ?? 'delivery',
       pickupProof: json['pickup_proof'],
       cancelReason: json['cancel_reason'],
       cancelComment: json['cancel_comment'],
@@ -218,6 +242,14 @@ class Order {
     DeliveryAddress? deliveryAddress,
     Customer? user,
     Vendor? vendor,
+    int? warehouseId,
+    int? createdBy,
+    String? channel,
+    String? paymentMethod,
+    String? customerRating,
+    String? customerRatingTags,
+    String? paymentStatus,
+    String? orderType,
     String? pickupProof,
     String? cancelReason,
     String? cancelComment,
@@ -243,6 +275,14 @@ class Order {
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       user: user ?? this.user,
       vendor: vendor ?? this.vendor,
+      warehouseId: warehouseId ?? this.warehouseId,
+      createdBy: createdBy ?? this.createdBy,
+      channel: channel ?? this.channel,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      customerRating: customerRating ?? this.customerRating,
+      customerRatingTags: customerRatingTags ?? this.customerRatingTags,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      orderType: orderType ?? this.orderType,
       pickupProof: pickupProof ?? this.pickupProof,
       cancelReason: cancelReason ?? this.cancelReason,
       cancelComment: cancelComment ?? this.cancelComment,
@@ -321,7 +361,12 @@ class OrderItem {
   final int orderId;
   final int productId;
   final int quantity;
-  final String price;
+  final int? productBatchId;
+  final bool isPicked;
+  final String? price;
+  final String? taxPercent;
+  final String? taxAmount;
+  final String? lineTotal;
   final String total;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -332,7 +377,12 @@ class OrderItem {
     required this.orderId,
     required this.productId,
     required this.quantity,
-    required this.price,
+    this.productBatchId,
+    this.isPicked = false,
+    this.price,
+    this.taxPercent,
+    this.taxAmount,
+    this.lineTotal,
     required this.total,
     required this.createdAt,
     required this.updatedAt,
@@ -345,7 +395,12 @@ class OrderItem {
       orderId: json['order_id'] ?? 0,
       productId: json['product_id'] ?? 0,
       quantity: json['quantity'] ?? 0,
+      productBatchId: json['product_batch_id'],
+      isPicked: json['is_picked'] == true || json['is_picked'] == 1,
       price: json['price']?.toString() ?? '0.00',
+      taxPercent: json['tax_percent']?.toString(),
+      taxAmount: json['tax_amount']?.toString(),
+      lineTotal: json['line_total']?.toString(),
       total: json['total']?.toString() ?? '0.00',
       createdAt: _parseDate(json['created_at']),
       updatedAt: _parseDate(json['updated_at']),
@@ -365,16 +420,19 @@ class Product {
   final int? subCategoryId;
   final int? brandId;
   final String name;
-  final int? expiryDays;
+  final int? unitId;
+  final String? unitValue;
   final String? sku;
   final String? description;
   final String basePrice;
   final String retailerPrice;
   final String mrp;
   final String? discountType;
-  final String discountValue;
+  final String? discountValue;
   final int? taxId;
   final String gstPercentage;
+  final String? gstAmount;
+  final String? finalPrice;
   final int stock;
   final List<String> productImages;
   final List<String> productImageUrls; // New field for full URLs
@@ -388,16 +446,19 @@ class Product {
     this.subCategoryId,
     this.brandId,
     required this.name,
-    this.expiryDays,
+    this.unitId,
+    this.unitValue,
     this.sku,
     this.description,
     required this.basePrice,
     required this.retailerPrice,
     required this.mrp,
     this.discountType,
-    required this.discountValue,
+    this.discountValue,
     this.taxId,
     required this.gstPercentage,
+    this.gstAmount,
+    this.finalPrice,
     required this.stock,
     required this.productImages,
     this.productImageUrls = const [], // Default empty
@@ -447,16 +508,19 @@ class Product {
       subCategoryId: json['sub_category_id'],
       brandId: json['brand_id'],
       name: json['name'] ?? '',
-      expiryDays: json['expiry_days'],
+      unitId: json['unit_id'],
+      unitValue: json['unit_value']?.toString(),
       sku: json['sku'],
       description: json['description'],
       basePrice: json['base_price']?.toString() ?? '0.00',
       retailerPrice: json['retailer_price']?.toString() ?? '0.00',
       mrp: json['mrp']?.toString() ?? '0.00',
       discountType: json['discount_type'],
-      discountValue: json['discount_value']?.toString() ?? '0.00',
+      discountValue: json['discount_value']?.toString(),
       taxId: json['tax_id'],
       gstPercentage: json['gst_percentage']?.toString() ?? '0.00',
+      gstAmount: json['gst_amount']?.toString(),
+      finalPrice: json['final_price']?.toString(),
       stock: json['stock'] ?? 0,
       productImages: images,
       productImageUrls: imageUrls,

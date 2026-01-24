@@ -547,7 +547,13 @@ class ApiService {
           uri,
           headers: await _getHeaders(token),
         ));
-    return response;
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to accept order');
+    }
   }
 
   Future<Map<String, dynamic>> rejectOrder(String? token, int orderId) async {
@@ -558,7 +564,13 @@ class ApiService {
           uri,
           headers: await _getHeaders(token),
         ));
-    return response;
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to reject order');
+    }
   }
 
   Future<Order> getOrderDetails(String? token, int orderId) async {
@@ -684,7 +696,12 @@ class ApiService {
           }),
         ));
 
-    return response;
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to cancel order');
+    }
   }
 
   Future<Map<String, dynamic>?> getCurrentOrder(String token) async {

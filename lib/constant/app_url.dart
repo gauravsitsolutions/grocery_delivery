@@ -24,7 +24,7 @@ class AppUrls {
   static const String updateProfileEmail =
       '$baseUrl/api/delivery_boy/profile/email';
   static const String uploadProfileImage = '$baseUrl/api/partner/profile/image';
-  static const String newOrders = '$baseUrl/api/delivery/orders/available';
+  static const String newOrders = '$baseUrl/api/delivery/orders/new';
   static const String myOrders = '$baseUrl/api/delivery/orders/queue';
   static const String deliveries = '$baseUrl/api/deliveries';
   static const String searchDeliveries = '$baseUrl/api/deliveries/search';
