@@ -7,7 +7,6 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
-import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
@@ -26,8 +25,6 @@ class AvailableOrdersView extends StatefulWidget {
 
 class _AvailableOrdersViewState extends State<AvailableOrdersView> {
   final ScrollController _scrollController = ScrollController();
-  final ApiService _apiService =
-      ApiService(); // Still needed for acceptOrder locally for now
   String?
       _authToken; // Still needed for image headers if we don't move that to VM
 
@@ -36,6 +33,10 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _loadAuthToken();
+    // Fetch initial data using global provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OrderListViewModel>().fetchNewOrders(refresh: true);
+    });
   }
 
   Future<void> _loadAuthToken() async {
@@ -57,8 +58,9 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
       // Access VM via context to load more
-      final viewModel = Provider.of<OrderListViewModel>(context, listen: false);
-      viewModel.loadMoreNewOrders();
+      if (mounted) {
+        context.read<OrderListViewModel>().loadMoreNewOrders();
+      }
     }
   }
 
@@ -66,24 +68,20 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
     if (!mounted) return;
 
     try {
-      final token = await SharedPrefsUtil.getToken();
-
-      if (token == null) return;
-
-      if (!mounted) return;
+      // Find the order object to pass its details
+      final acceptedOrder = orders.firstWhere((o) => o.id == orderId);
 
       // Show loading
       CustomSnackBar.showSuccess(context, 'Accepting order...');
 
-      await _apiService.acceptOrder(token, orderId);
+      final viewModel = context.read<OrderListViewModel>();
+      final success = await viewModel.acceptOrder(orderId);
 
-      if (!mounted) return;
-
-      if (!context.mounted) return;
-
-      // Find the order object to pass its details
-      final acceptedOrder = orders.firstWhere((o) => o.id == orderId);
-      _showAcceptSuccessDialog(acceptedOrder);
+      if (success && mounted) {
+        _showAcceptSuccessDialog(acceptedOrder);
+      } else if (mounted) {
+        CustomSnackBar.showError(context, 'Failed to accept order');
+      }
     } catch (e) {
       if (mounted) {
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
@@ -140,6 +138,7 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
           screen: OrderDetailsView(
             orderId: order.id,
             orderNumber: order.orderNumber,
+            order: order,
           ),
           withNavBar: false,
           pageTransitionAnimation: PageTransitionAnimation.cupertino,
@@ -150,55 +149,51 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => OrderListViewModel()..fetchNewOrders(refresh: true),
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: AppColors.scaffoldBg,
+      appBar: AppBar(
+        title: const Text('Available Orders',
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: AppColors.headingText)),
         backgroundColor: AppColors.scaffoldBg,
-        appBar: AppBar(
-          title: const Text('Available Orders',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: AppColors.headingText)),
-          backgroundColor: AppColors.scaffoldBg,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: AppColors.bodyText),
-        ),
-        body: SafeArea(
-          child: Consumer<OrderListViewModel>(
-            builder: (context, viewModel, child) {
-              return RefreshIndicator(
-                onRefresh: () async =>
-                    await viewModel.fetchNewOrders(refresh: true),
-                color: AppColors.primaryGreen,
-                child: viewModel.isNewOrdersLoading
-                    ? const ListShimmer(count: 6)
-                    : viewModel.newOrdersError != null
-                        ? Center(
-                            child: Text(viewModel.newOrdersError!,
-                                style: const TextStyle(color: Colors.red)))
-                        : viewModel.newOrders.isEmpty
-                            ? const Center(child: Text('No available orders'))
-                            : ListView.builder(
-                                controller: _scrollController,
-                                padding: EdgeInsets.all(R.w(16)),
-                                itemCount: viewModel.newOrders.length +
-                                    (viewModel.isNewOrdersLoadingMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  if (index == viewModel.newOrders.length) {
-                                    return const Padding(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: OrderShimmer());
-                                  }
-                                  final order = viewModel.newOrders[index];
-                                  return AnimatedOrderCard(
-                                    key: ValueKey(order.id),
-                                    child:
-                                        _orderCard(order, viewModel.newOrders),
-                                  );
-                                },
-                              ),
-              );
-            },
-          ),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.bodyText),
+      ),
+      body: SafeArea(
+        child: Consumer<OrderListViewModel>(
+          builder: (context, viewModel, child) {
+            return RefreshIndicator(
+              onRefresh: () async =>
+                  await viewModel.fetchNewOrders(refresh: true),
+              color: AppColors.primaryGreen,
+              child: viewModel.isNewOrdersLoading
+                  ? const ListShimmer(count: 6)
+                  : viewModel.newOrdersError != null
+                      ? Center(
+                          child: Text(viewModel.newOrdersError!,
+                              style: const TextStyle(color: Colors.red)))
+                      : viewModel.newOrders.isEmpty
+                          ? const Center(child: Text('No available orders'))
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding: EdgeInsets.all(R.w(16)),
+                              itemCount: viewModel.newOrders.length +
+                                  (viewModel.isNewOrdersLoadingMore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == viewModel.newOrders.length) {
+                                  return const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: OrderShimmer());
+                                }
+                                final order = viewModel.newOrders[index];
+                                return AnimatedOrderCard(
+                                  key: ValueKey(order.id),
+                                  child: _orderCard(order, viewModel.newOrders),
+                                );
+                              },
+                            ),
+            );
+          },
         ),
       ),
     );

@@ -348,6 +348,49 @@ class OrderListViewModel extends ChangeNotifier {
     }
   }
 
+  // Order Actions
+  Future<bool> acceptOrder(int orderId) async {
+    try {
+      final token = await _authToken;
+      if (token == null) return false;
+
+      final response = await _apiService.acceptOrder(token, orderId);
+
+      if (response['status'] == true || response['status'] == 'success') {
+        // Remove from new orders locally for immediate UI update
+        _newOrders.removeWhere((o) => o.id == orderId);
+        notifyListeners();
+        // Refresh active orders list in background
+        fetchActiveOrders(refresh: true);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error accepting order: $e');
+      return false;
+    }
+  }
+
+  Future<bool> rejectOrder(int orderId) async {
+    try {
+      final token = await _authToken;
+      if (token == null) return false;
+
+      final response = await _apiService.rejectOrder(token, orderId);
+
+      if (response['status'] == true || response['status'] == 'success') {
+        // Remove from new orders locally
+        _newOrders.removeWhere((o) => o.id == orderId);
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error rejecting order: $e');
+      return false;
+    }
+  }
+
   Future<String?> get _authToken async {
     return await SharedPrefsUtil.getToken();
   }

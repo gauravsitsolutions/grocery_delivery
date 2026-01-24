@@ -28,7 +28,6 @@ import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -262,7 +261,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         }
       }
     } catch (e) {
-      log('Error fetching profile: $e');
+      if (e is! NetworkException) {
+        log('Error fetching profile: $e');
+      }
     }
   }
 
@@ -284,7 +285,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         }
       }
     } catch (e) {
-      log('Error fetching partner summary: $e');
+      if (e is! NetworkException) {
+        log('Error fetching partner summary: $e');
+      }
     }
   }
 
@@ -375,7 +378,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         });
       }
     } catch (e) {
-      log('Error fetching orders: $e');
+      if (e is! NetworkException) {
+        log('Error fetching orders: $e');
+      }
+
       if (mounted) {
         if (e is UnauthorisedException) {
           await SharedPrefsUtil.clearSession();
@@ -384,10 +390,18 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 context, AppRoutes.login, (route) => false);
           }
         } else {
-          setState(() {
-            _error = e.toString();
-            _isLoading = false;
-          });
+          // Only show error UI if it's a forced refresh or we have no data at all
+          if (refresh || (_availableOrders.isEmpty && _myOrders.isEmpty)) {
+            setState(() {
+              _error = e.toString();
+              _isLoading = false;
+            });
+          } else {
+            // Silently fail for background refresh
+            setState(() {
+              _isLoading = false;
+            });
+          }
         }
       }
     }
@@ -410,7 +424,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         }
       }
     } catch (e) {
-      log('Error fetching delivery stats: $e');
+      if (e is! NetworkException) {
+        log('Error fetching delivery stats: $e');
+      }
     }
   }
 
@@ -438,7 +454,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         });
       }
     } catch (e) {
-      log('Error loading more available orders: $e');
+      if (e is! NetworkException) {
+        log('Error loading more available orders: $e');
+      }
       if (mounted) {
         setState(() {
           _isAvailableLoadingMore = false;
@@ -471,7 +489,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         });
       }
     } catch (e) {
-      log('Error loading more my orders: $e');
+      if (e is! NetworkException) {
+        log('Error loading more my orders: $e');
+      }
       if (mounted) {
         setState(() {
           _isMyOrdersLoadingMore = false;
@@ -1218,7 +1238,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   onPressed: () {
                     PersistentNavBarNavigator.pushNewScreen(
                       context,
-                      screen: PickupTaskView(order: order),
+                      screen: OrderDetailsView(
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        order: order,
+                      ),
                       withNavBar: false,
                       pageTransitionAnimation:
                           PageTransitionAnimation.cupertino,

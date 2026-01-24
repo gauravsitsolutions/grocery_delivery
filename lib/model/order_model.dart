@@ -200,7 +200,9 @@ class Order {
           ? DeliveryAddress.fromJson(json['delivery_address'])
           : json['deliveryAddress'] != null
               ? DeliveryAddress.fromJson(json['deliveryAddress'])
-              : null,
+              : json['customer_address'] != null
+                  ? DeliveryAddress.fromJson(json['customer_address'])
+                  : null,
       user: json['user'] != null
           ? Customer.fromJson(json['user'])
           : json['customer'] != null

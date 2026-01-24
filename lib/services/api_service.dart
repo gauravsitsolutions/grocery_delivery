@@ -731,7 +731,9 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      log('Check Current Order Error (SILENT): $e');
+      if (e is! SocketException && !e.toString().contains('No internet')) {
+        log('Check Current Order Error (SILENT): $e');
+      }
       return null;
     }
   }

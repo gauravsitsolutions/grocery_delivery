@@ -4,7 +4,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
 
 class OrderAcceptedSuccessView extends StatefulWidget {
   final Order order;
@@ -32,7 +32,11 @@ class _OrderAcceptedSuccessViewState extends State<OrderAcceptedSuccessView> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => PickupTaskView(order: widget.order),
+        builder: (context) => OrderDetailsView(
+          orderId: widget.order.id,
+          orderNumber: widget.order.orderNumber,
+          order: widget.order,
+        ),
       ),
     );
   }

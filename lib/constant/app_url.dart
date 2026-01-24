@@ -1,5 +1,5 @@
 class AppUrls {
-  static const String baseUrl = 'http://192.168.1.49:8000';
+  static const String baseUrl = 'http://192.168.1.81:8000';
   static const String loginPassword = '$baseUrl/api/auth/login/password';
   static const String loginOtp = '$baseUrl/api/auth/login/otp/';
   static const String verifyOtp = '$baseUrl/api/auth/mobile/verify-otp/login';
@@ -24,7 +24,7 @@ class AppUrls {
   static const String updateProfileEmail =
       '$baseUrl/api/delivery_boy/profile/email';
   static const String uploadProfileImage = '$baseUrl/api/partner/profile/image';
-  static const String newOrders = '$baseUrl/api/delivery/orders/new';
+  static const String newOrders = '$baseUrl/api/delivery/orders/available';
   static const String myOrders = '$baseUrl/api/delivery/orders/queue';
   static const String deliveries = '$baseUrl/api/deliveries';
   static const String searchDeliveries = '$baseUrl/api/deliveries/search';

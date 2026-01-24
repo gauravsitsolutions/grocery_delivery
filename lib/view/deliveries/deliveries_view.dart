@@ -13,7 +13,6 @@ import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_cancelled_details_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../utils/responsive.dart';
 
@@ -41,6 +40,9 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OrderListViewModel>().fetchActiveOrders(refresh: true);
+    });
   }
 
   @override
@@ -66,27 +68,25 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   Widget build(BuildContext context) {
     R.init(context);
 
-    return ChangeNotifierProvider(
-      create: (_) => OrderListViewModel()..fetchActiveOrders(refresh: true),
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: AppColors.scaffoldBg,
+      appBar: AppBar(
         backgroundColor: AppColors.scaffoldBg,
-        appBar: AppBar(
-          backgroundColor: AppColors.scaffoldBg,
-          elevation: 0,
-          centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
-          title: Text(
-            'My Deliveries',
-            style: TextStyle(
-              color: AppColors.headingText,
-              fontWeight: FontWeight.w700,
-              fontSize: R.sp(18),
-            ),
+        elevation: 0,
+        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
+        title: Text(
+          'My Deliveries',
+          style: TextStyle(
+            color: AppColors.headingText,
+            fontWeight: FontWeight.w700,
+            fontSize: R.sp(18),
           ),
         ),
-        body: SafeArea(
-          bottom: false,
-          child: Consumer<OrderListViewModel>(
-              builder: (context, viewModel, child) {
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: Consumer<OrderListViewModel>(
+          builder: (context, viewModel, child) {
             final statusFilter = _selectedStatus.toLowerCase();
             final orders = viewModel.isSearching
                 ? viewModel.searchResults
@@ -328,7 +328,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                 ),
               ),
             );
-          }),
+          },
         ),
       ),
     );
@@ -610,7 +610,11 @@ class _DeliveriesViewState extends State<DeliveriesView> {
           // Navigate to Pickup Task if not picked up yet (and not delivered)
           PersistentNavBarNavigator.pushNewScreen(
             context,
-            screen: PickupTaskView(order: order),
+            screen: OrderDetailsView(
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              order: order,
+            ),
             withNavBar: false,
             pageTransitionAnimation: PageTransitionAnimation.cupertino,
           );
