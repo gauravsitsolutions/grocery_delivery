@@ -60,7 +60,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       navigatorKey: NavigationService.navigatorKey, // Registered GlobalKey
       initialRoute: AppRoutes.splash,
-      routes: AppPages.routes,
+      onGenerateRoute: AppPages.generateRoute,
       builder: (context, child) {
         R.init(context);
         return ConnectionStatusWrapper(

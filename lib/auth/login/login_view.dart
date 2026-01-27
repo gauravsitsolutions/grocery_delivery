@@ -10,6 +10,8 @@ import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/auth_view_model.dart';
 
+import 'package:animations/animations.dart';
+
 enum LoginMethod { password, otp }
 
 class LoginView extends StatefulWidget {
@@ -113,9 +115,30 @@ class _LoginViewState extends State<LoginView> {
                         SizedBox(height: R.h(32)),
                         _buildMethodSelector(viewModel),
                         SizedBox(height: R.h(20)),
-                        _buildPrimaryField(viewModel),
-                        SizedBox(height: R.h(20)),
-                        _buildSecondaryField(context, viewModel),
+                        PageTransitionSwitcher(
+                          duration: const Duration(milliseconds: 400),
+                          reverse:
+                              viewModel.loginMethod == LoginMethod.password,
+                          transitionBuilder:
+                              (child, animation, secondaryAnimation) {
+                            return SharedAxisTransition(
+                              animation: animation,
+                              secondaryAnimation: secondaryAnimation,
+                              transitionType:
+                                  SharedAxisTransitionType.horizontal,
+                              child: child,
+                            );
+                          },
+                          child: Column(
+                            key: ValueKey(viewModel.loginMethod),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildPrimaryField(viewModel),
+                              SizedBox(height: R.h(20)),
+                              _buildSecondaryField(context, viewModel),
+                            ],
+                          ),
+                        ),
                         SizedBox(height: R.h(16)),
                         _buildActionButton(context, viewModel),
                         SizedBox(height: R.h(20)),
@@ -138,9 +161,12 @@ class _LoginViewState extends State<LoginView> {
     return Column(
       children: [
         Center(
-          child: Image.asset(
-            'assets/images/app_logo.png',
-            width: isMobile ? R.w(220) : R.w(300),
+          child: Hero(
+            tag: 'app_logo',
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              width: isMobile ? R.w(220) : R.w(300),
+            ),
           ),
         ),
         SizedBox(height: R.h(20)),

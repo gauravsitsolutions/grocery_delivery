@@ -164,13 +164,16 @@ class _SplashScreenState extends State<SplashScreen>
               /// LOGO
               ScaleTransition(
                 scale: _logoScale,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(60),
-                  child: Image.asset(
-                    'assets/images/app_logo.png',
-                    height: R.w(170),
-                    width: R.w(170),
-                    fit: BoxFit.contain,
+                child: Hero(
+                  tag: 'app_logo',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(60),
+                    child: Image.asset(
+                      'assets/images/app_logo.png',
+                      height: R.w(170),
+                      width: R.w(170),
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),

@@ -17,39 +17,83 @@ import 'package:samrudhi_delivery_agent_app/view/splash_view.dart';
 
 import 'app_routes.dart';
 
-class AppPages {
-  static final Map<String, WidgetBuilder> routes = {
-    // Auth
-    AppRoutes.splash: (_) => const SplashScreen(),
-    AppRoutes.login: (_) => const LoginView(),
-    AppRoutes.forgotPassword: (_) => const ForgotPasswordView(),
-    AppRoutes.forgotPasswordOtp: (_) => const ForgotPasswordOTPView(),
-    AppRoutes.setNewPassword: (_) => const SetNewPasswordView(),
-    AppRoutes.passwordResetSuccess: (_) => const PasswordResetSuccessView(),
+import 'package:animations/animations.dart';
 
-    // Main
-    AppRoutes.bottomNav: (_) => const AgentBottomNavView(),
-    AppRoutes.dashboard: (_) => AgentDashboardView(
+class AppPages {
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    Widget page;
+
+    switch (settings.name) {
+      case AppRoutes.splash:
+        page = const SplashScreen();
+        break;
+      case AppRoutes.login:
+        page = const LoginView();
+        break;
+      case AppRoutes.forgotPassword:
+        page = const ForgotPasswordView();
+        break;
+      case AppRoutes.forgotPasswordOtp:
+        page = const ForgotPasswordOTPView();
+        break;
+      case AppRoutes.setNewPassword:
+        page = const SetNewPasswordView();
+        break;
+      case AppRoutes.passwordResetSuccess:
+        page = const PasswordResetSuccessView();
+        break;
+      case AppRoutes.bottomNav:
+        page = const AgentBottomNavView();
+        break;
+      case AppRoutes.dashboard:
+        page = AgentDashboardView(
           isOnline: true,
           onStatusChanged: (_) {},
-        ),
-    AppRoutes.customerInfo: (_) => const CustomerInfoView(),
-    AppRoutes.deliverySummary: (_) => const DeliverySummaryView(),
-    AppRoutes.navigationView: (_) => const NavigationView(),
-    AppRoutes.verificationView: (_) => const VerificationView(),
-    AppRoutes.notificationView: (_) => const NotificationsView(),
-    AppRoutes.orderDetails: (context) {
-      final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is int) {
-        return OrderDetailsView(orderId: args);
-      }
+        );
+        break;
+      case AppRoutes.customerInfo:
+        page = const CustomerInfoView();
+        break;
+      case AppRoutes.deliverySummary:
+        page = const DeliverySummaryView();
+        break;
+      case AppRoutes.navigationView:
+        page = const NavigationView();
+        break;
+      case AppRoutes.verificationView:
+        page = const VerificationView();
+        break;
+      case AppRoutes.notificationView:
+        page = const NotificationsView();
+        break;
+      case AppRoutes.orderDetails:
+        final args = settings.arguments;
+        if (args is int) {
+          page = OrderDetailsView(orderId: args);
+        } else {
+          try {
+            final dynamic order = args;
+            page = OrderDetailsView(orderId: order.id, order: order);
+          } catch (_) {
+            page = const OrderDetailsView(orderId: 0); // Error fallback
+          }
+        }
+        break;
+      default:
+        page = const SplashScreen(); // Fallback
+    }
 
-      try {
-        final dynamic order = args;
-        return OrderDetailsView(orderId: order.id, order: order);
-      } catch (_) {
-        return const OrderDetailsView(orderId: 0); // Error fallback
-      }
-    },
-  };
+    return PageRouteBuilder(
+      settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeThroughTransition(
+          animation: animation,
+          secondaryAnimation: secondaryAnimation,
+          child: child,
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 500),
+    );
+  }
 }

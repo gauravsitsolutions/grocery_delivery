@@ -116,6 +116,14 @@ class OrderViewModel extends ChangeNotifier {
       _order = results[0] as Order;
       _orderItems = results[1] as List<OrderItem>;
 
+      // Sync checked items with backend state
+      _checkedItems.clear();
+      for (var item in _orderItems) {
+        if (item.isPicked) {
+          _checkedItems.add(item.id);
+        }
+      }
+
       final status = _order?.status.toLowerCase();
       _isPickupMode = status == 'accepted' || status == 'pending';
 

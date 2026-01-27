@@ -392,13 +392,35 @@ class OrderItem {
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
+    // If name/image are at root, create a fallback product
+    Product? fallbackProduct;
+    if (json['name'] != null) {
+      fallbackProduct = Product(
+        id: json['product_id'] ?? 0,
+        name: json['name'],
+        basePrice: '0.00',
+        retailerPrice: '0.00',
+        mrp: '0.00',
+        gstPercentage: '0.00',
+        stock: 0,
+        productImages:
+            json['image'] != null ? [json['image'].toString()] : const [],
+        productImageUrls: const [],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }
+
     return OrderItem(
       id: json['id'] ?? 0,
       orderId: json['order_id'] ?? 0,
       productId: json['product_id'] ?? 0,
-      quantity: json['quantity'] ?? 0,
+      quantity:
+          json['quantity'] != null ? (json['quantity'] as num).toInt() : 0,
       productBatchId: json['product_batch_id'],
-      isPicked: json['is_picked'] == true || json['is_picked'] == 1,
+      isPicked: json['isPicked'] == true ||
+          json['is_picked'] == true ||
+          json['is_picked'] == 1,
       price: json['price']?.toString() ?? '0.00',
       taxPercent: json['tax_percent']?.toString(),
       taxAmount: json['tax_amount']?.toString(),
@@ -406,8 +428,9 @@ class OrderItem {
       total: json['total']?.toString() ?? '0.00',
       createdAt: _parseDate(json['created_at']),
       updatedAt: _parseDate(json['updated_at']),
-      product:
-          json['product'] is Map ? Product.fromJson(json['product']) : null,
+      product: json['product'] is Map
+          ? Product.fromJson(json['product'])
+          : fallbackProduct,
     );
   }
 }

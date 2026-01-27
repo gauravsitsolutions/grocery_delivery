@@ -598,10 +598,15 @@ class ApiService {
           headers: await _getHeaders(token),
         ));
 
-    if (response['status'] == true && response['data'] is List) {
-      return (response['data'] as List)
-          .map((e) => OrderItem.fromJson(e))
-          .toList();
+    dynamic itemsData = response['data'];
+
+    // Handle nested Map format: { "status": true, "data": { "orderId": 1, "items": [...] } }
+    if (itemsData is Map && itemsData['items'] is List) {
+      itemsData = itemsData['items'];
+    }
+
+    if (response['status'] == true && itemsData is List) {
+      return itemsData.map((e) => OrderItem.fromJson(e)).toList();
     } else {
       throw ValidationException(response['message'] ?? 'Failed to parse items');
     }

@@ -9,6 +9,7 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
 import 'package:url_launcher/url_launcher.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_success_view.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
@@ -114,7 +115,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                     color: AppColors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.black.withOpacity(0.08),
+                        color: AppColors.black.withValues(alpha: 0.08),
                         blurRadius: 20,
                         offset: const Offset(0, -5),
                       ),
@@ -135,7 +136,8 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                         backgroundColor: AppColors.primaryGreen,
                         disabledBackgroundColor: AppColors.grey300,
                         elevation: canProceed ? 8 : 0,
-                        shadowColor: AppColors.primaryGreen.withOpacity(0.4),
+                        shadowColor:
+                            AppColors.primaryGreen.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(R.r(16)),
                         ),
@@ -186,7 +188,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
         borderRadius: BorderRadius.circular(R.r(20)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.05),
+            color: AppColors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -201,7 +203,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               Container(
                 padding: EdgeInsets.all(R.w(10)),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(RemixIcons.store_2_fill,
@@ -331,7 +333,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.primaryGreen.withOpacity(0.04)
+                      ? AppColors.primaryGreen.withValues(alpha: 0.04)
                       : AppColors.white,
                   borderRadius: BorderRadius.circular(R.r(16)),
                   border: Border.all(
@@ -344,7 +346,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                       ? []
                       : [
                           BoxShadow(
-                            color: AppColors.black.withOpacity(0.02),
+                            color: AppColors.black.withValues(alpha: 0.02),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -360,14 +362,30 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                       decoration: BoxDecoration(
                         color: AppColors.softGreyBg,
                         borderRadius: BorderRadius.circular(R.r(12)),
+                        image: item.product != null &&
+                                (item.product!.productImageUrls.isNotEmpty ||
+                                    item.product!.productImages.isNotEmpty)
+                            ? DecorationImage(
+                                image: NetworkImage(
+                                  item.product!.productImageUrls.isNotEmpty
+                                      ? item.product!.productImageUrls.first
+                                      : '${AppUrls.productImages}${item.product!.productImages.first}',
+                                ),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                      child: Center(
-                        child: Icon(RemixIcons.shopping_bag_3_fill,
-                            color: isSelected
-                                ? AppColors.primaryGreen
-                                : AppColors.grey400,
-                            size: R.sp(24)),
-                      ),
+                      child: item.product == null ||
+                              (item.product!.productImageUrls.isEmpty &&
+                                  item.product!.productImages.isEmpty)
+                          ? Center(
+                              child: Icon(RemixIcons.shopping_bag_3_fill,
+                                  color: isSelected
+                                      ? AppColors.primaryGreen
+                                      : AppColors.grey400,
+                                  size: R.sp(24)),
+                            )
+                          : null,
                     ),
                     SizedBox(width: R.w(16)),
 
@@ -500,14 +518,14 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               boxShadow: viewModel.pickupProofImage != null
                   ? [
                       BoxShadow(
-                        color: AppColors.primaryGreen.withOpacity(0.15),
+                        color: AppColors.primaryGreen.withValues(alpha: 0.15),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       )
                     ]
                   : [
                       BoxShadow(
-                        color: AppColors.black.withOpacity(0.02),
+                        color: AppColors.black.withValues(alpha: 0.02),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       )
@@ -529,8 +547,8 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                AppColors.black.withOpacity(0.0),
-                                AppColors.black.withOpacity(0.4),
+                                AppColors.black.withValues(alpha: 0.0),
+                                AppColors.black.withValues(alpha: 0.4),
                               ],
                             ),
                           ),
@@ -569,7 +587,8 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                           width: R.w(64),
                           height: R.w(64),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryGreen.withOpacity(0.08),
+                            color:
+                                AppColors.primaryGreen.withValues(alpha: 0.08),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -631,7 +650,7 @@ class DottedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.primaryGreen.withOpacity(0.3)
+      ..color = AppColors.primaryGreen.withValues(alpha: 0.3)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
