@@ -5,6 +5,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:animations/animations.dart';
 
 class OrderAcceptedSuccessView extends StatefulWidget {
   final Order order;
@@ -31,12 +32,22 @@ class _OrderAcceptedSuccessViewState extends State<OrderAcceptedSuccessView> {
   void _navigateToPickup() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => OrderDetailsView(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            OrderDetailsView(
           orderId: widget.order.id,
           orderNumber: widget.order.orderNumber,
           order: widget.order,
         ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SharedAxisTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: SharedAxisTransitionType.horizontal,
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }

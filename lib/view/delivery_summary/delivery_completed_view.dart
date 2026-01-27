@@ -5,6 +5,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/agent_bottom_nav_item.dart';
+import 'package:animations/animations.dart';
 
 class DeliverySummaryView extends StatefulWidget {
   const DeliverySummaryView({super.key});
@@ -363,8 +364,19 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
           if (!mounted) return;
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (_) => const AgentBottomNavView(),
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const AgentBottomNavView(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return SharedAxisTransition(
+                  animation: animation,
+                  secondaryAnimation: secondaryAnimation,
+                  transitionType: SharedAxisTransitionType.horizontal,
+                  child: child,
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 300),
             ),
           );
         },

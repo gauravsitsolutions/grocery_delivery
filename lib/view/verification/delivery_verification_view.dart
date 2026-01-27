@@ -6,6 +6,7 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/delivery_success_view.dart';
+import 'package:animations/animations.dart';
 
 class DeliveryVerificationView extends StatefulWidget {
   final int orderId;
@@ -92,7 +93,11 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
         elevation: 0,
         foregroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Remix.arrow_left_line),
+          icon: Icon(
+            Theme.of(context).platform == TargetPlatform.iOS
+                ? Remix.arrow_left_s_line
+                : Remix.arrow_left_line,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -286,10 +291,24 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                             // Navigate to Delivered Details View
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => DeliverySuccessView(
+                              PageRouteBuilder(
+                                pageBuilder:
+                                    (context, animation, secondaryAnimation) =>
+                                        DeliverySuccessView(
                                   order: viewModel.order!,
                                 ),
+                                transitionsBuilder: (context, animation,
+                                    secondaryAnimation, child) {
+                                  return SharedAxisTransition(
+                                    animation: animation,
+                                    secondaryAnimation: secondaryAnimation,
+                                    transitionType:
+                                        SharedAxisTransitionType.horizontal,
+                                    child: child,
+                                  );
+                                },
+                                transitionDuration:
+                                    const Duration(milliseconds: 300),
                               ),
                             );
                           } else {

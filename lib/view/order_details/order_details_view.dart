@@ -95,7 +95,11 @@ class OrderDetailsView extends StatelessWidget {
       backgroundColor: AppColors.white,
       foregroundColor: AppColors.black,
       leading: IconButton(
-        icon: const Icon(Remix.arrow_left_line),
+        icon: Icon(
+          Theme.of(context).platform == TargetPlatform.iOS
+              ? Remix.arrow_left_s_line
+              : Remix.arrow_left_line,
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       actions: [

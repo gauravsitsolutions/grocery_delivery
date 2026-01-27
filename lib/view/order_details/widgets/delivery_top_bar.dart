@@ -15,7 +15,9 @@ class DeliveryTopBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildCircleButton(
-            icon: Remix.arrow_left_line,
+            icon: Theme.of(context).platform == TargetPlatform.iOS
+                ? Remix.arrow_left_s_line
+                : Remix.arrow_left_line,
             onTap: () => Navigator.pop(context),
           ),
           _buildEstTimeCard(),

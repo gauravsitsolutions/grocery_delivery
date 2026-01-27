@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 
@@ -292,16 +291,9 @@ class OrderPickupScreen extends StatelessWidget {
                     item.product!.productImages.isNotEmpty
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
+                    child: CustomNetworkImage(
                       imageUrl: item.product!.productImages[0],
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Shimmer.fromColors(
-                        baseColor: AppColors.shimmerBase,
-                        highlightColor: AppColors.shimmerHighlight,
-                        child: Container(color: AppColors.white),
-                      ),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.image_not_supported_outlined),
                     ),
                   )
                 : const Icon(Icons.shopping_basket_outlined,

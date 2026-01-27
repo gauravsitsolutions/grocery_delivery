@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 
@@ -64,8 +64,13 @@ class OrderCancelledDetailsView extends StatelessWidget {
                 children: [
                   InkWell(
                     onTap: () => Navigator.pop(context),
-                    child: Icon(RemixIcons.arrow_left_line,
-                        color: AppColors.white, size: R.sp(24)),
+                    child: Icon(
+                      Theme.of(context).platform == TargetPlatform.iOS
+                          ? Remix.arrow_left_s_line
+                          : Remix.arrow_left_line,
+                      color: AppColors.white,
+                      size: R.sp(24),
+                    ),
                   ),
                   SizedBox(width: R.w(8)),
                   Column(
@@ -425,11 +430,9 @@ class OrderCancelledDetailsView extends StatelessWidget {
                       height: R.w(60),
                       color: Colors.grey[100],
                       child: imageUrl != null
-                          ? CachedNetworkImage(
+                          ? CustomNetworkImage(
                               imageUrl: imageUrl,
                               fit: BoxFit.cover,
-                              errorWidget: (context, url, error) =>
-                                  const Icon(Icons.image),
                             )
                           : Icon(Icons.image, color: AppColors.grey),
                     ),

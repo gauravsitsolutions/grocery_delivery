@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
+import 'package:animations/animations.dart';
 import '../../utils/responsive.dart';
 
 class NavigationView extends StatelessWidget {
@@ -374,8 +375,18 @@ class NavigationView extends StatelessWidget {
             onTap: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const VerificationView(),
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const VerificationView(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return SharedAxisTransition(
+                      animation: animation,
+                      secondaryAnimation: secondaryAnimation,
+                      transitionType: SharedAxisTransitionType.horizontal,
+                      child: child,
+                    );
+                  },
+                  transitionDuration: const Duration(milliseconds: 300),
                 ),
               );
             },

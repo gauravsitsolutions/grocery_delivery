@@ -87,13 +87,14 @@ class AppPages {
       settings: settings,
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeThroughTransition(
+        return SharedAxisTransition(
           animation: animation,
           secondaryAnimation: secondaryAnimation,
+          transitionType: SharedAxisTransitionType.horizontal,
           child: child,
         );
       },
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: const Duration(milliseconds: 300),
     );
   }
 }

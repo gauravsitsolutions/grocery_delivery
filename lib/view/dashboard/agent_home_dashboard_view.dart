@@ -8,16 +8,16 @@ import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
+import 'package:animations/animations.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/dashboard_shimmer.dart';
@@ -1106,19 +1106,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(R.r(8)),
                       child: imageUrl != null
-                          ? CachedNetworkImage(
+                          ? CustomNetworkImage(
                               imageUrl: imageUrl,
-                              httpHeaders: _authToken != null
-                                  ? {'Authorization': 'Bearer $_authToken'}
-                                  : null,
                               fit: BoxFit.cover,
-                              placeholder: (context, url) => Shimmer.fromColors(
-                                baseColor: AppColors.shimmerBase,
-                                highlightColor: AppColors.shimmerHighlight,
-                                child: Container(color: AppColors.white),
-                              ),
-                              errorWidget: (context, url, error) => Icon(
-                                  RemixIcons.store_2_line,
+                              errorWidget: Icon(RemixIcons.store_2_line,
                                   color: AppColors.grey),
                             )
                           : Icon(RemixIcons.store_2_line,
@@ -1758,8 +1749,18 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Future<void> _showRejectSuccessDialog(int orderId) async {
     await Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(
-        builder: (context) => OrderRejectedFeedbackView(orderId: orderId),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            OrderRejectedFeedbackView(orderId: orderId),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SharedAxisTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: SharedAxisTransitionType.horizontal,
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
     _fetchOrders(refresh: false);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_page.dart';
@@ -18,6 +19,14 @@ import 'package:samrudhi_delivery_agent_app/services/navigation_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+    ),
+  );
   runApp(
     MultiProvider(
       providers: [

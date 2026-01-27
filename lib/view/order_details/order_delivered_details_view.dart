@@ -4,8 +4,8 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class OrderDeliveredDetailsView extends StatelessWidget {
@@ -66,8 +66,12 @@ class OrderDeliveredDetailsView extends StatelessWidget {
                 children: [
                   InkWell(
                     onTap: () => Navigator.pop(context),
-                    child: Icon(Remix.arrow_left_line,
-                        color: AppColors.white, size: R.sp(24)),
+                    child: Icon(
+                        Theme.of(context).platform == TargetPlatform.iOS
+                            ? Remix.arrow_left_s_line
+                            : Remix.arrow_left_line,
+                        color: AppColors.white,
+                        size: R.sp(24)),
                   ),
                   SizedBox(width: R.w(8)),
                   Column(
@@ -211,15 +215,13 @@ class OrderDeliveredDetailsView extends StatelessWidget {
             child: order.user?.profilePhoto != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(R.r(16)),
-                    child: CachedNetworkImage(
+                    child: CustomNetworkImage(
                       imageUrl: order.user!.profilePhoto!.startsWith('http')
                           ? order.user!.profilePhoto!
                           : '${AppUrls.baseUrl}/${order.user!.profilePhoto}',
                       fit: BoxFit.cover,
-                      errorWidget: (context, url, error) => Icon(
-                          Remix.user_fill,
-                          color: AppColors.grey400,
-                          size: R.sp(24)),
+                      errorWidget: Icon(Remix.user_fill,
+                          color: AppColors.grey400, size: R.sp(24)),
                     ),
                   )
                 : Icon(Remix.user_fill,
@@ -426,7 +428,7 @@ class OrderDeliveredDetailsView extends StatelessWidget {
           SizedBox(height: R.h(12)),
           ClipRRect(
             borderRadius: BorderRadius.circular(R.r(12)),
-            child: CachedNetworkImage(
+            child: CustomNetworkImage(
               imageUrl: order.pickupProof!.startsWith('http')
                   ? order.pickupProof!
                   : (order.pickupProof!.startsWith('/')
@@ -435,14 +437,6 @@ class OrderDeliveredDetailsView extends StatelessWidget {
               height: R.h(150),
               width: double.infinity,
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: AppColors.grey200,
-                child: const Center(child: CircularProgressIndicator()),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: AppColors.grey200,
-                child: const Center(child: Icon(Icons.error)),
-              ),
             ),
           ),
         ],

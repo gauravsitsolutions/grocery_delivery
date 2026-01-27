@@ -260,9 +260,16 @@ class _ProfileViewState extends State<ProfileView> {
               Container(
                 width: R.w(104),
                 height: R.w(104),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.softGreyBg,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.15),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
               ),
               Consumer<ProfileViewModel>(

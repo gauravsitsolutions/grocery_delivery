@@ -5,8 +5,8 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/view/verification/delivery_verification_view.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -135,21 +135,23 @@ class OrderDeliveryScreen extends StatelessWidget {
                           border: Border.all(color: AppColors.white, width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.black.withOpacity(0.1),
-                              blurRadius: 8,
+                              color: AppColors.primaryGreen
+                                  .withValues(alpha: 0.12),
+                              blurRadius: 12,
+                              spreadRadius: 2,
                             ),
                           ],
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(R.r(25)),
                           child: order.user?.profilePhoto != null
-                              ? CachedNetworkImage(
+                              ? CustomNetworkImage(
                                   imageUrl: order.user!.profilePhoto!
                                           .startsWith('http')
                                       ? order.user!.profilePhoto!
                                       : '${AppUrls.baseUrl}/${order.user!.profilePhoto}',
                                   fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) => Image.asset(
+                                  errorWidget: Image.asset(
                                       'assets/images/profile_placeholder.png'),
                                 )
                               : Image.asset(
@@ -285,14 +287,13 @@ class OrderDeliveryScreen extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(R.w(28)),
                           child: product?.productImages.isNotEmpty == true
-                              ? CachedNetworkImage(
+                              ? CustomNetworkImage(
                                   imageUrl: product!.productImages.first
                                           .startsWith('http')
                                       ? product.productImages.first
                                       : '${AppUrls.baseUrl}/${product.productImages.first}',
                                   fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) => Icon(
-                                      Remix.image_line,
+                                  errorWidget: Icon(Remix.image_line,
                                       color: AppColors.grey),
                                 )
                               : Icon(Remix.gift_fill, color: AppColors.grey),

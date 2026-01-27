@@ -113,8 +113,11 @@ class OrderViewModel extends ChangeNotifier {
         _apiService.getOrderItems(token, orderId),
       ]);
 
-      _order = results[0] as Order;
+      final fetchedOrder = results[0] as Order;
       _orderItems = results[1] as List<OrderItem>;
+
+      // Update the order object with the fetched items to ensure consistency across views
+      _order = fetchedOrder.copyWith(orderItems: _orderItems);
 
       // Sync checked items with backend state
       _checkedItems.clear();

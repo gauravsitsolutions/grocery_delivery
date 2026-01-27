@@ -93,11 +93,12 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                 : viewModel.myDeliveries.where((o) {
                     // 1. Status Filter
                     bool matchStatus = false;
+                    final orderStatus = o.status.toLowerCase();
                     if (_selectedStatus == 'Pending') {
-                      matchStatus =
-                          o.status != 'delivered' && o.status != 'cancelled';
+                      matchStatus = orderStatus != 'delivered' &&
+                          orderStatus != 'cancelled';
                     } else {
-                      matchStatus = o.status == statusFilter;
+                      matchStatus = orderStatus == statusFilter;
                     }
 
                     // 2. Date Filter
@@ -504,18 +505,21 @@ class _DeliveriesViewState extends State<DeliveriesView> {
       ),
       child: Row(
         children: [
-          _statusTab('Pending', active: _selectedStatus == 'Pending',
-              onTap: () {
+          _statusTab('Pending',
+              count: viewModel.deliveryStatus?.pendingOrders.toString(),
+              active: _selectedStatus == 'Pending', onTap: () {
             setState(() => _selectedStatus = 'Pending');
             viewModel.fetchActiveOrders(refresh: true);
           }),
-          _statusTab('Delivered', active: _selectedStatus == 'Delivered',
-              onTap: () {
+          _statusTab('Delivered',
+              count: viewModel.deliveryStatus?.deliveredOrders.toString(),
+              active: _selectedStatus == 'Delivered', onTap: () {
             setState(() => _selectedStatus = 'Delivered');
             viewModel.fetchHistoryOrders(refresh: true);
           }),
-          _statusTab('Cancelled', active: _selectedStatus == 'Cancelled',
-              onTap: () {
+          _statusTab('Cancelled',
+              count: viewModel.deliveryStatus?.cancelledOrders.toString(),
+              active: _selectedStatus == 'Cancelled', onTap: () {
             setState(() => _selectedStatus = 'Cancelled');
             viewModel.fetchHistoryOrders(refresh: true);
           }),

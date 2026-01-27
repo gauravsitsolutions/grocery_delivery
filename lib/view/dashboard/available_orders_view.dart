@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 // import 'package:lottie/lottie.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
@@ -25,28 +24,17 @@ class AvailableOrdersView extends StatefulWidget {
 
 class _AvailableOrdersViewState extends State<AvailableOrdersView> {
   final ScrollController _scrollController = ScrollController();
-  String?
-      _authToken; // Still needed for image headers if we don't move that to VM
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _loadAuthToken();
     // Fetch initial data using global provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OrderListViewModel>().fetchNewOrders(refresh: true);
     });
   }
 
-  Future<void> _loadAuthToken() async {
-    final token = await SharedPrefsUtil.getToken();
-    if (mounted) {
-      setState(() {
-        _authToken = token;
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -264,23 +252,11 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
                                     true
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(R.r(12)),
-                                child: CachedNetworkImage(
+                                child: CustomNetworkImage(
                                   imageUrl: AppUrls.productImages +
                                       order.orderItems.first.product!
                                           .productImages.first,
-                                  httpHeaders: _authToken != null
-                                      ? {'Authorization': 'Bearer $_authToken'}
-                                      : null,
                                   fit: BoxFit.cover,
-                                  placeholder: (context, url) =>
-                                      Shimmer.fromColors(
-                                    baseColor: Colors.grey[300]!,
-                                    highlightColor: Colors.grey[100]!,
-                                    child: Container(color: Colors.white),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      const Icon(Icons.error,
-                                          color: Colors.red),
                                 ),
                               )
                             : Icon(
