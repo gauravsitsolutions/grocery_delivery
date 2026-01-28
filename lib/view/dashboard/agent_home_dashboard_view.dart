@@ -79,6 +79,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   int _completedDeliveries = 0;
   int _pendingOrders = 0;
   int _cancelledOrders = 0;
+  double _earningsToday = 0.0;
   final int _dailyGoal = 15; // Hardcoded goal for now
 
   @override
@@ -280,6 +281,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             // So if server returns 0 or negative (invalid), ignore it to keep local count.
             if (summary.todayDutyTime > 0) {
               _secondsOnDuty = summary.todayDutyTime;
+            }
+
+            // Update stats from the new API
+            if (summary.stats != null) {
+              _completedDeliveries = summary.stats!.deliveredOrders;
+              _pendingOrders = summary.stats!.totalOrdersToday -
+                  summary.stats!.deliveredOrders; // Approx
+              _earningsToday = summary.stats!.earningsToday;
             }
           });
         }

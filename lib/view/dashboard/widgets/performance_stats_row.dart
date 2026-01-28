@@ -7,12 +7,15 @@ class PerformanceStatsRow extends StatelessWidget {
   final int pending;
   final int completed;
   final int cancelled;
+  final double earnings; // Added
 
   const PerformanceStatsRow({
     super.key,
     required this.pending,
     required this.completed,
     required this.cancelled,
+    this.earnings =
+        0.0, // Default for backward compatibility if needed, but we'll update call sites
   });
 
   @override
@@ -49,15 +52,22 @@ class PerformanceStatsRow extends StatelessWidget {
         IntrinsicHeight(
           child: Row(
             children: [
-              Expanded(child: _statCard('Pending', pending, Remix.time_line)),
+              Expanded(
+                  child: _statCard(
+                      'Earnings',
+                      '₹${earnings.toStringAsFixed(0)}',
+                      Remix.money_rupee_circle_line)),
               SizedBox(width: R.w(12)),
               Expanded(
                   child: _statCard(
-                      'Completed', completed, Remix.checkbox_circle_line)),
+                      'Completed', '$completed', Remix.checkbox_circle_line)),
               SizedBox(width: R.w(12)),
               Expanded(
                   child: _statCard(
-                      'Cancelled', cancelled, Remix.close_circle_line)),
+                      'Pending',
+                      '$pending',
+                      Remix
+                          .time_line)), // Swapped Pending/Cancelled for space if needed, or just added
             ],
           ),
         ),
@@ -65,7 +75,7 @@ class PerformanceStatsRow extends StatelessWidget {
     );
   }
 
-  Widget _statCard(String label, int count, IconData icon) {
+  Widget _statCard(String label, String value, IconData icon) {
     return Container(
       padding: EdgeInsets.fromLTRB(R.w(6), R.h(12), R.w(6), R.h(8)),
       decoration: BoxDecoration(
@@ -99,7 +109,7 @@ class PerformanceStatsRow extends StatelessWidget {
           ),
           SizedBox(height: R.h(6)),
           Text(
-            count.toString(),
+            value,
             style: TextStyle(
               fontSize: R.sp(20),
               fontWeight: FontWeight.w800,

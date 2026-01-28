@@ -14,6 +14,7 @@ class DashboardWaitingState extends StatelessWidget {
   final int onTimePercentage;
   final double loginHours;
   final bool isOnline; // Added parameter
+  final double earnings; // Added parameter
 
   const DashboardWaitingState({
     super.key,
@@ -25,6 +26,7 @@ class DashboardWaitingState extends StatelessWidget {
     this.onTimePercentage = 95, // Default value
     this.loginHours = 0.0,
     this.isOnline = true, // Default to true
+    this.earnings = 0.0,
   });
 
   @override
@@ -396,6 +398,7 @@ class DashboardWaitingState extends StatelessWidget {
           pending: pendingOrders,
           completed: completedToday,
           cancelled: cancelledOrders,
+          earnings: earnings,
         ),
 
         SizedBox(height: R.h(40)),
