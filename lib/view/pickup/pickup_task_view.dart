@@ -51,12 +51,8 @@ class _PickupTaskViewState extends State<PickupTaskView> {
             backgroundColor: AppColors.white,
             elevation: 0,
             leading: IconButton(
-              icon: Icon(
-                  Theme.of(context).platform == TargetPlatform.iOS
-                      ? Remix.arrow_left_s_line
-                      : Remix.arrow_left_line,
-                  color: AppColors.black,
-                  size: R.sp(20)),
+              icon: Icon(Icons.adaptive.arrow_back,
+                  color: AppColors.black, size: R.sp(20)),
               onPressed: () => Navigator.pop(context),
             ),
             centerTitle: true,
@@ -95,6 +91,18 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                   children: [
                     _buildLocationCard(order),
                     SizedBox(height: R.h(24)),
+                    if (viewModel.error != null)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: R.h(16)),
+                        child: Text(
+                          viewModel.error!,
+                          style: TextStyle(
+                            color: AppColors.error,
+                            fontSize: R.sp(14),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     _buildItemChecklist(viewModel),
                     SizedBox(height: R.h(24)),
                     _buildPickupProof(viewModel),
@@ -289,6 +297,28 @@ class _PickupTaskViewState extends State<PickupTaskView> {
   }
 
   Widget _buildItemChecklist(OrderViewModel viewModel) {
+    if (viewModel.orderItems.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: R.h(32)),
+          child: Column(
+            children: [
+              Icon(RemixIcons.file_list_3_line,
+                  size: R.sp(48), color: AppColors.grey400),
+              SizedBox(height: R.h(12)),
+              Text(
+                'No items in this order',
+                style: TextStyle(
+                  color: AppColors.grey500,
+                  fontSize: R.sp(16),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Column(
       children: [
         Row(

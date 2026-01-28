@@ -601,8 +601,12 @@ class ApiService {
     dynamic itemsData = response['data'];
 
     // Handle nested Map format: { "status": true, "data": { "orderId": 1, "items": [...] } }
-    if (itemsData is Map && itemsData['items'] is List) {
-      itemsData = itemsData['items'];
+    if (itemsData is Map) {
+      if (itemsData['items'] is List) {
+        itemsData = itemsData['items'];
+      } else if (itemsData['order_items'] is List) {
+        itemsData = itemsData['order_items'];
+      }
     }
 
     if (response['status'] == true && itemsData is List) {

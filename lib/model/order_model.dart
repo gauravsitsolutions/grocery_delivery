@@ -416,7 +416,9 @@ class OrderItem {
       orderId: json['order_id'] ?? 0,
       productId: json['product_id'] ?? 0,
       quantity:
-          json['quantity'] != null ? (json['quantity'] as num).toInt() : 0,
+          json['quantity'] != null && (json['quantity'] as num).toInt() > 0
+              ? (json['quantity'] as num).toInt()
+              : 1, // Default to 1 if null or 0
       productBatchId: json['product_batch_id'],
       isPicked: json['isPicked'] == true ||
           json['is_picked'] == true ||

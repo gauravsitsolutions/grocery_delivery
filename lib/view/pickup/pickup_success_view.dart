@@ -19,7 +19,7 @@ class PickupSuccessView extends StatelessWidget {
         elevation: 0,
         backgroundColor: AppColors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
+          icon: Icon(Icons.adaptive.arrow_back,
               color: AppColors.black, size: R.sp(20)),
           onPressed: () => Navigator.pop(context),
         ),
