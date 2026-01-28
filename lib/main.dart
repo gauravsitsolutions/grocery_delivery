@@ -9,6 +9,7 @@ import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dar
 import 'package:samrudhi_delivery_agent_app/view_model/profile_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/delivery_summary_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/delivery_history_view_model.dart';
 import 'res/theme/app_theme.dart';
 
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
@@ -35,6 +36,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         ChangeNotifierProvider(create: (_) => NotificationsViewModel()),
         ChangeNotifierProvider(create: (_) => DeliverySummaryViewModel()),
+        ChangeNotifierProvider(create: (_) => DeliveryHistoryViewModel()),
       ],
       child: const MyApp(),
     ),

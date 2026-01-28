@@ -197,13 +197,14 @@ class OrderListViewModel extends ChangeNotifier {
       if (!_isHistoryList) return;
 
       if (refresh) {
-        _myDeliveries = response.data;
+        _myDeliveries = response.deliveries.data;
       } else {
-        _myDeliveries.addAll(response.data);
+        _myDeliveries.addAll(response.deliveries.data);
       }
 
-      _myDeliveriesHasMore = (response.currentPage ?? _myDeliveriesPage) <
-          (response.lastPage ?? _myDeliveriesPage);
+      _myDeliveriesHasMore =
+          (response.deliveries.currentPage ?? _myDeliveriesPage) <
+              (response.deliveries.lastPage ?? _myDeliveriesPage);
       _isMyDeliveriesLoading = false;
       _isMyDeliveriesLoadingMore = false;
       notifyListeners();

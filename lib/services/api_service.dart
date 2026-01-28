@@ -11,6 +11,7 @@ import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/delivery_summary_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/delivery_history_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
@@ -495,7 +496,8 @@ class ApiService {
     return OrderResponse.fromJson(response);
   }
 
-  Future<OrderResponse> getDeliveries(String? token, {int page = 1}) async {
+  Future<DeliveryHistoryResponse> getDeliveries(String? token,
+      {int page = 1}) async {
     final uri = Uri.parse('${AppUrls.deliveries}?page=$page');
     log('API Request: GET $uri');
 
@@ -505,9 +507,15 @@ class ApiService {
         ));
 
     if (response is List) {
-      return OrderResponse.fromJson({'data': response, 'status': true});
+      // Handle list response if it happens (legacy)
+      return DeliveryHistoryResponse(
+        status: true,
+        summary: DeliveryHistorySummary.empty(),
+        inProgress: [],
+        deliveries: OrderResponse.fromJson({'data': response, 'status': true}),
+      );
     }
-    return OrderResponse.fromJson(response);
+    return DeliveryHistoryResponse.fromJson(response);
   }
 
   Future<OrderResponse> searchDeliveries(String? token, String query,

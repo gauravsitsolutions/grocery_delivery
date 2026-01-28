@@ -4,6 +4,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/agent_home_dashboard_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/deliveries/deliveries_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/delivery_history/delivery_history_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/profile/profile_view.dart';
 import '../../constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
@@ -147,7 +148,13 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                 }
               },
               onViewDeliveries: () {
-                _controller.jumpToTab(1); // Switch to Deliveries Tab (index 1)
+                // _controller.jumpToTab(1);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DeliveryHistoryView(),
+                  ),
+                );
               },
             ),
             const DeliveriesView(),

@@ -13,6 +13,7 @@ class AppRoutes {
   static const customerInfo = '/customer-info';
   static const profile = '/profile';
   static const deliverySummary = '/delivery-summary';
+  static const deliveryHistory = '/delivery-history';
   static const navigationView = '/navigation-view';
   static const verificationView = '/verification-view';
   static const orderDetails = '/order-details';

@@ -7,6 +7,7 @@ import 'package:samrudhi_delivery_agent_app/auth/login/login_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/agent_home_dashboard_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/customer_info/customer_info_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/delivery_history/delivery_history_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
@@ -56,6 +57,9 @@ class AppPages {
         break;
       case AppRoutes.deliverySummary:
         page = const DeliverySummaryView();
+        break;
+      case AppRoutes.deliveryHistory:
+        page = const DeliveryHistoryView();
         break;
       case AppRoutes.navigationView:
         page = const NavigationView();
