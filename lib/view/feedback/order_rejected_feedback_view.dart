@@ -3,6 +3,8 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
+import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+
 class OrderRejectedFeedbackView extends StatelessWidget {
   final int orderId;
   final String reason;
@@ -17,13 +19,12 @@ class OrderRejectedFeedbackView extends StatelessWidget {
   Widget build(BuildContext context) {
     R.init(context);
     return Scaffold(
-      backgroundColor:
-          AppColors.white, // In the image it looks very clean white
+      backgroundColor: AppColors.scaffoldBg, // Consistent background
       appBar: AppBar(
         backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(RemixIcons.close_line, color: AppColors.black),
+          icon: Icon(Icons.adaptive.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
         centerTitle: true,
@@ -102,7 +103,7 @@ class OrderRejectedFeedbackView extends StatelessWidget {
               padding:
                   EdgeInsets.symmetric(horizontal: R.w(20), vertical: R.h(10)),
               decoration: BoxDecoration(
-                color: const Color(0xFF121212), // Very dark black/grey pill
+                color: AppColors.black, // Consistent black
                 borderRadius: BorderRadius.circular(R.r(24)),
                 boxShadow: [
                   BoxShadow(
@@ -155,11 +156,14 @@ class OrderRejectedFeedbackView extends StatelessWidget {
               margin: EdgeInsets.only(bottom: R.h(20)),
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.bottomNav,
+                    (route) => false,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFF00FF66), // Bright neon green from image
+                  backgroundColor: AppColors.primaryGreen,
                   foregroundColor: AppColors.black,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(R.r(30)),

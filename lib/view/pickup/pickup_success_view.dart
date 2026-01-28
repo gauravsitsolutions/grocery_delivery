@@ -1,3 +1,4 @@
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 
 import 'package:remixicon/remixicon.dart';
@@ -38,23 +39,30 @@ class PickupSuccessView extends StatelessWidget {
         child: Column(
           children: [
             SizedBox(height: R.h(20)),
+
             // Success Indicator
-            Container(
-              padding: EdgeInsets.all(R.w(30)),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryGreen.withOpacity(0.1),
-              ),
+            AvatarGlow(
+              glowColor: AppColors.primaryGreen,
+              duration: const Duration(milliseconds: 2000),
+              repeat: true,
+              startDelay: const Duration(milliseconds: 100),
               child: Container(
-                padding: EdgeInsets.all(R.w(24)),
-                decoration: const BoxDecoration(
+                padding: EdgeInsets.all(R.w(30)),
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primaryGreen,
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
                 ),
-                child: Icon(
-                  Remix.check_line,
-                  color: AppColors.white,
-                  size: R.sp(48),
+                child: Container(
+                  padding: EdgeInsets.all(R.w(24)),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primaryGreen,
+                  ),
+                  child: Icon(
+                    Remix.check_line,
+                    color: AppColors.white,
+                    size: R.sp(48),
+                  ),
                 ),
               ),
             ),
@@ -329,7 +337,7 @@ class PickupSuccessView extends StatelessWidget {
             // View Items List
             TextButton.icon(
               onPressed: () {
-                // TODO: Show items bottom sheet or dialog
+                _showItemsList(context);
               },
               icon: Icon(Remix.list_check_2,
                   color: AppColors.primaryGreen, size: R.sp(18)),
@@ -343,6 +351,118 @@ class PickupSuccessView extends StatelessWidget {
               ),
             ),
             SizedBox(height: R.h(20)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showItemsList(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(R.r(24))),
+        ),
+        child: Column(
+          children: [
+            SizedBox(height: R.h(12)),
+            Container(
+              width: R.w(40),
+              height: R.h(4),
+              decoration: BoxDecoration(
+                color: AppColors.grey300,
+                borderRadius: BorderRadius.circular(R.r(2)),
+              ),
+            ),
+            SizedBox(height: R.h(16)),
+            Text(
+              'Order Items',
+              style: TextStyle(
+                fontSize: R.sp(18),
+                fontWeight: FontWeight.bold,
+                color: AppColors.headingText,
+              ),
+            ),
+            SizedBox(height: R.h(16)),
+            Expanded(
+              child: order.orderItems.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No items found',
+                        style: TextStyle(
+                          color: AppColors.bodyText,
+                          fontSize: R.sp(16),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: R.w(20), vertical: R.h(8)),
+                      itemCount: order.orderItems.length,
+                      itemBuilder: (context, index) {
+                        final item = order.orderItems[index];
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: R.h(16)),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: R.w(60),
+                                height: R.w(60),
+                                decoration: BoxDecoration(
+                                  color: AppColors.softGreyBg,
+                                  borderRadius: BorderRadius.circular(R.r(12)),
+                                  image: item.product?.productImageUrls
+                                              .isNotEmpty ==
+                                          true
+                                      ? DecorationImage(
+                                          image: NetworkImage(item
+                                              .product!.productImageUrls.first),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                                child: item.product?.productImageUrls.isEmpty ??
+                                        true
+                                    ? Icon(Remix.image_line,
+                                        color: AppColors.grey400,
+                                        size: R.sp(24))
+                                    : null,
+                              ),
+                              SizedBox(width: R.w(16)),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.product?.name ?? 'Unknown Product',
+                                      style: TextStyle(
+                                        fontSize: R.sp(16),
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    SizedBox(height: R.h(4)),
+                                    Text(
+                                      'Qty: ${item.quantity}',
+                                      style: TextStyle(
+                                        fontSize: R.sp(14),
+                                        color: AppColors.bodyText,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
           ],
         ),
       ),

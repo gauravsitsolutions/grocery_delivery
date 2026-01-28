@@ -665,7 +665,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
       // Navigate to Pickup Success View
       PersistentNavBarNavigator.pushNewScreen(
         context,
-        screen: PickupSuccessView(order: widget.order),
+        screen: PickupSuccessView(order: viewModel.order ?? widget.order),
         withNavBar: false,
         pageTransitionAnimation: PageTransitionAnimation.cupertino,
       );

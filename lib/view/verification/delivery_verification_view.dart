@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
@@ -108,19 +109,26 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
+
               // Header Icon
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Remix.shield_check_line,
-                    size: 50,
-                    color: AppColors.primaryGreen,
+              AvatarGlow(
+                glowColor: AppColors.primaryGreen,
+                duration: const Duration(milliseconds: 2000),
+                repeat: true,
+                startDelay: const Duration(milliseconds: 100),
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Remix.shield_check_line,
+                      size: 50,
+                      color: AppColors.primaryGreen,
+                    ),
                   ),
                 ),
               ),

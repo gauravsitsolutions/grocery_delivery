@@ -35,7 +35,7 @@ class OrderDeliveryScreen extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new,
+            icon: Icon(Icons.adaptive.arrow_back,
                 color: AppColors.black, size: R.sp(18)),
             padding: EdgeInsets.zero,
             onPressed: () => Navigator.pop(context),
