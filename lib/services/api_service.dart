@@ -933,11 +933,15 @@ class ApiService {
           headers: await _getHeaders(token),
         ));
 
-    if (response['status'] == true && response['data'] != null) {
-      return DeliverySummary.fromJson(response['data']);
+    if (response['status'] == true) {
+      // The response structure is flat: { "status": true, ...fields }
+      // So we pass the whole response (excluding status check which we just did)
+      // or just pass the whole map to fromJson if it handles it.
+      // But our model expects the fields directly.
+      return DeliverySummary.fromJson(response);
     }
 
-    // Fallback or empty if structure differs
-    return DeliverySummary.fromJson(response);
+    return DeliverySummary(
+        completedCount: 0, totalDistanceKm: 0, avgDeliveryTimeMin: 0);
   }
 }

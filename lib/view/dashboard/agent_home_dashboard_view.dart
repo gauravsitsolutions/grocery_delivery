@@ -1485,6 +1485,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   dailyGoal: _dailyGoal,
                                   pendingOrders: _pendingOrders,
                                   cancelledOrders: _cancelledOrders,
+                                  earnings: _earningsToday,
                                 ),
                               )
                             : Column(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/delivery_summary_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/delivery_summary_model.dart';
 import 'package:intl/intl.dart';
 
 class DeliverySummaryView extends StatefulWidget {
@@ -120,54 +121,81 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
     );
   }
 
-  Widget _buildSummaryContent(dynamic summary) {
-    // Assuming summary is DeliverySummary object
+  Widget _buildSummaryContent(DeliverySummary summary) {
     return ListView(
       padding: EdgeInsets.all(R.w(16)),
       children: [
-        _statCard('Total Deliveries', '${summary.totalDeliveries}'),
+        _statCard('Completed Orders', '${summary.completedCount}'),
         SizedBox(height: R.h(16)),
-        _statCard(
-            'Total Earnings', '₹${summary.totalEarnings.toStringAsFixed(2)}'),
+        _statCard('Total Distance', '${summary.totalDistanceKm} km'),
         SizedBox(height: R.h(16)),
-        _statCard('Total Distance', '${summary.totalDistance} km'),
-        SizedBox(height: R.h(16)),
-        _statCard('Duration', '${summary.totalDurationHours} hrs'),
+        _statCard('Avg. Delivery Time',
+            '${summary.avgDeliveryTimeMin.toStringAsFixed(1)} min'),
       ],
     );
   }
 
   Widget _statCard(String title, String value) {
+    IconData icon;
+    Color color;
+
+    if (title.contains('Orders')) {
+      icon = Icons.check_circle_outline;
+      color = Colors.green;
+    } else if (title.contains('Distance')) {
+      icon = Icons.directions_bike;
+      color = Colors.blue;
+    } else {
+      icon = Icons.timer;
+      color = Colors.orange;
+    }
+
     return Container(
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
             offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: R.sp(14),
+          Container(
+            padding: EdgeInsets.all(R.w(12)),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
+            child: Icon(icon, color: color, size: R.sp(24)),
           ),
-          SizedBox(height: R.h(8)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: R.sp(24),
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+          SizedBox(width: R.w(16)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: R.sp(14),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: R.h(4)),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: R.sp(20),
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
