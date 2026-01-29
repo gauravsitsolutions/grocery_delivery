@@ -95,8 +95,8 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                     bool matchStatus = false;
                     final orderStatus = o.status.toLowerCase();
                     if (_selectedStatus == 'Pending') {
-                      matchStatus = orderStatus != 'delivered' &&
-                          orderStatus != 'cancelled';
+                      // Trust the API queue response for active orders
+                      matchStatus = true;
                     } else {
                       matchStatus = orderStatus == statusFilter;
                     }

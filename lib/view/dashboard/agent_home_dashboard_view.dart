@@ -28,6 +28,7 @@ import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -373,6 +374,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           _hasMoreMyOrders = (myOrdersResponse.currentPage ?? 1) <
               (myOrdersResponse.lastPage ?? 1);
 
+          // Sync pending orders with local queue length for consistency
+          _pendingOrders = _myOrders.length;
+
           if (activeOrder != null) {
             _currentOrder = activeOrder;
             // Ensure this active order is also reflected in myOrders list if it matches
@@ -540,8 +544,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       // Find the order object to pass to the next screen
       // Find the order object to pass to the next screen
       Order? orderToAccept;
+      bool isFromNewRequests = false;
       try {
         orderToAccept = _newRequests.firstWhere((o) => o.id == orderId);
+        isFromNewRequests = true;
       } catch (_) {
         try {
           orderToAccept = _availableOrders.firstWhere((o) => o.id == orderId);
@@ -570,7 +576,33 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
       if (response['status'] == true || response['status'] == 'success') {
         if (!context.mounted) return;
-        _showAcceptSuccessDialog(orderToAccept);
+
+        // --- LOCAL STATE UPDATE ---
+        setState(() {
+          // 1. Remove from source list
+          if (isFromNewRequests) {
+            _newRequests.removeWhere((o) => o.id == orderId);
+          } else {
+            _availableOrders.removeWhere((o) => o.id == orderId);
+          }
+
+          // 2. Add to My Queue (at the end usually, or sorted by creation)
+          // Ideally we clone it and status=accepted, but for now moving the object is fine
+          // We assume the API returns the updated list on next refresh, but for immediate UI:
+          _myOrders.add(orderToAccept!);
+
+          // 3. Update Pending Count (Active Queue)
+          _pendingOrders = _myOrders.length;
+
+          // 4. Update Current Order if null
+          if (_currentOrder == null && _myOrders.isNotEmpty) {
+            _currentOrder = _myOrders.first;
+          }
+
+          _removingOrderIds.remove(orderId);
+        });
+
+        _showAcceptSuccessDialog(orderToAccept!);
       } else {
         if (!context.mounted) return;
         CustomSnackBar.showError(
@@ -1385,7 +1417,20 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _dashboardHeader(isOnline),
-              SizedBox(height: R.h(12)),
+
+              // Always Visible Stats
+              Padding(
+                padding: EdgeInsets.only(bottom: R.h(24)),
+                child: PerformanceStatsRow(
+                  pending: _pendingOrders > 0
+                      ? _pendingOrders
+                      : _myOrders.length, // Fallback to queue length
+                  completed: _completedDeliveries,
+                  cancelled: _cancelledOrders,
+                  loginHours: _secondsOnDuty / 3600.0,
+                ),
+              ),
+
               if (widget.isOnline && _isTimerPaused)
                 Padding(
                   padding: EdgeInsets.only(bottom: R.h(16)),
@@ -1503,10 +1548,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   isOnline: isOnline,
                                   completedToday: _completedDeliveries,
                                   dailyGoal: _dailyGoal,
-                                  pendingOrders: _pendingOrders,
-                                  cancelledOrders: _cancelledOrders,
-                                  earnings: _earningsToday,
-                                  loginHours: _secondsOnDuty / 3600.0,
                                 ),
                               )
                             : Column(
