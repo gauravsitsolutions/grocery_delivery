@@ -125,6 +125,7 @@ class Order {
   final DeliveryAddress? deliveryAddress;
   final Customer? user;
   final Vendor? vendor;
+  final String? distance;
 
   final int? deliveryAgentId;
   final int? warehouseId;
@@ -173,6 +174,7 @@ class Order {
     this.cancelComment,
     this.cancelledAt,
     this.deliveredAt,
+    this.distance,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -222,6 +224,7 @@ class Order {
       cancelComment: json['cancel_comment'],
       cancelledAt: _parseDate(json['cancelled_at']),
       deliveredAt: _parseDate(json['delivered_at']),
+      distance: json['distance']?.toString(),
     );
   }
 
@@ -257,6 +260,7 @@ class Order {
     String? cancelComment,
     DateTime? cancelledAt,
     DateTime? deliveredAt,
+    String? distance,
   }) {
     return Order(
       id: id ?? this.id,
@@ -290,6 +294,7 @@ class Order {
       cancelComment: cancelComment ?? this.cancelComment,
       cancelledAt: cancelledAt ?? this.cancelledAt,
       deliveredAt: deliveredAt ?? this.deliveredAt,
+      distance: distance ?? this.distance,
     );
   }
 }

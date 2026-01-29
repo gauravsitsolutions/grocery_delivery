@@ -7,6 +7,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
@@ -29,6 +30,7 @@ import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -81,7 +83,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   int _completedDeliveries = 0;
   int _pendingOrders = 0;
   int _cancelledOrders = 0;
-  double _earningsToday = 0.0;
+  // Removed _earningsToday
+
   final int _dailyGoal = 15; // Hardcoded goal for now
 
   @override
@@ -290,7 +293,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               _completedDeliveries = summary.stats!.deliveredOrders;
               _pendingOrders = summary.stats!.totalOrdersToday -
                   summary.stats!.deliveredOrders; // Approx
-              _earningsToday = summary.stats!.earningsToday;
             }
           });
         }
@@ -602,7 +604,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           _removingOrderIds.remove(orderId);
         });
 
-        _showAcceptSuccessDialog(orderToAccept!);
+        // 5. Sync with Deliveries Tab ViewModel
+        if (context.mounted) {
+          // We use read() here because we are in a callback/async function, not build
+          Provider.of<OrderListViewModel>(context, listen: false)
+              .fetchActiveOrders(refresh: true);
+        }
+
+        _showAcceptSuccessDialog(orderToAccept);
       } else {
         if (!context.mounted) return;
         CustomSnackBar.showError(
@@ -624,21 +633,38 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   Future<void> _rejectOrder(int orderId) async {
     if (!mounted) return;
 
-    setState(() {
-      _removingOrderIds.add(orderId);
-    });
-
     try {
       final token = _authToken ?? await SharedPrefsUtil.getToken();
-
       if (token == null) return;
 
-      // Show loading
-      if (mounted) {
-        CustomSnackBar.showError(context, 'Rejecting order...');
+      // 1. Fetch Reasons
+      log('Fetching cancellation reasons for rejection...');
+      final reasons = await _apiService.getCancellationReasons(token);
+
+      if (!mounted) return;
+
+      // 2. Show Dialog
+      final int? selectedReasonId = await showDialog<int>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => OrderCancellationDialog(reasons: reasons),
+      );
+
+      if (selectedReasonId == null) {
+        log('Rejection cancelled by user');
+        return; // User dismissed
       }
 
-      final response = await _apiService.rejectOrder(token, orderId);
+      // 3. Perform Rejection
+      setState(() {
+        _removingOrderIds.add(orderId);
+      });
+
+      log('Rejecting order $orderId with reason $selectedReasonId');
+
+      // Use cancelOrder if we have a reason, or rejectOrder as fallback
+      final response =
+          await _apiService.cancelOrder(token, orderId, selectedReasonId);
 
       if (!mounted) return;
 
@@ -655,6 +681,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       }
     } catch (e) {
       if (mounted) {
+        log('Error in rejection flow: $e');
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
         setState(() {
           _removingOrderIds.remove(orderId);
@@ -663,201 +690,207 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     }
   }
 
-  Widget _newRequestCard({
-    required int orderId, // Changed to int
-    required String title,
-    required String price,
-    required String meta,
-    required String acceptText,
-  }) {
+  Widget _newRequestCard(Order order) {
+    // Determine image URL
+    String? imageUrl;
+    if (order.orderItems.isNotEmpty && order.orderItems.first.product != null) {
+      final product = order.orderItems.first.product!;
+      if (product.productImageUrls.isNotEmpty) {
+        imageUrl = product.productImageUrls.first;
+      } else if (product.productImages.isNotEmpty) {
+        imageUrl = AppUrls.productImages + product.productImages.first;
+      }
+    }
+
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: R.w(4)),
+      margin: EdgeInsets.symmetric(horizontal: R.w(4), vertical: R.h(8)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
         border: Border.all(
-            color: AppColors.primaryGreen.withOpacity(0.3),
-            width: 1.5), // Subtle green border
+            color: AppColors.primaryGreen.withOpacity(0.1), width: 1),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.05),
-            blurRadius: 20,
+            color: AppColors.shadow.withValues(alpha: 0.08),
+            blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
         children: [
-          // Top Accent Line
-          Positioned(
-            top: 0,
-            left: 20,
-            right: 150, // Partial width
-            child: Container(
-              height: 4,
-              decoration: BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  borderRadius:
-                      BorderRadius.vertical(bottom: Radius.circular(4))),
-            ),
-          ),
-
+          // Header Section with Store Info
           Padding(
-            padding: EdgeInsets.fromLTRB(R.w(20), R.h(24), R.w(20), R.h(20)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: EdgeInsets.all(R.w(16)),
+            child: Row(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: R.w(8), vertical: R.h(4)),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryGreen.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(R.r(4)),
-                          ),
-                          child: Text(
-                            'NEW REQUEST',
-                            style: TextStyle(
-                              color: AppColors.primaryGreen,
-                              fontWeight: FontWeight.w800,
-                              fontSize: R.sp(12),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: R.w(10)),
-                        Text(
-                          'ID: #ORD-$orderId',
-                          style: TextStyle(
-                            color: AppColors.bodyText.withOpacity(0.5),
-                            fontSize: R.sp(13),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Icon(RemixIcons.timer_line,
-                            size: R.sp(16), color: AppColors.warning),
-                        SizedBox(width: R.w(4)),
-                        Text('45s',
-                            style: TextStyle(
-                                color: AppColors.warning,
-                                fontWeight: FontWeight.w800,
-                                fontSize: R.sp(14)))
-                      ],
-                    )
-                  ],
+                // Store/Product Image
+                Container(
+                  width: R.w(56),
+                  height: R.w(56),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(R.r(12)),
+                    border: Border.all(color: AppColors.borderLight),
+                    color: AppColors.softGreyBg,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(R.r(12)),
+                    child: imageUrl != null
+                        ? CustomNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: Icon(RemixIcons.store_2_line,
+                                color: AppColors.grey),
+                          )
+                        : Icon(RemixIcons.store_2_line,
+                            size: R.sp(24), color: AppColors.grey),
+                  ),
                 ),
-                SizedBox(height: R.h(8)),
-                Row(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.end, // Align text bottom
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          price,
-                          style: TextStyle(
-                            fontSize: R.sp(32),
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.headingText,
-                            height: 1.0,
-                          ),
-                        ),
-                        SizedBox(height: R.h(4)),
-                        Text(
-                          'Estimated Earnings',
-                          style: TextStyle(
-                            fontSize: R.sp(13),
-                            color: AppColors.bodyText.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(RemixIcons.navigation_fill,
-                                size: R.sp(16), color: AppColors.headingText),
-                            SizedBox(width: R.w(4)),
-                            Text(
-                              '3.2 km', // Mock distance
+                SizedBox(width: R.w(12)),
+                // Order Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              order.orderNumber,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: R.sp(18),
+                                fontSize: R.sp(16),
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.headingText,
                               ),
                             ),
-                          ],
-                        ),
-                        SizedBox(height: R.h(4)),
-                        Text(
-                          'Total Distance',
-                          style: TextStyle(
-                            fontSize: R.sp(13),
-                            color: AppColors.bodyText.withOpacity(0.7),
                           ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: R.w(8), vertical: R.h(4)),
+                            decoration: BoxDecoration(
+                              color: AppColors.softGreenBg,
+                              borderRadius: BorderRadius.circular(R.r(6)),
+                            ),
+                            child: Text(
+                              'NEW',
+                              style: TextStyle(
+                                fontSize: R.sp(10),
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: R.h(4)),
+                      Text(
+                        '${order.orderItems.length} items • 2.5 km', // Mock distance
+                        style: TextStyle(
+                          fontSize: R.sp(13),
+                          color: AppColors.bodyText.withOpacity(0.7),
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
+                      ),
+                      SizedBox(height: R.h(4)),
+                      Text(
+                        order.deliveryAddress?.addressLine1 ??
+                            'Delivery Address',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: R.sp(12),
+                          color: AppColors.bodyText.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Divider
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: R.w(16)),
+            child: Divider(height: 1, color: AppColors.borderLight),
+          ),
+
+          // Price and Actions
+          Padding(
+            padding: EdgeInsets.all(R.w(16)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'EARNINGS',
+                      style: TextStyle(
+                        fontSize: R.sp(10),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                        color: AppColors.bodyText.withOpacity(0.5),
+                      ),
+                    ),
+                    Text(
+                      '₹ ${order.totalAmount}',
+                      style: TextStyle(
+                        fontSize: R.sp(20),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.headingText,
+                      ),
                     ),
                   ],
                 ),
-                SizedBox(height: R.h(24)),
                 Row(
                   children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: R.h(50),
-                        child: ElevatedButton(
-                          onPressed: () => _rejectOrder(orderId),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.softGreyBg,
-                            foregroundColor: AppColors.headingText,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(R.r(12)),
-                            ),
+                    // Reject Button
+                    SizedBox(
+                      height: R.h(44),
+                      child: OutlinedButton(
+                        onPressed: () => _rejectOrder(order.id),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                              color: AppColors.error.withOpacity(0.5)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(R.r(12)),
                           ),
-                          child: Text(
-                            'Decline',
-                            style: TextStyle(
-                                fontSize: R.sp(16),
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.bodyText.withOpacity(0.8)),
+                          padding: EdgeInsets.symmetric(horizontal: R.w(16)),
+                        ),
+                        child: Text(
+                          'Reject',
+                          style: TextStyle(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w700,
+                            fontSize: R.sp(14),
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(width: R.w(16)),
-                    Expanded(
-                      child: SizedBox(
-                        height: R.h(50),
-                        child: ElevatedButton(
-                          onPressed: () => _acceptOrder(orderId),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
-                            foregroundColor: AppColors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(R.r(12)),
-                            ),
+                    SizedBox(width: R.w(12)),
+                    // Accept Button
+                    SizedBox(
+                      height: R.h(44),
+                      child: ElevatedButton(
+                        onPressed: () => _acceptOrder(order.id),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(R.r(12)),
                           ),
-                          child: Text(
-                            'Accept Order',
-                            style: TextStyle(
-                              fontSize: R.sp(16),
-                              fontWeight: FontWeight.w700,
-                            ),
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(horizontal: R.w(24)),
+                        ),
+                        child: Text(
+                          'Accept',
+                          style: TextStyle(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: R.sp(14),
                           ),
                         ),
                       ),
@@ -872,122 +905,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  Widget _tag(String text) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(6)),
-      decoration: BoxDecoration(
-        color: AppColors.grey.withValues(alpha: 0.1), // #F2F4F7 ideally
-        borderRadius: BorderRadius.circular(R.r(6)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: R.sp(12),
-          color: AppColors.bodyText.withValues(alpha: 0.8),
-          fontWeight: FontWeight.w500,
-          fontStyle: FontStyle.italic,
-        ),
-      ),
-    );
-  }
+  // Removed unused _tag method
 
   Widget _myQueueItem(Order order) {
-    // Logic for icon/badge
-    // Ideally use order.status or order.type.
-    // Mocking for visual match.
-    // We can assume first item is 'Pickup' and second is 'Drop' for visual demo as user requested "make like this"
-    // Using even/odd id or just forcing it for now.
-    bool isPickup = order.id % 2 != 0;
-
-    // In real app, check order status e.g.
-    // isPickup = order.status == 'accepted' || order.status == 'arrived_at_pickup';
-
     return Container(
-      padding: EdgeInsets.all(R.w(16)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(16)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(R.w(10)),
-            decoration: BoxDecoration(
-              color: AppColors.scaffoldBg,
-              borderRadius: BorderRadius.circular(R.r(12)),
-            ),
-            child: Icon(
-              isPickup
-                  ? RemixIcons.shopping_bag_3_fill
-                  : RemixIcons.home_smile_fill,
-              color: isPickup
-                  ? AppColors.primaryGreen
-                  : AppColors.info, // Blue for Drop
-              size: R.sp(24),
-            ),
-          ),
-          SizedBox(width: R.w(16)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  order.orderNumber, // e.g. "Fresh Mart - Sector 45"
-                  style: TextStyle(
-                    fontSize: R.sp(15),
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.headingText,
-                  ),
-                ),
-                SizedBox(height: R.h(4)),
-                Text(
-                  '${order.orderItems.length} Items • Ready in 2 mins',
-                  style: TextStyle(
-                    fontSize: R.sp(13),
-                    color: AppColors.bodyText.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // BADGE
-          Container(
-            padding:
-                EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
-            decoration: BoxDecoration(
-              color: isPickup
-                  ? AppColors.softGreenBg
-                  : AppColors.summaryBlueBg, // Soft Blue
-              borderRadius: BorderRadius.circular(R.r(6)),
-            ),
-            child: Text(
-              isPickup ? 'PICKUP' : 'DROP',
-              style: TextStyle(
-                fontSize: R.sp(11),
-                fontWeight: FontWeight.w700,
-                color: isPickup ? AppColors.primaryGreen : AppColors.info,
-              ),
-            ),
-          ),
-          SizedBox(width: R.w(12)),
-          Icon(Icons.chevron_right,
-              size: R.sp(20), color: AppColors.bodyText.withOpacity(0.4)),
-        ],
-      ),
-    );
-  }
-
-  Widget _availableOrderItem(Order order) {
-    return Container(
-      margin: EdgeInsets.only(bottom: R.h(16)),
-      padding: EdgeInsets.all(R.w(16)),
+      margin: EdgeInsets.only(bottom: R.h(12)),
+      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(12)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(20)),
@@ -999,106 +922,232 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           ),
         ],
       ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(R.w(12)),
+            decoration: BoxDecoration(
+              color: AppColors.softGreenBg,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              RemixIcons.box_3_fill,
+              color: AppColors.primaryGreen,
+              size: R.sp(22),
+            ),
+          ),
+          SizedBox(width: R.w(16)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ORDER #${order.orderNumber}',
+                  style: TextStyle(
+                    fontSize: R.sp(12),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.bodyText.withOpacity(0.5),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                SizedBox(height: R.h(2)),
+                Text(
+                  order.orderNumber.contains('Mart') ||
+                          order.orderNumber.contains('Hub')
+                      ? order.orderNumber
+                      : "Store # ${order.id}", // Fallback for demo
+                  style: TextStyle(
+                    fontSize: R.sp(16),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.headingText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            RemixIcons.arrow_right_s_line,
+            size: R.sp(22),
+            color: AppColors.bodyText.withOpacity(0.3),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _availableOrderItem(Order order) {
+    bool isNearby = (double.tryParse(order.distance ?? '0') ?? 0) < 3.0;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: R.h(20)),
+      padding: EdgeInsets.all(R.w(20)),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(R.r(24)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withValues(alpha: 0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              /* 
-              Container(
-                width: R.w(48),
-                height: R.w(48),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(R.r(12)),
-                ),
-                child: Center(
-                  child: Text(
-                    order.orderNumber.isNotEmpty ? order.orderNumber[0] : 'O',
+              // ORDER ID & TAG
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '#${order.orderNumber}',
+                        style: TextStyle(
+                          fontSize: R.sp(18),
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.headingText,
+                        ),
+                      ),
+                      SizedBox(width: R.w(10)),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: R.w(10), vertical: R.h(4)),
+                        decoration: BoxDecoration(
+                          color: isNearby
+                              ? const Color(0xFFE8FFF3)
+                              : const Color(0xFFF1F3F5),
+                          borderRadius: BorderRadius.circular(R.r(8)),
+                        ),
+                        child: Text(
+                          isNearby ? 'NEARBY' : 'STANDARD',
+                          style: TextStyle(
+                            fontSize: R.sp(11),
+                            fontWeight: FontWeight.w800,
+                            color: isNearby
+                                ? const Color(0xFF10CE67)
+                                : const Color(0xFF74828F),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: R.h(8)),
+                  // ITEMS & DISTANCE
+                  Row(
+                    children: [
+                      Icon(RemixIcons.shopping_bag_3_line,
+                          size: R.sp(16),
+                          color: AppColors.bodyText.withOpacity(0.5)),
+                      SizedBox(width: R.w(6)),
+                      Text(
+                        '${order.orderItems.length} items',
+                        style: TextStyle(
+                          fontSize: R.sp(14),
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.bodyText.withOpacity(0.6),
+                        ),
+                      ),
+                      SizedBox(width: R.w(16)),
+                      Icon(RemixIcons.map_pin_2_line,
+                          size: R.sp(16), color: const Color(0xFF10CE67)),
+                      SizedBox(width: R.w(6)),
+                      Text(
+                        '${order.distance ?? '0.0'} km',
+                        style: TextStyle(
+                          fontSize: R.sp(14),
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF10CE67),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              // PAYOUT
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹${order.totalAmount}',
                     style: TextStyle(
-                      fontSize: R.sp(20),
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primaryGreen,
+                      fontSize: R.sp(22),
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.headingText,
+                    ),
+                  ),
+                  Text(
+                    'EST. PAYOUT',
+                    style: TextStyle(
+                      fontSize: R.sp(10),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.bodyText.withOpacity(0.4),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: R.h(24)),
+          // BUTTONS
+          Row(
+            children: [
+              Expanded(
+                flex: 5,
+                child: SizedBox(
+                  height: R.h(54),
+                  child: ElevatedButton(
+                    onPressed: () => _acceptOrder(order.id),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10CE67),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(16)),
+                      ),
+                    ),
+                    child: Text(
+                      'Accept',
+                      style: TextStyle(
+                        fontSize: R.sp(16),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
               ),
               SizedBox(width: R.w(12)),
-              */
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      order.orderNumber, // e.g. Gourmet Grocery
-                      style: TextStyle(
-                        fontSize: R.sp(16),
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.headingText,
+                flex: 4,
+                child: SizedBox(
+                  height: R.h(54),
+                  child: ElevatedButton(
+                    onPressed: () => _rejectOrder(order.id),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF1F3F5),
+                      foregroundColor: const Color(0xFF74828F),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(16)),
                       ),
                     ),
-                    SizedBox(height: R.h(6)),
-                    Row(
-                      children: [
-                        Text(
-                          '0.8 km away', // Mock
-                          style: TextStyle(
-                            fontSize: R.sp(13),
-                            color: AppColors.bodyText.withOpacity(0.7),
-                          ),
-                        ),
-                        SizedBox(width: R.w(8)),
-                        Container(
-                          width: 3,
-                          height: 3,
-                          decoration: BoxDecoration(
-                            color: AppColors.bodyText.withOpacity(0.5),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        SizedBox(width: R.w(8)),
-                        Text(
-                          '₹${order.totalAmount}',
-                          style: TextStyle(
-                            fontSize: R.sp(14),
-                            color: AppColors.bodyText.withOpacity(0.7),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Reject',
+                      style: TextStyle(
+                        fontSize: R.sp(16),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ],
-                ),
-              ),
-              OutlinedButton(
-                onPressed: () => _acceptOrder(order.id),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primaryGreen),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(R.r(10)),
-                  ),
-                  padding: EdgeInsets.symmetric(
-                      horizontal: R.w(24), vertical: R.h(10)),
-                ),
-                child: Text(
-                  'Add',
-                  style: TextStyle(
-                    color: AppColors.primaryGreen,
-                    fontWeight: FontWeight.w700,
-                    fontSize: R.sp(14),
                   ),
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: R.h(16)),
-          // TAGS
-          Row(
-            children: [
-              _tag('Medium Task'),
-              SizedBox(width: R.w(8)),
-              _tag('No Cold Storage'),
             ],
           ),
         ],
@@ -1258,7 +1307,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: AppColors.headingText,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               fontSize: R.sp(14),
                             ),
                           ),
@@ -1301,9 +1350,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
-                    padding: EdgeInsets.symmetric(vertical: R.h(14)),
+                    padding: EdgeInsets.symmetric(vertical: R.h(16)),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(R.r(12)),
+                      borderRadius: BorderRadius.circular(R.r(14)),
                     ),
                     elevation: 0,
                   ),
@@ -1311,7 +1360,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Navigate to Pickup',
+                        'Navigate to Dropoff',
                         style: TextStyle(
                           fontSize: R.sp(16),
                           fontWeight: FontWeight.w700,
@@ -1346,7 +1395,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         ],
       ),
       child: IconButton(
-        icon: Icon(icon, size: R.sp(20), color: AppColors.primaryGreen),
+        icon: Icon(icon, size: R.sp(20), color: AppColors.headingText),
         onPressed: onTap,
         padding: EdgeInsets.all(R.w(8)),
         constraints: const BoxConstraints(),
@@ -1555,6 +1604,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                 children: [
                                   // Current Task (Priority)
                                   if (_currentOrder != null) ...[
+                                    _sectionHeader(
+                                        title: 'Current Task & Delivery'),
+                                    SizedBox(height: R.h(12)),
                                     _currentTaskCard(_currentOrder!),
                                     SizedBox(height: R.h(24)),
                                   ],
@@ -1686,17 +1738,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                         children: _newRequests
                                                             .map((order) =>
                                                                 _newRequestCard(
-                                                                  orderId:
-                                                                      order.id,
-                                                                  title: order
-                                                                      .orderNumber,
-                                                                  price:
-                                                                      '₹ ${order.totalAmount}',
-                                                                  meta:
-                                                                      '${order.orderItems.length} items',
-                                                                  acceptText:
-                                                                      'Accept',
-                                                                ))
+                                                                    order))
                                                             .toList(),
                                                       ),
                                       ),
