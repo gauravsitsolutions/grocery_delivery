@@ -398,7 +398,7 @@ class DashboardWaitingState extends StatelessWidget {
           pending: pendingOrders,
           completed: completedToday,
           cancelled: cancelledOrders,
-          earnings: earnings,
+          loginHours: loginHours,
         ),
 
         SizedBox(height: R.h(40)),

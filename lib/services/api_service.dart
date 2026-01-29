@@ -464,6 +464,22 @@ class ApiService {
     return OrderResponse.fromJson(response);
   }
 
+  Future<OrderResponse> getAvailableOrders(String? token,
+      {int page = 1}) async {
+    final uri = Uri.parse('${AppUrls.availableOrders}?page=$page');
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response is List) {
+      return OrderResponse.fromJson({'data': response, 'status': true});
+    }
+    return OrderResponse.fromJson(response);
+  }
+
   Future<Map<String, dynamic>> confirmPickup(String? token, int orderId) async {
     final uri = Uri.parse(AppUrls.pickupOrder(orderId));
     log('API Request: POST $uri');

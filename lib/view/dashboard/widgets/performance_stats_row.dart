@@ -7,15 +7,14 @@ class PerformanceStatsRow extends StatelessWidget {
   final int pending;
   final int completed;
   final int cancelled;
-  final double earnings; // Added
+  final double loginHours; // Added
 
   const PerformanceStatsRow({
     super.key,
     required this.pending,
     required this.completed,
     required this.cancelled,
-    this.earnings =
-        0.0, // Default for backward compatibility if needed, but we'll update call sites
+    this.loginHours = 0.0,
   });
 
   @override
@@ -53,10 +52,8 @@ class PerformanceStatsRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                  child: _statCard(
-                      'Earnings',
-                      '₹${earnings.toStringAsFixed(0)}',
-                      Remix.money_rupee_circle_line)),
+                  child: _statCard('Login Hours',
+                      '${loginHours.toStringAsFixed(1)}h', Remix.time_fill)),
               SizedBox(width: R.w(12)),
               Expanded(
                   child: _statCard(

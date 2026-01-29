@@ -49,7 +49,8 @@ class AgentDashboardView extends StatefulWidget {
 
 class _AgentDashboardViewState extends State<AgentDashboardView> {
   final ApiService _apiService = ApiService();
-  List<Order> _availableOrders = [];
+  List<Order> _newRequests = []; // From getNewOrders
+  List<Order> _availableOrders = []; // From getAvailableOrders
   List<Order> _myOrders = []; // Full list of accepted orders
   Order? _currentOrder; // The first one in the queue
   bool _isLoading = true;
@@ -346,8 +347,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         // If we want auto-nav, we can keep it, but let's make sure _currentOrder is set below
       }
 
-      // Fetch new orders
-      final availableResponse = await _apiService.getNewOrders(token, page: 1);
+      // Fetch new orders (New Requests)
+      final newRequestsResponse =
+          await _apiService.getNewOrders(token, page: 1);
+
+      // Fetch available orders (Nearby Available)
+      final availableResponse =
+          await _apiService.getAvailableOrders(token, page: 1);
 
       // Fetch my orders (queue)
       final myOrdersResponse = await _apiService.getMyOrders(token, page: 1);
@@ -356,6 +362,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         setState(() {
           _authToken = token;
           log('Auth Token Set: ${_authToken?.substring(0, 10)}...'); // Debug log
+          _newRequests = newRequestsResponse.data;
           _availableOrders = availableResponse.data;
           _myOrders = myOrdersResponse.data;
 
@@ -400,7 +407,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           }
         } else {
           // Only show error UI if it's a forced refresh or we have no data at all
-          if (refresh || (_availableOrders.isEmpty && _myOrders.isEmpty)) {
+          if (refresh ||
+              (_availableOrders.isEmpty &&
+                  _myOrders.isEmpty &&
+                  _newRequests.isEmpty)) {
             setState(() {
               _error = e.toString();
               _isLoading = false;
@@ -451,7 +461,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       if (token == null) return;
 
       final nextPage = _availablePage + 1;
-      final response = await _apiService.getNewOrders(token, page: nextPage);
+      final response =
+          await _apiService.getAvailableOrders(token, page: nextPage);
 
       if (mounted) {
         setState(() {
@@ -527,23 +538,31 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       CustomSnackBar.showSuccess(context, 'Accepting order...');
 
       // Find the order object to pass to the next screen
-      final orderToAccept = _availableOrders.firstWhere(
-        (o) => o.id == orderId,
-        orElse: () => Order(
-          id: orderId,
-          userId: _userProfile?.userId ?? 0,
-          orderNumber: '',
-          subtotal: '0',
-          deliveryCharge: '0',
-          discount: '0',
-          couponDiscount: '0',
-          totalAmount: '0',
-          orderItems: [],
-          status: 'accepted',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+      // Find the order object to pass to the next screen
+      Order? orderToAccept;
+      try {
+        orderToAccept = _newRequests.firstWhere((o) => o.id == orderId);
+      } catch (_) {
+        try {
+          orderToAccept = _availableOrders.firstWhere((o) => o.id == orderId);
+        } catch (_) {
+          // Fallback if not found in lists (shouldn't happen mainly)
+          orderToAccept = Order(
+            id: orderId,
+            userId: _userProfile?.userId ?? 0,
+            orderNumber: '',
+            subtotal: '0',
+            deliveryCharge: '0',
+            discount: '0',
+            couponDiscount: '0',
+            totalAmount: '0',
+            orderItems: [],
+            status: 'accepted',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+        }
+      }
 
       final response = await _apiService.acceptOrder(token, orderId);
 
@@ -1472,7 +1491,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     opacity: isOnline ? 1.0 : 0.6,
                     child: Column(
                       children: [
-                        (_availableOrders.isEmpty &&
+                        (_newRequests.isEmpty &&
+                                _availableOrders.isEmpty &&
                                 _myOrders.isEmpty &&
                                 _currentOrder == null &&
                                 !_isLoading)
@@ -1486,6 +1506,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   pendingOrders: _pendingOrders,
                                   cancelledOrders: _cancelledOrders,
                                   earnings: _earningsToday,
+                                  loginHours: _secondsOnDuty / 3600.0,
                                 ),
                               )
                             : Column(
@@ -1604,7 +1625,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                         ),
                                                       ],
                                                     ))
-                                                : _availableOrders.isEmpty
+                                                : _newRequests.isEmpty
                                                     ? Container(
                                                         key: const ValueKey(
                                                             'empty'),
@@ -1620,19 +1641,22 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                             style: TextStyle(
                                                                 color: AppColors
                                                                     .bodyText)))
-                                                    : _newRequestCard(
-                                                        orderId:
-                                                            _availableOrders
-                                                                .first.id,
-                                                        title: _availableOrders
-                                                            .first
-                                                            .orderNumber, // e.g. Costco
-                                                        price:
-                                                            '₹ ${_availableOrders.first.totalAmount}',
-                                                        meta:
-                                                            '${_availableOrders.first.orderItems.length} items', // e.g. 15 items
-                                                        acceptText:
-                                                            'Accept', // Ignored by newRequestCard but kept compatible
+                                                    : Column(
+                                                        children: _newRequests
+                                                            .map((order) =>
+                                                                _newRequestCard(
+                                                                  orderId:
+                                                                      order.id,
+                                                                  title: order
+                                                                      .orderNumber,
+                                                                  price:
+                                                                      '₹ ${order.totalAmount}',
+                                                                  meta:
+                                                                      '${order.orderItems.length} items',
+                                                                  acceptText:
+                                                                      'Accept',
+                                                                ))
+                                                            .toList(),
                                                       ),
                                       ),
                                     ],
@@ -1677,9 +1701,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                       SizedBox(height: R.h(12)),
                                       // ... logic for available list or mock
                                       Builder(builder: (context) {
-                                        final remainingOrders =
-                                            _availableOrders.skip(1).toList();
-                                        if (remainingOrders.isEmpty) {
+                                        if (_availableOrders.isEmpty) {
                                           return Container(
                                               width: double.infinity,
                                               padding: EdgeInsets.symmetric(
@@ -1692,8 +1714,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                           AppColors.bodyText)));
                                         }
                                         return Column(
-                                          children: remainingOrders
-                                              .take(2)
+                                          children: _availableOrders
                                               .map((order) =>
                                                   _availableOrderItem(order))
                                               .toList(),
