@@ -193,7 +193,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                         contentPadding: EdgeInsets.zero,
                         filled: true,
                         fillColor: isFocused || hasValue
-                            ? AppColors.primaryGreen.withOpacity(0.05)
+                            ? AppColors.primaryGreen.withValues(alpha: 0.05)
                             : Colors.grey[50],
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -232,11 +232,13 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                         .read<OrderViewModel>()
                         .resendDeliveryOtp();
 
-                    if (success && mounted) {
+                    if (!context.mounted) return;
+
+                    if (success) {
                       _startTimer();
                       CustomSnackBar.showSuccess(
                           context, "OTP Sent Successfully");
-                    } else if (mounted) {
+                    } else {
                       setState(() => _canResend = true); // Re-enable if failed
                     }
                   },
@@ -333,7 +335,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 5,
-                    shadowColor: AppColors.primaryGreen.withOpacity(0.4),
+                    shadowColor: AppColors.primaryGreen.withValues(alpha: 0.4),
                   ),
                   child: viewModel.isLoading
                       ? const SizedBox(

@@ -12,22 +12,22 @@ class OrderShimmer extends StatelessWidget {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: Container(
-        margin: EdgeInsets.only(bottom: R.h(12)),
+        margin: EdgeInsets.only(bottom: R.h(16)),
         padding: EdgeInsets.all(R.w(16)),
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: BorderRadius.circular(R.r(18)),
+          borderRadius: BorderRadius.circular(R.r(24)),
         ),
         child: Column(
           children: [
             Row(
               children: [
                 Container(
-                  height: R.w(40),
-                  width: R.w(40),
+                  height: R.w(48),
+                  width: R.w(48),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(R.r(10)),
+                    borderRadius: BorderRadius.circular(R.r(16)),
                   ),
                 ),
                 SizedBox(width: R.w(12)),
@@ -36,46 +36,40 @@ class OrderShimmer extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: double.infinity,
-                        height: R.h(14),
+                        width: R.w(120),
+                        height: R.h(16),
                         color: Colors.white,
                       ),
                       SizedBox(height: R.h(8)),
                       Container(
-                        width: R.w(100),
-                        height: R.h(14),
+                        width: R.w(180),
+                        height: R.h(12),
                         color: Colors.white,
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: R.w(12)),
-                Container(
-                  width: R.w(50),
-                  height: R.h(16),
-                  color: Colors.white,
-                ),
               ],
             ),
-            SizedBox(height: R.h(16)),
+            SizedBox(height: R.h(20)),
             Row(
               children: [
                 Expanded(
                   child: Container(
-                    height: R.h(45),
+                    height: R.h(48),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(R.r(12)),
+                      borderRadius: BorderRadius.circular(R.r(14)),
                     ),
                   ),
                 ),
                 SizedBox(width: R.w(12)),
                 Expanded(
                   child: Container(
-                    height: R.h(45),
+                    height: R.h(48),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(R.r(12)),
+                      borderRadius: BorderRadius.circular(R.r(14)),
                     ),
                   ),
                 ),

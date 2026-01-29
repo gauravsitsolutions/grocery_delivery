@@ -450,7 +450,7 @@ class ApiService {
   }
 
   Future<OrderResponse> getNewOrders(String? token, {int page = 1}) async {
-    final uri = Uri.parse('${AppUrls.newOrders}?page=$page');
+    final uri = Uri.parse('${AppUrls.pendingList}?page=$page');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
@@ -494,6 +494,39 @@ class ApiService {
     } else {
       throw ValidationException(
           response['message'] ?? 'Failed to complete pickup');
+    }
+  }
+
+  Future<Map<String, dynamic>> startOrder(String? token, int orderId) async {
+    final uri = Uri.parse(AppUrls.startOrder(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(response['message'] ?? 'Failed to start order');
+    }
+  }
+
+  Future<Map<String, dynamic>> completeOrder(String? token, int orderId) async {
+    final uri = Uri.parse(AppUrls.completeOrder(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to complete order');
     }
   }
 
@@ -594,6 +627,23 @@ class ApiService {
     } else {
       throw ValidationException(
           response['message'] ?? 'Failed to reject order');
+    }
+  }
+
+  Future<Map<String, dynamic>> markAsPending(String? token, int orderId) async {
+    final uri = Uri.parse(AppUrls.markPending(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to mark order as pending');
     }
   }
 

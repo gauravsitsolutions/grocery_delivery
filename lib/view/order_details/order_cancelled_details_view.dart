@@ -79,7 +79,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
                       Text(
                         'ORDER DETAILS',
                         style: TextStyle(
-                          color: AppColors.white.withOpacity(0.8),
+                          color: AppColors.white.withValues(alpha: 0.8),
                           fontSize: R.sp(10),
                           fontWeight: FontWeight.w600,
                         ),
@@ -99,7 +99,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
               Text(
                 DateFormat('MMM dd, h:mm a').format(order.createdAt.toLocal()),
                 style: TextStyle(
-                  color: AppColors.white.withOpacity(0.8),
+                  color: AppColors.white.withValues(alpha: 0.8),
                   fontSize: R.sp(12),
                   fontWeight: FontWeight.w500,
                 ),
@@ -113,7 +113,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
             padding: EdgeInsets.all(R.w(12)),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.white.withOpacity(0.2),
+              color: AppColors.white.withValues(alpha: 0.2),
             ),
             child: Icon(
               RemixIcons.close_fill,
@@ -137,7 +137,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
           Text(
             'Refund will be processed within 24-48 hours',
             style: TextStyle(
-              color: AppColors.white.withOpacity(0.9),
+              color: AppColors.white.withValues(alpha: 0.9),
               fontSize: R.sp(13),
               fontWeight: FontWeight.w400,
             ),
@@ -156,7 +156,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
         borderRadius: BorderRadius.circular(R.r(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

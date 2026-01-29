@@ -1,3 +1,4 @@
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
@@ -19,168 +20,185 @@ class OrderRejectedFeedbackView extends StatelessWidget {
   Widget build(BuildContext context) {
     R.init(context);
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg, // Consistent background
-      appBar: AppBar(
-        backgroundColor: AppColors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.adaptive.arrow_back, color: AppColors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        centerTitle: true,
-        title: Text(
-          'Feedback',
-          style: TextStyle(
-            color: AppColors.headingText,
-            fontSize: R.sp(18),
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: R.w(24)),
-        child: Column(
-          children: [
-            const Spacer(flex: 2),
-            // Rejection Icon
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: R.w(140),
-                  height: R.w(140),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.05),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Container(
-                  width: R.w(110),
-                  height: R.w(110),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Container(
-                  width: R.w(80),
-                  height: R.w(80),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    RemixIcons.close_line,
-                    color: AppColors.error,
-                    size: R.sp(44),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: R.h(32)),
-            // Title
-            Text(
-              'Order Rejected',
-              style: TextStyle(
-                fontSize: R.sp(26),
-                fontWeight: FontWeight.w800,
-                color: AppColors.headingText,
-              ),
-            ),
-            SizedBox(height: R.h(8)),
-            // Order ID
-            Text(
-              '#ORD-$orderId',
-              style: TextStyle(
-                fontSize: R.sp(18),
-                color: AppColors.bodyText.withValues(alpha: 0.5),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: R.h(28)),
-            // Reason Pill
-            Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: R.w(20), vertical: R.h(10)),
-              decoration: BoxDecoration(
-                color: AppColors.black, // Consistent black
-                borderRadius: BorderRadius.circular(R.r(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.black.withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    RemixIcons.error_warning_fill,
-                    color: AppColors.white,
-                    size: R.sp(18),
-                  ),
-                  SizedBox(width: R.w(10)),
-                  Text(
-                    reason,
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontSize: R.sp(15),
-                      fontWeight: FontWeight.w600,
+      backgroundColor: AppColors.scaffoldBg,
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: R.w(24), vertical: R.h(20)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(),
+              // Animated Rejection Icon
+              AvatarGlow(
+                startDelay: const Duration(milliseconds: 100),
+                glowColor: AppColors.error,
+                glowShape: BoxShape.circle,
+                animate: true,
+                curve: Curves.fastOutSlowIn,
+                child: Material(
+                  elevation: 8.0,
+                  shape: const CircleBorder(),
+                  color: AppColors.white,
+                  child: Container(
+                    width: R.w(100),
+                    height: R.w(100),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.error.withValues(alpha: 0.1),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: R.w(70),
+                        height: R.w(70),
+                        decoration: const BoxDecoration(
+                            shape: BoxShape.circle, color: AppColors.error),
+                        child: Icon(
+                          RemixIcons.close_line,
+                          color: AppColors.white,
+                          size: R.sp(40),
+                        ),
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-            SizedBox(height: R.h(36)),
-            // Description
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: R.w(12)),
-              child: Text(
-                'This order has been returned to the pool.\nYou can now wait for new tasks.',
+              SizedBox(height: R.h(40)),
+
+              // Title
+              Text(
+                'Order Rejected',
+                style: TextStyle(
+                  fontSize: R.sp(28),
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.headingText,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              SizedBox(height: R.h(8)),
+
+              // Order ID
+              Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(6)),
+                decoration: BoxDecoration(
+                  color: AppColors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(R.r(8)),
+                ),
+                child: Text(
+                  'Order #$orderId',
+                  style: TextStyle(
+                    fontSize: R.sp(16),
+                    color: AppColors.bodyText.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              SizedBox(height: R.h(32)),
+
+              // Reason Card
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(R.w(20)),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(R.r(20)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadow.withValues(alpha: 0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: AppColors.borderLight.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Reason for Rejection',
+                      style: TextStyle(
+                        fontSize: R.sp(14),
+                        color: AppColors.bodyText.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: R.h(12)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          RemixIcons.error_warning_fill,
+                          color: AppColors.error,
+                          size: R.sp(20),
+                        ),
+                        SizedBox(width: R.w(8)),
+                        Flexible(
+                          child: Text(
+                            reason,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: R.sp(18),
+                              color: AppColors.headingText,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: R.h(32)),
+
+              // Description
+              Text(
+                'This order has been returned to the pool.\nYou can now look for other available orders.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: R.sp(16),
-                  color: AppColors.bodyText.withValues(alpha: 0.8),
+                  fontSize: R.sp(15),
+                  color: AppColors.bodyText.withValues(alpha: 0.6),
                   height: 1.5,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            const Spacer(flex: 3),
-            // Bottom Button
-            Container(
-              width: double.infinity,
-              height: R.h(60),
-              margin: EdgeInsets.only(bottom: R.h(20)),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.bottomNav,
-                    (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: AppColors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(R.r(30)),
+
+              const Spacer(),
+
+              // Back Button
+              SizedBox(
+                width: double.infinity,
+                height: R.h(56),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.bottomNav,
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.black,
+                    foregroundColor: AppColors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(R.r(16)),
+                    ),
                   ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Back to Dashboard',
-                  style: TextStyle(
-                    fontSize: R.sp(17),
-                    fontWeight: FontWeight.w700,
+                  child: Text(
+                    'Back to Dashboard',
+                    style: TextStyle(
+                      fontSize: R.sp(16),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
-            ),
-            SizedBox(height: R.h(20)),
-          ],
+              SizedBox(height: R.h(16)),
+            ],
+          ),
         ),
       ),
     );

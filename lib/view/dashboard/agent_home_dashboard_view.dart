@@ -1,7 +1,7 @@
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
-
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
@@ -73,6 +73,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   bool _hasMoreMyOrders = false;
   bool _isAvailableLoadingMore = false;
   bool _isMyOrdersLoadingMore = false;
+  bool _isAvailableExpanded = false; // Added to manage expansion state
 
   String? _authToken;
   final Set<int> _removingOrderIds = {};
@@ -83,7 +84,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   int _completedDeliveries = 0;
   int _pendingOrders = 0;
   int _cancelledOrders = 0;
-  // Removed _earningsToday
+  double _loginHours = 0.0; // Added for stats
 
   final int _dailyGoal = 15; // Hardcoded goal for now
 
@@ -150,18 +151,19 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     // Refresh data every 10 seconds
     _dataRefreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted && widget.isOnline) {
-        _refreshData();
+        refreshData();
       }
     });
   }
 
-  Future<void> _refreshData() async {
+  Future<void> refreshData() async {
     // Silent refresh - no loading indicators
     await Future.wait([
       _fetchOrders(refresh: false),
       _fetchProfile(),
       _partnerSummary != null ? _fetchPartnerSummary() : Future.value(),
       _fetchDeliveryStats(),
+      _fetchLoginHours(),
     ]);
     if (mounted) {
       Provider.of<NotificationsViewModel>(context, listen: false)
@@ -238,6 +240,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       _fetchProfile();
       _fetchPartnerSummary();
       _fetchDeliveryStats();
+      _fetchLoginHours();
 
       // Fetch notifications for badge
       if (mounted) {
@@ -452,6 +455,22 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       if (e is! NetworkException) {
         log('Error fetching delivery stats: $e');
       }
+    }
+  }
+
+  Future<void> _fetchLoginHours() async {
+    try {
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
+      if (token == null) return;
+
+      final hours = await _apiService.getLoginHours(token);
+      if (mounted) {
+        setState(() {
+          _loginHours = hours;
+        });
+      }
+    } catch (e) {
+      log('Error fetching login hours: $e');
     }
   }
 
@@ -769,7 +788,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           '2.1 mi away', // Mock distance
                           style: TextStyle(
                             fontSize: R.sp(14),
-                            color: AppColors.bodyText.withOpacity(0.7),
+                            color: AppColors.bodyText.withValues(alpha: 0.7),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -795,7 +814,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     '${order.orderItems.length} items',
                     style: TextStyle(
                       fontSize: R.sp(13),
-                      color: AppColors.bodyText.withOpacity(0.5),
+                      color: AppColors.bodyText.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -884,15 +903,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   Widget _myQueueItem(Order order) {
     return Container(
       margin: EdgeInsets.only(bottom: R.h(12)),
-      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(12)),
+      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(20)),
+        borderRadius: BorderRadius.circular(R.r(24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.shadow.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -901,7 +920,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           Container(
             padding: EdgeInsets.all(R.w(12)),
             decoration: BoxDecoration(
-              color: AppColors.softGreenBg,
+              color: AppColors.softGreenBg.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -918,20 +937,20 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 Text(
                   'ORDER #${order.orderNumber}',
                   style: TextStyle(
-                    fontSize: R.sp(12),
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.bodyText.withOpacity(0.5),
+                    fontSize: R.sp(11),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.bodyText.withValues(alpha: 0.4),
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: R.h(2)),
+                SizedBox(height: R.h(3)),
                 Text(
                   order.orderNumber.contains('Mart') ||
                           order.orderNumber.contains('Hub')
                       ? order.orderNumber
-                      : "Store # ${order.id}", // Fallback for demo
+                      : "Main St. Grocery Hub", // Mocking text from screenshot if not available
                   style: TextStyle(
-                    fontSize: R.sp(16),
+                    fontSize: R.sp(17),
                     fontWeight: FontWeight.w800,
                     color: AppColors.headingText,
                   ),
@@ -944,7 +963,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           Icon(
             RemixIcons.arrow_right_s_line,
             size: R.sp(22),
-            color: AppColors.bodyText.withOpacity(0.3),
+            color: AppColors.bodyText.withValues(alpha: 0.2),
           ),
         ],
       ),
@@ -955,15 +974,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     bool isNearby = (double.tryParse(order.distance ?? '0') ?? 0) < 3.0;
 
     return Container(
-      margin: EdgeInsets.only(bottom: R.h(20)),
+      margin: EdgeInsets.only(bottom: R.h(16)),
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(24)),
+        borderRadius: BorderRadius.circular(R.r(28)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.08),
-            blurRadius: 15,
+            color: AppColors.shadow.withValues(alpha: 0.06),
+            blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
@@ -996,15 +1015,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           color: isNearby
                               ? const Color(0xFFE8FFF3)
                               : const Color(0xFFF1F3F5),
-                          borderRadius: BorderRadius.circular(R.r(8)),
+                          borderRadius: BorderRadius.circular(R.r(100)),
                         ),
                         child: Text(
                           isNearby ? 'NEARBY' : 'STANDARD',
                           style: TextStyle(
-                            fontSize: R.sp(11),
+                            fontSize: R.sp(10),
                             fontWeight: FontWeight.w800,
                             color: isNearby
-                                ? const Color(0xFF10CE67)
+                                ? const Color(0xFF00D166)
                                 : const Color(0xFF74828F),
                             letterSpacing: 0.5,
                           ),
@@ -1016,54 +1035,31 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   // ITEMS & DISTANCE
                   Row(
                     children: [
-                      Icon(RemixIcons.shopping_bag_3_line,
-                          size: R.sp(16),
-                          color: AppColors.bodyText.withOpacity(0.5)),
+                      Icon(RemixIcons.shopping_bag_3_fill,
+                          size: R.sp(18),
+                          color: AppColors.bodyText.withValues(alpha: 0.4)),
                       SizedBox(width: R.w(6)),
                       Text(
                         '${order.orderItems.length} items',
                         style: TextStyle(
                           fontSize: R.sp(14),
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.bodyText.withOpacity(0.6),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.bodyText.withValues(alpha: 0.5),
                         ),
                       ),
                       SizedBox(width: R.w(16)),
-                      Icon(RemixIcons.map_pin_2_line,
-                          size: R.sp(16), color: const Color(0xFF10CE67)),
+                      Icon(RemixIcons.map_pin_2_fill,
+                          size: R.sp(18), color: const Color(0xFF00D166)),
                       SizedBox(width: R.w(6)),
                       Text(
                         '${order.distance ?? '0.0'} km',
                         style: TextStyle(
                           fontSize: R.sp(14),
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF10CE67),
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF00D166),
                         ),
                       ),
                     ],
-                  ),
-                ],
-              ),
-              // PAYOUT
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '₹${order.totalAmount}',
-                    style: TextStyle(
-                      fontSize: R.sp(22),
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.headingText,
-                    ),
-                  ),
-                  Text(
-                    'EST. PAYOUT',
-                    style: TextStyle(
-                      fontSize: R.sp(10),
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.bodyText.withOpacity(0.4),
-                      letterSpacing: 0.5,
-                    ),
                   ),
                 ],
               ),
@@ -1074,24 +1070,24 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           Row(
             children: [
               Expanded(
-                flex: 5,
+                flex: 1,
                 child: SizedBox(
-                  height: R.h(54),
+                  height: R.h(56),
                   child: ElevatedButton(
                     onPressed: () => _acceptOrder(order.id),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10CE67),
+                      backgroundColor: const Color(0xFF00E676),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(16)),
+                        borderRadius: BorderRadius.circular(R.r(20)),
                       ),
                     ),
                     child: Text(
                       'Accept',
                       style: TextStyle(
-                        fontSize: R.sp(16),
-                        fontWeight: FontWeight.w800,
+                        fontSize: R.sp(17),
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
@@ -1099,24 +1095,24 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               ),
               SizedBox(width: R.w(12)),
               Expanded(
-                flex: 4,
+                flex: 1,
                 child: SizedBox(
-                  height: R.h(54),
+                  height: R.h(56),
                   child: ElevatedButton(
                     onPressed: () => _rejectOrder(order.id),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F3F5),
-                      foregroundColor: const Color(0xFF74828F),
+                      backgroundColor: const Color(0xFFF1F4F7),
+                      foregroundColor: const Color(0xFF64748B),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(16)),
+                        borderRadius: BorderRadius.circular(R.r(20)),
                       ),
                     ),
                     child: Text(
                       'Reject',
                       style: TextStyle(
-                        fontSize: R.sp(16),
-                        fontWeight: FontWeight.w700,
+                        fontSize: R.sp(17),
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
@@ -1377,35 +1373,48 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  Widget _sectionHeader({required String title, Widget? action, int? count}) {
+  Widget _sectionHeader(
+      {required String title,
+      Widget? action,
+      int? count,
+      IconData? icon,
+      Color? iconColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                color: iconColor ?? AppColors.primaryGreen,
+                size: R.sp(22),
+              ),
+              SizedBox(width: R.w(12)),
+            ],
             Text(
               title,
               style: TextStyle(
-                fontSize: R.sp(18),
+                fontSize: R.sp(20),
                 fontWeight: FontWeight.w800,
                 color: AppColors.headingText,
               ),
             ),
             if (count != null) ...[
-              SizedBox(width: R.w(8)),
+              SizedBox(width: R.w(12)),
               Container(
                 padding:
-                    EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(2)),
+                    EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(2)),
                 decoration: BoxDecoration(
-                  color: AppColors.grey.withValues(alpha: 0.2), // #E0E2E7
-                  borderRadius: BorderRadius.circular(R.r(6)),
+                  color: AppColors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(R.r(100)),
                 ),
                 child: Text(
                   count.toString(),
                   style: TextStyle(
-                    fontSize: R.sp(12),
+                    fontSize: R.sp(11),
                     fontWeight: FontWeight.w700,
-                    color: AppColors.headingText,
+                    color: AppColors.bodyText.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -1440,20 +1449,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _dashboardHeader(isOnline),
-
-              // Always Visible Stats
-              Padding(
-                padding: EdgeInsets.only(bottom: R.h(24)),
-                child: PerformanceStatsRow(
-                  pending: _pendingOrders > 0
-                      ? _pendingOrders
-                      : _myOrders.length, // Fallback to queue length
-                  completed: _completedDeliveries,
-                  cancelled: _cancelledOrders,
-                  loginHours: _secondsOnDuty / 3600.0,
-                ),
-              ),
-
               if (widget.isOnline && _isTimerPaused)
                 Padding(
                   padding: EdgeInsets.only(bottom: R.h(16)),
@@ -1463,10 +1458,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       padding: EdgeInsets.symmetric(
                           horizontal: R.w(16), vertical: R.h(12)),
                       decoration: BoxDecoration(
-                        color: AppColors.warning.withOpacity(0.1),
+                        color: AppColors.warning.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(R.r(12)),
                         border: Border.all(
-                            color: AppColors.warning.withOpacity(0.5)),
+                            color: AppColors.warning.withValues(alpha: 0.5)),
                       ),
                       child: Row(
                         children: [
@@ -1500,10 +1495,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                     // Propagate online status up just in case
                                     widget.onStatusChanged(true);
                                   } catch (e) {
-                                    if (mounted) {
-                                      CustomSnackBar.showError(
-                                          context, 'Failed to resume: $e');
-                                    }
+                                    if (!context.mounted) return;
+                                    CustomSnackBar.showError(
+                                        context, 'Failed to resume: $e');
                                   }
                                 },
                                 child: Container(
@@ -1534,30 +1528,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   colorFilter: isOnline
                       ? const ColorFilter.mode(
                           AppColors.transparent, BlendMode.multiply)
-                      : const ColorFilter.matrix(<double>[
-                          0.2126,
-                          0.7152,
-                          0.0722,
-                          0,
-                          0,
-                          0.2126,
-                          0.7152,
-                          0.0722,
-                          0,
-                          0,
-                          0.2126,
-                          0.7152,
-                          0.0722,
-                          0,
-                          0,
-                          0,
-                          0,
-                          0,
-                          1,
-                          0,
-                        ]),
+                      : const ColorFilter.mode(
+                          AppColors.grey, BlendMode.saturation),
                   child: Opacity(
-                    opacity: isOnline ? 1.0 : 0.6,
+                    opacity: isOnline ? 1.0 : 0.8,
                     child: Column(
                       children: [
                         (_newRequests.isEmpty &&
@@ -1568,15 +1542,47 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                             ? Padding(
                                 padding: EdgeInsets.only(
                                     top: R.h(8), bottom: R.h(12)),
-                                child: DashboardWaitingState(
-                                  isOnline: isOnline,
-                                  completedToday: _completedDeliveries,
-                                  dailyGoal: _dailyGoal,
+                                child: Column(
+                                  children: [
+                                    DashboardWaitingState(
+                                      isOnline: isOnline,
+                                      completedToday: _completedDeliveries,
+                                      dailyGoal: _dailyGoal,
+                                      onToggle: () =>
+                                          widget.onStatusChanged(!isOnline),
+                                    ),
+                                    if (isOnline)
+                                      Padding(
+                                        padding: EdgeInsets.only(top: R.h(20)),
+                                        child: PerformanceStatsRow(
+                                          pending: _pendingOrders > 0
+                                              ? _pendingOrders
+                                              : _myOrders
+                                                  .length, // Fallback to queue length
+                                          completed: _completedDeliveries,
+                                          cancelled: _cancelledOrders,
+                                          loginHours: _loginHours,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               )
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Performance Stats (Busy State)
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: R.h(24)),
+                                    child: PerformanceStatsRow(
+                                      pending: _pendingOrders > 0
+                                          ? _pendingOrders
+                                          : _myOrders
+                                              .length, // Fallback to queue length
+                                      completed: _completedDeliveries,
+                                      cancelled: _cancelledOrders,
+                                      loginHours: _loginHours,
+                                    ),
+                                  ),
                                   // Current Task (Priority)
                                   if (_currentOrder != null) ...[
                                     _sectionHeader(
@@ -1589,12 +1595,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   // Delivery Queue (Priority)
                                   if (_myOrders.length > 1) ...[
                                     _sectionHeader(
-                                      title: 'My Queue',
+                                      title: 'Order Queue',
                                       count: _myOrders.length - 1,
+                                      icon: RemixIcons.box_3_fill,
+                                      iconColor: AppColors.primaryGreen,
                                       action: GestureDetector(
                                         onTap: widget.onViewDeliveries,
                                         child: Text(
-                                          '${_myOrders.length - 1} more',
+                                          'View All',
                                           style: TextStyle(
                                             fontSize: R.sp(14),
                                             color: AppColors.primaryGreen,
@@ -1651,14 +1659,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                       _sectionHeader(
                                         title: 'New Order Request',
                                         count: null,
-                                        action: Text(
-                                          '00 : 23',
-                                          style: TextStyle(
-                                            fontSize: R.sp(18),
-                                            color: AppColors.primaryGreen,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
                                       ),
                                       SizedBox(height: R.h(12)),
                                       AnimatedSwitcher(
@@ -1735,34 +1735,31 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       _sectionHeader(
-                                        title: 'Nearby Available',
-                                        action: Container(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: R.w(12),
-                                              vertical: R.h(6)),
-                                          decoration: BoxDecoration(
-                                              color: AppColors
-                                                  .softGreenBg, // Light Green
-                                              borderRadius:
-                                                  BorderRadius.circular(100)),
-                                          child: Row(
-                                            children: [
-                                              Icon(RemixIcons.sparkling_2_fill,
-                                                  size: R.sp(14),
-                                                  color:
-                                                      AppColors.primaryGreen),
-                                              SizedBox(width: R.w(6)),
-                                              Text(
-                                                'Batch All',
-                                                style: TextStyle(
-                                                  fontSize: R.sp(13),
-                                                  color: AppColors.primaryGreen,
-                                                  fontWeight: FontWeight.w700,
+                                        title: 'Available Orders',
+                                        icon: RemixIcons.compass_3_fill,
+                                        iconColor:
+                                            const Color(0xFFFF8A65), // Orange
+                                        action: _availableOrders.length > 2
+                                            ? GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _isAvailableExpanded =
+                                                        !_isAvailableExpanded;
+                                                  });
+                                                },
+                                                child: Text(
+                                                  _isAvailableExpanded
+                                                      ? 'View Less'
+                                                      : 'View All',
+                                                  style: TextStyle(
+                                                    fontSize: R.sp(14),
+                                                    color:
+                                                        AppColors.primaryGreen,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                              )
+                                            : null,
                                       ),
                                       SizedBox(height: R.h(12)),
                                       // ... logic for available list or mock
@@ -1779,14 +1776,21 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                       color:
                                                           AppColors.bodyText)));
                                         }
+                                        final ordersToShow =
+                                            _isAvailableExpanded
+                                                ? _availableOrders
+                                                : _availableOrders
+                                                    .take(2)
+                                                    .toList();
                                         return Column(
-                                          children: _availableOrders
+                                          children: ordersToShow
                                               .map((order) =>
                                                   _availableOrderItem(order))
                                               .toList(),
                                         );
                                       }),
-                                      if (_hasMoreAvailable)
+                                      if (_hasMoreAvailable &&
+                                          _isAvailableExpanded)
                                         Padding(
                                           padding: EdgeInsets.only(top: R.h(8)),
                                           child: Center(
@@ -1808,11 +1812,35 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                         ),
                                     ],
                                   ),
+                                  SizedBox(height: R.h(40)),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      AvatarGlow(
+                                        glowRadiusFactor: 0.5,
+                                        child: Container(
+                                          width: R.w(8),
+                                          height: R.w(8),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF00E676),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: R.w(10)),
+                                      Text(
+                                        'Waiting for more orders...',
+                                        style: TextStyle(
+                                          fontSize: R.sp(15),
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.bodyText
+                                              .withValues(alpha: 0.4),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
-
-                        // Bottom Spacing
-                        SizedBox(height: R.h(8)),
                       ],
                     ),
                   ),
@@ -1906,7 +1934,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       ),
                       child: isOnline
                           ? Icon(Icons.check,
-                              size: R.sp(16), color: AppColors.white)
+                              size: R.sp(16), color: AppColors.primaryGreen)
                           : null,
                     ),
                   ),
@@ -1937,7 +1965,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                       fontSize: R.sp(10),
                       letterSpacing: 1.2,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.bodyText.withOpacity(0.6),
+                      color: AppColors.bodyText.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -1965,7 +1993,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     borderRadius: BorderRadius.circular(100),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.black.withOpacity(0.05),
+                        color: AppColors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),

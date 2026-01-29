@@ -24,6 +24,7 @@ class AppUrls {
   static const String updateProfileEmail =
       '$baseUrl/api/delivery_boy/profile/email';
   static const String uploadProfileImage = '$baseUrl/api/partner/profile/image';
+  static const String pendingList = '$baseUrl/api/orders/pending';
   static const String newOrders = '$baseUrl/api/delivery/orders/new';
   static const String availableOrders =
       '$baseUrl/api/delivery/orders/available';
@@ -38,6 +39,9 @@ class AppUrls {
       '$baseUrl/api/delivery/orders/$id/reject';
   static String cancelOrder(int id) => '$baseUrl/api/orders/$id/cancel';
   static String orderDetails(int id) => '$baseUrl/api/orders/$id';
+  static String startOrder(int id) => '$baseUrl/api/orders/$id/start';
+  static String completeOrder(int id) => '$baseUrl/api/orders/$id/complete';
+  static String markPending(int id) => '$baseUrl/api/orders/$id/pending';
   static const String cancellationReasons =
       '$baseUrl/api/orders/cancellation-reasons';
   static const String currentOrder = '$baseUrl/api/partner/orders/current';

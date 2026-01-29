@@ -27,7 +27,7 @@ class PerformanceStatsRow extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(R.w(8)),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withOpacity(0.1),
+                color: AppColors.primaryGreen.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -80,14 +80,14 @@ class PerformanceStatsRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(R.r(16)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryGreen.withOpacity(0.04),
+            color: AppColors.primaryGreen.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
             spreadRadius: 0,
           ),
         ],
         border: Border.all(
-            color: AppColors.primaryGreen.withOpacity(0.1), width: 1),
+            color: AppColors.primaryGreen.withValues(alpha: 0.1), width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -119,7 +119,7 @@ class PerformanceStatsRow extends StatelessWidget {
             style: TextStyle(
               fontSize: R.sp(11),
               fontWeight: FontWeight.w600,
-              color: AppColors.bodyText.withOpacity(0.8),
+              color: AppColors.bodyText.withValues(alpha: 0.8),
             ),
             textAlign: TextAlign.center,
           ),

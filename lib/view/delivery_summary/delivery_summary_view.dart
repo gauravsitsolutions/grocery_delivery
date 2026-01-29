@@ -46,6 +46,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
           : null,
     );
     if (picked != null) {
+      if (!mounted) return;
       setState(() {
         _fromDate = picked.start;
         _toDate = picked.end;
@@ -113,7 +114,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
       onSelected: (selected) {
         if (selected) _onRangeChanged(value);
       },
-      selectedColor: Colors.green.withOpacity(0.2),
+      selectedColor: Colors.green.withValues(alpha: 0.2),
       labelStyle: TextStyle(
         color: isSelected ? Colors.green : Colors.black,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -157,7 +158,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -168,7 +169,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
           Container(
             padding: EdgeInsets.all(R.w(12)),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: R.sp(24)),

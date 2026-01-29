@@ -1,12 +1,10 @@
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
-
 import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/filter_deliveries_sheet.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';

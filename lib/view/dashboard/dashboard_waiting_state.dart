@@ -9,6 +9,7 @@ class DashboardWaitingState extends StatelessWidget {
   final int completedToday;
   final int dailyGoal;
   final bool isOnline; // Added parameter
+  final VoidCallback? onToggle;
 
   const DashboardWaitingState({
     super.key,
@@ -16,6 +17,7 @@ class DashboardWaitingState extends StatelessWidget {
     this.completedToday = 8, // Default value for now
     this.dailyGoal = 12, // Default value for now
     this.isOnline = true, // Default to true
+    this.onToggle,
   });
 
   @override
@@ -372,13 +374,41 @@ class DashboardWaitingState extends StatelessWidget {
         ),
         SizedBox(height: R.h(8)),
         Text(
-          'Auto-refresh active. Stay tuned!',
+          isOnline
+              ? 'Auto-refresh active. Stay tuned!'
+              : 'Go online to start receiving orders.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: R.sp(14),
             color: AppColors.bodyText,
           ),
         ),
+
+        if (!isOnline) ...[
+          SizedBox(height: R.h(32)),
+          SizedBox(
+            width: R.w(200),
+            height: R.h(50),
+            child: ElevatedButton(
+              onPressed: onToggle,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(R.r(14)),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Resume Duty',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: R.sp(16),
+                ),
+              ),
+            ),
+          ),
+        ],
 
         SizedBox(height: R.h(30)),
 

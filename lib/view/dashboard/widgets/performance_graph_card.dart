@@ -66,10 +66,10 @@ class _PerformanceGraphCardState extends State<PerformanceGraphCard> {
                   padding: EdgeInsets.symmetric(
                       horizontal: R.w(12), vertical: R.h(4)),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withOpacity(0.08),
+                    color: AppColors.primaryGreen.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(R.r(20)),
                     border: Border.all(
-                        color: AppColors.primaryGreen.withOpacity(0.2)),
+                        color: AppColors.primaryGreen.withValues(alpha: 0.2)),
                   ),
                   child: DropdownButton<String>(
                     value: 'Last 7 Days',

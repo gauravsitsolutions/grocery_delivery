@@ -155,7 +155,7 @@ class _DeliveryHistoryViewState extends State<DeliveryHistoryView> {
             label,
             style: TextStyle(
               fontSize: R.sp(12),
-              color: AppColors.bodyText.withOpacity(0.7),
+              color: AppColors.bodyText.withValues(alpha: 0.7),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -202,26 +202,25 @@ class _DeliveryHistoryViewState extends State<DeliveryHistoryView> {
               Icon(Remix.time_line, size: R.sp(14), color: AppColors.bodyText),
               SizedBox(width: R.w(4)),
               Text(
-                DateFormat('MMM dd, yyyy  hh:mm a')
-                    .format(order.createdAt ?? DateTime.now()),
+                DateFormat('MMM dd, yyyy  hh:mm a').format(order.createdAt),
                 style: TextStyle(
                   fontSize: R.sp(12),
-                  color: AppColors.bodyText.withOpacity(0.8),
+                  color: AppColors.bodyText.withValues(alpha: 0.8),
                 ),
               ),
             ],
           ),
           ...[
-          SizedBox(height: R.h(8)),
-          Text(
-            '₹${order.totalAmount}',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: R.sp(14),
-              color: AppColors.primaryGreen,
+            SizedBox(height: R.h(8)),
+            Text(
+              '₹${order.totalAmount}',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: R.sp(14),
+                color: AppColors.primaryGreen,
+              ),
             ),
-          ),
-        ]
+          ]
         ],
       ),
     );
@@ -242,7 +241,7 @@ class _DeliveryHistoryViewState extends State<DeliveryHistoryView> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(R.r(4)),
       ),
       child: Text(

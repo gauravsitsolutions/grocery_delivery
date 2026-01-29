@@ -613,7 +613,7 @@ class _ProfileViewState extends State<ProfileView> {
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: maxY,
-                            color: AppColors.softGreyBg.withOpacity(0.5),
+                            color: AppColors.softGreyBg.withValues(alpha: 0.5),
                           ),
                         ),
                       ],

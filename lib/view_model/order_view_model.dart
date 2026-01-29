@@ -29,7 +29,10 @@ class OrderViewModel extends ChangeNotifier {
       _order = initialOrder;
       _isLoading = false;
       final status = _order?.status.toLowerCase();
-      _isPickupMode = status == 'accepted' || status == 'pending';
+      _isPickupMode = status == 'accepted' ||
+          status == 'pending' ||
+          status == 'in_progress' ||
+          status == 'starting';
     }
   }
 
@@ -128,7 +131,10 @@ class OrderViewModel extends ChangeNotifier {
       }
 
       final status = _order?.status.toLowerCase();
-      _isPickupMode = status == 'accepted' || status == 'pending';
+      _isPickupMode = status == 'accepted' ||
+          status == 'pending' ||
+          status == 'in_progress' ||
+          status == 'starting';
 
       if (!_isPickupMode) {
         _checkedItems.clear();
@@ -164,13 +170,14 @@ class OrderViewModel extends ChangeNotifier {
       final token = await _getToken;
       if (token == null) throw Exception('Not authenticated');
 
-      // 1. Complete Delivery
+      // 1. Complete Delivery (OTP Verification)
       await _apiService.completeDelivery(token, orderId, otp);
 
-      // 2. Fetch Summary
+      // 2. Fetch Summary to check current status
       final summaryData = await _apiService.getOrderSummary(token, orderId);
+      final currentStatus = summaryData['status']?.toString().toLowerCase();
 
-      // Merge summary data into existing order
+      // Merge summary data into existing order immediately
       if (_order != null) {
         _order = _order!.copyWith(
           status: summaryData['status'],
@@ -178,11 +185,26 @@ class OrderViewModel extends ChangeNotifier {
           deliveryCharge: summaryData['delivery_charge']?.toString(),
           discount: summaryData['discount']?.toString(),
           totalAmount: summaryData['total_amount']?.toString(),
-          deliveredAt: DateTime.now(), // Since status is delivered/cancelled
+          deliveredAt: DateTime.now(),
         );
       } else {
-        // Fallback if order was somehow null (unlikely in this flow)
         _order = Order.fromJson(summaryData);
+      }
+
+      // 3. Finalize Order Status (New API) only if NOT cancelled
+      if (currentStatus != 'cancelled') {
+        try {
+          final completeResponse =
+              await _apiService.completeOrder(token, orderId);
+          if (completeResponse['status'] == true &&
+              completeResponse['data'] != null) {
+            _order = Order.fromJson(completeResponse['data']);
+          }
+        } catch (e) {
+          log('Warning: completeOrder failed but OTP was verified: $e');
+        }
+      } else {
+        log('Order is cancelled, skipping completeOrder call.');
       }
 
       _isLoading = false;
@@ -261,6 +283,151 @@ class OrderViewModel extends ChangeNotifier {
   void clearProofImage() {
     _pickupProofImage = null;
     notifyListeners();
+  }
+
+  bool _isStartLoading = false;
+  bool get isStartLoading => _isStartLoading;
+
+  Future<bool> startOrder() async {
+    _isStartLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await _getToken;
+      if (token == null) {
+        _error = "Authentication failed";
+        return false;
+      }
+
+      final response = await _apiService.startOrder(token, orderId);
+
+      if (response['status'] == true || response['status'] == 'success') {
+        if (response['data'] != null) {
+          _order = Order.fromJson(response['data']);
+        } else {
+          // Refresh if no data returned
+          await fetchOrderDetails();
+        }
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = e is AppException ? e.message : e.toString();
+      return false;
+    } finally {
+      _isStartLoading = false;
+      notifyListeners();
+    }
+  }
+
+  bool _isAcceptLoading = false;
+  bool get isAcceptLoading => _isAcceptLoading;
+
+  Future<bool> acceptOrder() async {
+    _isAcceptLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await _getToken;
+      if (token == null) {
+        _error = "Authentication failed";
+        return false;
+      }
+
+      final response = await _apiService.acceptOrder(token, orderId);
+
+      if (response['status'] == true || response['status'] == 'success') {
+        if (response['data'] != null) {
+          _order = Order.fromJson(response['data']);
+        } else {
+          await fetchOrderDetails();
+        }
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = e is AppException ? e.message : e.toString();
+      return false;
+    } finally {
+      _isAcceptLoading = false;
+      notifyListeners();
+    }
+  }
+
+  bool _isCompleteLoading = false;
+  bool get isCompleteLoading => _isCompleteLoading;
+
+  Future<bool> completeOrder() async {
+    _isCompleteLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await _getToken;
+      if (token == null) {
+        _error = "Authentication failed";
+        return false;
+      }
+
+      final response = await _apiService.completeOrder(token, orderId);
+
+      if (response['status'] == true || response['status'] == 'success') {
+        if (response['data'] != null) {
+          _order = Order.fromJson(response['data']);
+        } else {
+          await fetchOrderDetails();
+        }
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = e is AppException ? e.message : e.toString();
+      return false;
+    } finally {
+      _isCompleteLoading = false;
+      notifyListeners();
+    }
+  }
+
+  bool _isPendingLoading = false;
+  bool get isPendingLoading => _isPendingLoading;
+
+  Future<bool> markAsPending() async {
+    _isPendingLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await _getToken;
+      if (token == null) {
+        _error = "Authentication failed";
+        return false;
+      }
+
+      final response = await _apiService.markAsPending(token, orderId);
+
+      if (response['status'] == true || response['status'] == 'success') {
+        if (response['data'] != null) {
+          _order = Order.fromJson(response['data']);
+        } else {
+          await fetchOrderDetails();
+        }
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = e is AppException ? e.message : e.toString();
+      return false;
+    } finally {
+      _isPendingLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<bool> pickupOrder() async {

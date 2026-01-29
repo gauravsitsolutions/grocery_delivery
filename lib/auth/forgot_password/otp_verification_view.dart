@@ -201,13 +201,13 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                           await _apiService
                                               .sendForgotPasswordOtp(
                                                   mobileArgs);
-                                          if (!mounted) return;
+                                          if (!context.mounted) return;
 
                                           CustomSnackBar.showSuccess(context,
                                               'OTP Resent Successfully');
                                           _startTimer();
                                         } catch (e) {
-                                          if (!mounted) return;
+                                          if (!context.mounted) return;
                                           CustomSnackBar.showError(
                                               context,
                                               e.toString().replaceAll(

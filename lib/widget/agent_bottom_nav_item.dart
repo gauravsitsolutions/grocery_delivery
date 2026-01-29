@@ -25,10 +25,32 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
   bool isLoading = true;
   String? dutyStatus;
 
+  // GlobalKey to access dashboard state for refreshing
+  final GlobalKey<State> _dashboardKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     _checkInitialStatus();
+    _controller.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    // If switching TO the home tab (index 0)
+    if (_controller.index == 0) {
+      // Find the state and call refreshData if it exists
+      // We need to cast it dynamically or define an interface, simpler to use dynamic given imports
+      final state = _dashboardKey.currentState;
+      if (state != null) {
+        // Use reflection-like dynamic call since we don't want to export the State class publicly
+        // just for this. Or we can assume the method exists.
+        try {
+          (state as dynamic).refreshData();
+        } catch (e) {
+          // Method might not be defined or state mismatch, ignore
+        }
+      }
+    }
   }
 
   Future<void> _checkInitialStatus() async {
@@ -88,6 +110,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
           controller: _controller,
           screens: [
             AgentDashboardView(
+              key: _dashboardKey,
               isOnline: isOnline,
               dutyStatus: dutyStatus,
               onStatusChanged: (val) async {
