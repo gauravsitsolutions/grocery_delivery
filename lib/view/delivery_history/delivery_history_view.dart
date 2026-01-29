@@ -211,17 +211,17 @@ class _DeliveryHistoryViewState extends State<DeliveryHistoryView> {
               ),
             ],
           ),
-          if (order.totalAmount != null) ...[
-            SizedBox(height: R.h(8)),
-            Text(
-              '₹${order.totalAmount}',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: R.sp(14),
-                color: AppColors.primaryGreen,
-              ),
+          ...[
+          SizedBox(height: R.h(8)),
+          Text(
+            '₹${order.totalAmount}',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: R.sp(14),
+              color: AppColors.primaryGreen,
             ),
-          ]
+          ),
+        ]
         ],
       ),
     );

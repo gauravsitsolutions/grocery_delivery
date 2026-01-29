@@ -13,7 +13,6 @@ import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
-import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class AvailableOrdersView extends StatefulWidget {
   const AvailableOrdersView({super.key});

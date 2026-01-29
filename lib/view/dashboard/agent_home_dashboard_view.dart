@@ -704,11 +704,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: R.w(4), vertical: R.h(8)),
+      padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
-        border: Border.all(
-            color: AppColors.primaryGreen.withOpacity(0.1), width: 1),
         boxShadow: [
           BoxShadow(
             color: AppColors.shadow.withValues(alpha: 0.08),
@@ -719,186 +718,161 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       ),
       child: Column(
         children: [
-          // Header Section with Store Info
-          Padding(
-            padding: EdgeInsets.all(R.w(16)),
-            child: Row(
-              children: [
-                // Store/Product Image
-                Container(
-                  width: R.w(56),
-                  height: R.w(56),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(R.r(12)),
-                    border: Border.all(color: AppColors.borderLight),
-                    color: AppColors.softGreyBg,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(R.r(12)),
-                    child: imageUrl != null
-                        ? CustomNetworkImage(
-                            imageUrl: imageUrl,
-                            fit: BoxFit.cover,
-                            errorWidget: Icon(RemixIcons.store_2_line,
-                                color: AppColors.grey),
-                          )
-                        : Icon(RemixIcons.store_2_line,
-                            size: R.sp(24), color: AppColors.grey),
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Store/Product Image
+              Container(
+                width: R.w(56),
+                height: R.w(56),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(R.r(12)),
+                  border: Border.all(color: AppColors.borderLight),
+                  color: AppColors.softGreyBg,
                 ),
-                SizedBox(width: R.w(12)),
-                // Order Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              order.orderNumber,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: R.sp(16),
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.headingText,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: R.w(8), vertical: R.h(4)),
-                            decoration: BoxDecoration(
-                              color: AppColors.softGreenBg,
-                              borderRadius: BorderRadius.circular(R.r(6)),
-                            ),
-                            child: Text(
-                              'NEW',
-                              style: TextStyle(
-                                fontSize: R.sp(10),
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primaryGreen,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: R.h(4)),
-                      Text(
-                        '${order.orderItems.length} items • 2.5 km', // Mock distance
-                        style: TextStyle(
-                          fontSize: R.sp(13),
-                          color: AppColors.bodyText.withOpacity(0.7),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: R.h(4)),
-                      Text(
-                        order.deliveryAddress?.addressLine1 ??
-                            'Delivery Address',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: R.sp(12),
-                          color: AppColors.bodyText.withOpacity(0.5),
-                        ),
-                      ),
-                    ],
-                  ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(R.r(12)),
+                  child: imageUrl != null
+                      ? CustomNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          errorWidget: Icon(RemixIcons.store_2_line,
+                              color: AppColors.grey),
+                        )
+                      : Icon(RemixIcons.store_2_line,
+                          size: R.sp(24), color: AppColors.grey),
                 ),
-              ],
-            ),
-          ),
-
-          // Divider
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: R.w(16)),
-            child: Divider(height: 1, color: AppColors.borderLight),
-          ),
-
-          // Price and Actions
-          Padding(
-            padding: EdgeInsets.all(R.w(16)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
+              ),
+              SizedBox(width: R.w(12)),
+              // Store Info
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'EARNINGS',
+                      order.orderNumber,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: R.sp(10),
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                        color: AppColors.bodyText.withOpacity(0.5),
-                      ),
-                    ),
-                    Text(
-                      '₹ ${order.totalAmount}',
-                      style: TextStyle(
-                        fontSize: R.sp(20),
+                        fontSize: R.sp(18),
                         fontWeight: FontWeight.w800,
                         color: AppColors.headingText,
                       ),
                     ),
+                    SizedBox(height: R.h(6)),
+                    Row(
+                      children: [
+                        Icon(RemixIcons.map_pin_2_fill,
+                            size: R.sp(16), color: AppColors.grey),
+                        SizedBox(width: R.w(4)),
+                        Text(
+                          '2.1 mi away', // Mock distance
+                          style: TextStyle(
+                            fontSize: R.sp(14),
+                            color: AppColors.bodyText.withOpacity(0.7),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-                Row(
-                  children: [
-                    // Reject Button
-                    SizedBox(
-                      height: R.h(44),
-                      child: OutlinedButton(
-                        onPressed: () => _rejectOrder(order.id),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                              color: AppColors.error.withOpacity(0.5)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(R.r(12)),
-                          ),
-                          padding: EdgeInsets.symmetric(horizontal: R.w(16)),
-                        ),
-                        child: Text(
+              ),
+              // Price and Items
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹ ${order.totalAmount}',
+                    style: TextStyle(
+                      fontSize: R.sp(20),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.headingText,
+                    ),
+                  ),
+                  SizedBox(height: R.h(4)),
+                  Text(
+                    '${order.orderItems.length} items',
+                    style: TextStyle(
+                      fontSize: R.sp(13),
+                      color: AppColors.bodyText.withOpacity(0.5),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: R.h(16)),
+          // Action Buttons
+          Row(
+            children: [
+              // Reject Button
+              Expanded(
+                child: SizedBox(
+                  height: R.h(50),
+                  child: ElevatedButton(
+                    onPressed: () => _rejectOrder(order.id),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.softGreyBg,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(14)),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(RemixIcons.close_line,
+                            size: R.sp(18), color: AppColors.headingText),
+                        SizedBox(width: R.w(8)),
+                        Text(
                           'Reject',
                           style: TextStyle(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w700,
-                            fontSize: R.sp(14),
+                            color: AppColors.headingText,
+                            fontWeight: FontWeight.w800,
+                            fontSize: R.sp(15),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    SizedBox(width: R.w(12)),
-                    // Accept Button
-                    SizedBox(
-                      height: R.h(44),
-                      child: ElevatedButton(
-                        onPressed: () => _acceptOrder(order.id),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(R.r(12)),
-                          ),
-                          elevation: 0,
-                          padding: EdgeInsets.symmetric(horizontal: R.w(24)),
-                        ),
-                        child: Text(
+                  ),
+                ),
+              ),
+              SizedBox(width: R.w(12)),
+              // Accept Button
+              Expanded(
+                child: SizedBox(
+                  height: R.h(50),
+                  child: ElevatedButton(
+                    onPressed: () => _acceptOrder(order.id),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(14)),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(RemixIcons.check_line,
+                            size: R.sp(18), color: AppColors.white),
+                        SizedBox(width: R.w(8)),
+                        Text(
                           'Accept',
                           style: TextStyle(
                             color: AppColors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: R.sp(14),
+                            fontWeight: FontWeight.w800,
+                            fontSize: R.sp(15),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1526,9 +1500,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                     // Propagate online status up just in case
                                     widget.onStatusChanged(true);
                                   } catch (e) {
-                                    if (mounted)
+                                    if (mounted) {
                                       CustomSnackBar.showError(
                                           context, 'Failed to resume: $e');
+                                    }
                                   }
                                 },
                                 child: Container(
@@ -1676,6 +1651,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                       _sectionHeader(
                                         title: 'New Order Request',
                                         count: null,
+                                        action: Text(
+                                          '00 : 23',
+                                          style: TextStyle(
+                                            fontSize: R.sp(18),
+                                            color: AppColors.primaryGreen,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                       ),
                                       SizedBox(height: R.h(12)),
                                       AnimatedSwitcher(
