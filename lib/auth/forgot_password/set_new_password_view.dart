@@ -6,6 +6,7 @@ import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class SetNewPasswordView extends StatefulWidget {
   const SetNewPasswordView({super.key});
@@ -135,7 +136,7 @@ class _SetNewPasswordViewState extends State<SetNewPasswordView> {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
-        leading: const BackButton(color: AppColors.black),
+        leading: const CustomBackButton(color: AppColors.black),
         title: Text(
           'Set New Password',
           style: AppTextStyles.heading.copyWith(fontSize: R.sp(18)),

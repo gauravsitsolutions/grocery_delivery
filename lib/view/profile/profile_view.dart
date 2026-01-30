@@ -30,6 +30,10 @@ class _ProfileViewState extends State<ProfileView> {
   String? _userId;
   List<DailyPerformance> _performanceData = [];
   String? _graphError;
+  String _selectedFilter = 'week'; // week, month, custom
+  DateTime? _startDate;
+  DateTime? _endDate;
+  bool _isGraphLoading = false;
 
   @override
   void initState() {
@@ -45,13 +49,20 @@ class _ProfileViewState extends State<ProfileView> {
     try {
       setState(() {
         _graphError = null;
+        _isGraphLoading = true;
       });
       final token = await SharedPrefsUtil.getToken();
       if (token != null) {
-        final data = await ApiService().getPartnerPerformanceGraph(token);
+        final data = await ApiService().getPartnerPerformanceGraph(
+          token,
+          filter: _selectedFilter == 'custom' ? null : _selectedFilter,
+          startDate: _startDate?.toIso8601String().split('T')[0],
+          endDate: _endDate?.toIso8601String().split('T')[0],
+        );
         if (mounted) {
           setState(() {
             _performanceData = data;
+            _isGraphLoading = false;
           });
         }
       }
@@ -59,6 +70,7 @@ class _ProfileViewState extends State<ProfileView> {
       log('Error fetching performance graph: $e');
       if (mounted) {
         setState(() {
+          _isGraphLoading = false;
           if (e.toString().contains('Agent profile not found')) {
             _graphError = 'Agent profile not found';
           } else {
@@ -66,6 +78,53 @@ class _ProfileViewState extends State<ProfileView> {
           }
         });
       }
+    }
+  }
+
+  void _onFilterChanged(String filter) {
+    if (_selectedFilter == filter && filter != 'custom') return;
+
+    if (filter == 'custom') {
+      _selectDateRange();
+    } else {
+      setState(() {
+        _selectedFilter = filter;
+        _startDate = null;
+        _endDate = null;
+      });
+      _fetchPerformanceGraph();
+    }
+  }
+
+  Future<void> _selectDateRange() async {
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: _startDate != null && _endDate != null
+          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryGreen,
+              onPrimary: Colors.white,
+              onSurface: AppColors.headingText,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedFilter = 'custom';
+        _startDate = picked.start;
+        _endDate = picked.end;
+      });
+      _fetchPerformanceGraph();
     }
   }
 
@@ -429,30 +488,68 @@ class _ProfileViewState extends State<ProfileView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Header with Filter Selectors
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Weekly Activity',
-                style: TextStyle(
-                  fontSize: R.sp(18),
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.headingText,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Performance Activity',
+                    style: TextStyle(
+                      fontSize: R.sp(18),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.headingText,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      _chartLegendItem('Orders', ordersColor),
+                      SizedBox(width: R.w(12)),
+                      _chartLegendItem('Hours', hoursColor),
+                    ],
+                  )
+                ],
+              ),
+              SizedBox(height: R.h(16)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _filterChip('Week', 'week'),
+                    SizedBox(width: R.w(8)),
+                    _filterChip('Month', 'month'),
+                    SizedBox(width: R.w(8)),
+                    _filterChip('Custom', 'custom'),
+                  ],
                 ),
               ),
-              // Legend
-              Row(
-                children: [
-                  _chartLegendItem('Orders', ordersColor),
-                  SizedBox(width: R.w(12)),
-                  _chartLegendItem('Hours', hoursColor),
-                ],
-              )
+              if (_selectedFilter == 'custom' &&
+                  _startDate != null &&
+                  _endDate != null)
+                Padding(
+                  padding: EdgeInsets.only(top: R.h(8)),
+                  child: Text(
+                    '${_startDate!.day}/${_startDate!.month} - ${_endDate!.day}/${_endDate!.month}',
+                    style: TextStyle(
+                      fontSize: R.sp(12),
+                      color: AppColors.primaryGreen,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
             ],
           ),
-          SizedBox(height: R.h(32)),
-          if (_graphError != null)
+          SizedBox(height: R.h(24)),
+          if (_isGraphLoading)
+            SizedBox(
+              height: R.h(200),
+              child: const Center(
+                child: CircularProgressIndicator(color: AppColors.primaryGreen),
+              ),
+            )
+          else if (_graphError != null)
             SizedBox(
               height: R.h(200),
               child: Center(
@@ -663,6 +760,36 @@ class _ProfileViewState extends State<ProfileView> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _filterChip(String label, String value) {
+    bool isSelected = _selectedFilter == value;
+    return GestureDetector(
+      onTap: () => _onFilterChanged(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(8)),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primaryGreen
+              : AppColors.primaryGreen.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(R.r(20)),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primaryGreen
+                : AppColors.primaryGreen.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: R.sp(12),
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            color: isSelected ? AppColors.white : AppColors.primaryGreen,
+          ),
+        ),
+      ),
     );
   }
 

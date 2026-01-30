@@ -4,6 +4,7 @@ import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
 import '../../constant/app_color.dart';
 import '../../utils/responsive.dart';
 import '../../view_model/notifications_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class NotificationSettingsView extends StatefulWidget {
   const NotificationSettingsView({super.key});
@@ -31,7 +32,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
-        leading: const BackButton(color: AppColors.headingText),
+        leading: const CustomBackButton(color: AppColors.headingText),
         centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
         title: Text(
           'Notification Settings',

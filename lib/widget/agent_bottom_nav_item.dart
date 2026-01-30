@@ -55,6 +55,18 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
 
   Future<void> _checkInitialStatus() async {
     try {
+      // 1. Try to load from cache first for immediate UI
+      final cachedStatus = await SharedPrefsUtil.getDutyStatus();
+      if (cachedStatus != null && mounted) {
+        setState(() {
+          dutyStatus = cachedStatus;
+          isOnline = cachedStatus == 'online' || cachedStatus == 'paused';
+          // We can stop initial loading if we have a cache, or keep it until API returns
+          // Let's keep loading true until API confirms to avoid split-second outdated data
+          // But the UI will already "know" the likely state.
+        });
+      }
+
       final token = await SharedPrefsUtil.getToken();
       if (token != null) {
         final apiService = ApiService();
@@ -67,6 +79,8 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                 summary.dutyStatus == 'paused';
             isLoading = false;
           });
+          // Update cache with fresh status
+          await SharedPrefsUtil.setDutyStatus(summary.dutyStatus ?? 'offline');
         }
       } else {
         setState(() => isLoading = false);
@@ -114,11 +128,15 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
               isOnline: isOnline,
               dutyStatus: dutyStatus,
               onStatusChanged: (val) async {
+                final newStatus = val ? 'online' : 'offline';
                 // 1. Optimistic Update
                 setState(() {
                   isOnline = val;
-                  dutyStatus = val ? 'online' : 'offline';
+                  dutyStatus = newStatus;
                 });
+
+                // Save to cache immediately
+                await SharedPrefsUtil.setDutyStatus(newStatus);
 
                 try {
                   final token = await SharedPrefsUtil.getToken();
@@ -126,10 +144,13 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   if (token == null) {
                     if (!context.mounted) return;
                     // Revert
+                    final revertedStatus = !val ? 'online' : 'offline';
                     setState(() {
                       isOnline = !val;
-                      dutyStatus = !val ? 'online' : 'offline';
+                      dutyStatus = revertedStatus;
                     });
+                    await SharedPrefsUtil.setDutyStatus(revertedStatus);
+
                     CustomSnackBar.showError(
                         context, 'Error: Authentication token not found');
                     return;
@@ -140,8 +161,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
 
                   if (!context.mounted) return;
 
-                  // Success - State is already updated optimistically.
-                  // Just show snackbar.
+                  // Success - State is already updated optimistically in cache and RAM.
                   if (val) {
                     CustomSnackBar.showSuccess(context, 'You are now Online');
                   } else {
@@ -155,17 +175,19 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   final errorMessage = e.toString().toLowerCase();
                   if (val && errorMessage.contains('already online')) {
                     // It's actually a success state (we are online), so don't revert.
-                    // Just show a message to align with reality.
                     CustomSnackBar.showSuccess(
                         context, 'You are already Online');
                     return;
                   }
 
                   // 2. Revert on Failure for other errors
+                  final revertedStatus = !val ? 'online' : 'offline';
                   setState(() {
                     isOnline = !val;
-                    dutyStatus = !val ? 'online' : 'offline';
+                    dutyStatus = revertedStatus;
                   });
+                  await SharedPrefsUtil.setDutyStatus(revertedStatus);
+
                   CustomSnackBar.showError(
                       context, e.toString().replaceAll('Exception: ', ''));
                 }

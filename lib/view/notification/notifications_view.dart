@@ -10,6 +10,7 @@ import '../../../constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import '../../../utils/responsive.dart';
 import '../../../utils/custom_snackbar.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
@@ -307,7 +308,7 @@ class _NotificationsViewState extends State<NotificationsView> {
       elevation: 0,
       centerTitle: false,
       titleSpacing: 0,
-      leading: BackButton(),
+      leading: const CustomBackButton(color: AppColors.headingText),
       title: Text(
         'Notifications',
         style: TextStyle(

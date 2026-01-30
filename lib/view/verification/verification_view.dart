@@ -4,9 +4,13 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class VerificationView extends StatefulWidget {
-  const VerificationView({super.key});
+  final int? orderId;
+  final Order? order;
+  const VerificationView({super.key, this.orderId, this.order});
 
   @override
   State<VerificationView> createState() => _VerificationViewState();
@@ -58,7 +62,10 @@ class _VerificationViewState extends State<VerificationView> {
   }
 
   void _onVerify() {
-    Navigator.of(context).pushReplacementNamed(AppRoutes.deliverySummary);
+    Navigator.of(context).pushReplacementNamed(
+      AppRoutes.deliverySummary,
+      arguments: widget.order,
+    );
   }
 
   @override
@@ -82,7 +89,7 @@ class _VerificationViewState extends State<VerificationView> {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
-        leading: const BackButton(color: AppColors.headingText),
+        leading: const CustomBackButton(color: AppColors.headingText),
         centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
         title: Text(
           'Verification',
@@ -100,7 +107,6 @@ class _VerificationViewState extends State<VerificationView> {
           ),
           child: Column(
             children: [
-              // _header() removed, moved to AppBar
               SizedBox(height: R.h(40)),
               _icon(),
               SizedBox(height: R.h(32)),
@@ -123,16 +129,12 @@ class _VerificationViewState extends State<VerificationView> {
     );
   }
 
-  // ================= HEADER =================
-
-  // ================= ICON =================
-
   Widget _icon() {
     return Container(
       width: R.r(120),
       height: R.r(120),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen.withValues(alpha: 0.12),
+        color: AppColors.primaryGreen.withAlpha(30),
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -144,8 +146,6 @@ class _VerificationViewState extends State<VerificationView> {
       ),
     );
   }
-
-  // ================= TEXT =================
 
   Widget _title() {
     return Text(
@@ -169,7 +169,7 @@ class _VerificationViewState extends State<VerificationView> {
         ),
         SizedBox(height: R.h(4)),
         Text(
-          '+1 (555) 000-0000',
+          widget.order?.user?.mobile ?? '+1 (555) 000-0000',
           style: TextStyle(
             fontSize: R.sp(15),
             fontWeight: FontWeight.w700,
@@ -179,8 +179,6 @@ class _VerificationViewState extends State<VerificationView> {
     );
   }
 
-  // ================= OTP =================
-
   Widget _otpFields() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -189,8 +187,8 @@ class _VerificationViewState extends State<VerificationView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(6, (index) {
           return Container(
-            width: R.r(50), // Reduced width to fit 6 items
-            height: R.r(60), // Adjusted height
+            width: R.r(50),
+            height: R.r(60),
             margin: EdgeInsets.symmetric(horizontal: R.w(4)),
             decoration: BoxDecoration(
               color: AppColors.white,
@@ -203,7 +201,7 @@ class _VerificationViewState extends State<VerificationView> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.black.withValues(alpha: 0.04),
+                  color: AppColors.black.withAlpha(10),
                   blurRadius: R.r(8),
                 ),
               ],
@@ -231,9 +229,9 @@ class _VerificationViewState extends State<VerificationView> {
     );
   }
 
-  // ================= TIMER =================
-
   Widget _timerWidget() {
+    final minutes = (_seconds / 60).floor();
+    final remainingSeconds = _seconds % 60;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: R.w(20),
@@ -244,7 +242,7 @@ class _VerificationViewState extends State<VerificationView> {
         borderRadius: BorderRadius.circular(R.r(30)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.05),
+            color: AppColors.black.withAlpha(12),
             blurRadius: R.r(10),
           ),
         ],
@@ -259,7 +257,7 @@ class _VerificationViewState extends State<VerificationView> {
           ),
           SizedBox(width: R.w(8)),
           Text(
-            '00:${_seconds.toString().padLeft(2, '0')}',
+            '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}',
             style: TextStyle(
               fontSize: R.sp(16),
               fontWeight: FontWeight.w700,
@@ -269,8 +267,6 @@ class _VerificationViewState extends State<VerificationView> {
       ),
     );
   }
-
-  // ================= RESEND =================
 
   Widget _resend() {
     return RichText(
@@ -293,8 +289,6 @@ class _VerificationViewState extends State<VerificationView> {
     );
   }
 
-  // ================= VERIFY BUTTON =================
-
   Widget _verifyButton() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: R.w(16)),
@@ -305,8 +299,7 @@ class _VerificationViewState extends State<VerificationView> {
           onPressed: _isOtpComplete ? _onVerify : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryGreen,
-            disabledBackgroundColor:
-                AppColors.primaryGreen.withValues(alpha: 0.4),
+            disabledBackgroundColor: AppColors.primaryGreen.withAlpha(100),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(R.r(16)),
             ),

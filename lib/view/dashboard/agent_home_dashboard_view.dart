@@ -628,24 +628,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         }
 
         await _showAcceptSuccessDialog(orderToAccept);
-
-        // Clear it now that everything is done and list is likely refreshed
-        if (mounted) {
-          setState(() {
-            _removingOrderIds.remove(orderId);
-          });
-        }
       } else {
         if (!context.mounted) return;
         CustomSnackBar.showError(
             context, response['message'] ?? 'Failed to accept order');
-        setState(() {
-          _removingOrderIds.remove(orderId);
-        });
       }
     } catch (e) {
       if (mounted) {
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           _removingOrderIds.remove(orderId);
         });
@@ -710,12 +703,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
         // Pass the actual reason string
         await _showRejectSuccessDialog(orderId, selectedReason.reason);
-
-        if (mounted) {
-          setState(() {
-            _removingOrderIds.remove(orderId);
-          });
-        }
       } else {
         if (!context.mounted) return;
 
@@ -733,20 +720,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           });
 
           await _showRejectSuccessDialog(orderId, selectedReason.reason);
-
-          if (mounted) {
-            setState(() {
-              _removingOrderIds.remove(orderId);
-            });
-          }
           return;
         }
 
         CustomSnackBar.showError(
             context, response['message'] ?? 'Failed to reject order');
-        setState(() {
-          _removingOrderIds.remove(orderId);
-        });
       }
     } catch (e) {
       if (mounted) {
@@ -765,16 +743,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           });
 
           await _showRejectSuccessDialog(orderId, 'Order already removed');
-
-          if (mounted) {
-            setState(() {
-              _removingOrderIds.remove(orderId);
-            });
-          }
           return;
         }
 
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           _removingOrderIds.remove(orderId);
         });
@@ -785,6 +760,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   // Removed unused _tag method
 
   Widget _myQueueItem(Order order) {
+    // Determine if it's pickup or dropoff based on status
+    final bool isPickup =
+        order.status == 'ready_for_pickup' || order.status == 'pending';
+
     return Container(
       margin: EdgeInsets.only(bottom: R.h(12)),
       padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(16)),
@@ -829,10 +808,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 ),
                 SizedBox(height: R.h(3)),
                 Text(
-                  order.orderNumber.contains('Mart') ||
-                          order.orderNumber.contains('Hub')
-                      ? order.orderNumber
-                      : "Main St. Grocery Hub", // Mocking text from screenshot if not available
+                  order.vendor?.storeName ?? "Main St. Grocery Hub",
                   style: TextStyle(
                     fontSize: R.sp(17),
                     fontWeight: FontWeight.w800,
@@ -844,10 +820,24 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               ],
             ),
           ),
-          Icon(
-            RemixIcons.arrow_right_s_line,
-            size: R.sp(22),
-            color: AppColors.bodyText.withValues(alpha: 0.2),
+          Container(
+            padding:
+                EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
+            decoration: BoxDecoration(
+              color: isPickup ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
+              borderRadius: BorderRadius.circular(R.r(6)),
+            ),
+            child: Text(
+              isPickup ? 'PICKUP' : 'DROP',
+              style: TextStyle(
+                fontSize: R.sp(10),
+                fontWeight: FontWeight.w800,
+                color: isPickup
+                    ? AppColors.badgeGreenText
+                    : AppColors.badgeBlueText,
+                letterSpacing: 0.5,
+              ),
+            ),
           ),
         ],
       ),
@@ -855,154 +845,95 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   }
 
   Widget _availableOrderItem(Order order) {
-    bool isNearby = (double.tryParse(order.distance ?? '0') ?? 0) < 3.0;
-
     return Container(
-      margin: EdgeInsets.only(bottom: R.h(16)),
-      padding: EdgeInsets.all(R.w(20)),
+      margin: EdgeInsets.only(bottom: R.h(12)),
+      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(12)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(28)),
+        borderRadius: BorderRadius.circular(R.r(24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: AppColors.shadow.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // ORDER ID & TAG
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        '#${order.orderNumber}',
-                        style: TextStyle(
-                          fontSize: R.sp(18),
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.headingText,
-                        ),
-                      ),
-                      SizedBox(width: R.w(10)),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: R.w(10), vertical: R.h(4)),
-                        decoration: BoxDecoration(
-                          color: isNearby
-                              ? const Color(0xFFE8FFF3)
-                              : const Color(0xFFF1F3F5),
-                          borderRadius: BorderRadius.circular(R.r(100)),
-                        ),
-                        child: Text(
-                          isNearby ? 'NEARBY' : 'STANDARD',
-                          style: TextStyle(
-                            fontSize: R.sp(10),
-                            fontWeight: FontWeight.w800,
-                            color: isNearby
-                                ? const Color(0xFF00D166)
-                                : const Color(0xFF74828F),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: R.h(8)),
-                  // ITEMS & DISTANCE
-                  Row(
-                    children: [
-                      Icon(RemixIcons.shopping_bag_3_fill,
-                          size: R.sp(18),
-                          color: AppColors.bodyText.withValues(alpha: 0.4)),
-                      SizedBox(width: R.w(6)),
-                      Text(
-                        '${order.orderItems.length} items',
-                        style: TextStyle(
-                          fontSize: R.sp(14),
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.bodyText.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      SizedBox(width: R.w(16)),
-                      Icon(RemixIcons.map_pin_2_fill,
-                          size: R.sp(18), color: const Color(0xFF00D166)),
-                      SizedBox(width: R.w(6)),
-                      Text(
-                        '${order.distance ?? '0.0'} km',
-                        style: TextStyle(
-                          fontSize: R.sp(14),
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF00D166),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+          Container(
+            padding: EdgeInsets.all(R.w(10)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F4F9),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              RemixIcons.shopping_bag_3_fill,
+              color: AppColors.primaryGreen,
+              size: R.sp(20),
+            ),
           ),
-          SizedBox(height: R.h(24)),
-          // BUTTONS
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: SizedBox(
-                  height: R.h(56),
-                  child: ElevatedButton(
-                    onPressed: () => _acceptOrder(order.id),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00E676),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(20)),
+          SizedBox(width: R.w(16)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: R.w(6), vertical: R.h(2)),
+                      decoration: BoxDecoration(
+                        color: AppColors.softGreenBg,
+                        borderRadius: BorderRadius.circular(R.r(4)),
+                      ),
+                      child: Text(
+                        'GROCERIES',
+                        style: TextStyle(
+                          fontSize: R.sp(8),
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryGreen,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
-                    child: Text(
-                      'Accept',
+                    SizedBox(width: R.w(8)),
+                    Text(
+                      '${order.distance ?? '1.4'} km',
                       style: TextStyle(
-                        fontSize: R.sp(17),
-                        fontWeight: FontWeight.w900,
+                        fontSize: R.sp(12),
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.bodyText.withValues(alpha: 0.5),
                       ),
                     ),
+                  ],
+                ),
+                SizedBox(height: R.h(4)),
+                Text(
+                  '₹${(double.tryParse(order.totalAmount) ?? 35.0).toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: R.sp(18),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.headingText,
                   ),
                 ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _acceptOrder(order.id),
+            child: Container(
+              padding: EdgeInsets.all(R.w(8)),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen,
+                borderRadius: BorderRadius.circular(R.r(12)),
               ),
-              SizedBox(width: R.w(12)),
-              Expanded(
-                flex: 1,
-                child: SizedBox(
-                  height: R.h(56),
-                  child: ElevatedButton(
-                    onPressed: () => _rejectOrder(order.id),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F4F7),
-                      foregroundColor: const Color(0xFF64748B),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(20)),
-                      ),
-                    ),
-                    child: Text(
-                      'Reject',
-                      style: TextStyle(
-                        fontSize: R.sp(17),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
+              child: Icon(
+                RemixIcons.add_line,
+                color: Colors.white,
+                size: R.sp(20),
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1231,7 +1162,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
     if (isPickup) {
       // Navigate to Vendor
-      query = Uri.encodeComponent(order.vendor?.address ?? '');
+      final vendorAddr = order.vendor?.address;
+      if (vendorAddr != null && vendorAddr.isNotEmpty) {
+        query = Uri.encodeComponent(vendorAddr);
+      } else {
+        // Fallback to vendor name if address is missing
+        query = Uri.encodeComponent(order.vendor?.storeName ?? '');
+      }
     } else {
       // Navigate to Customer
       if (order.deliveryAddress?.latitude != null &&
@@ -1259,14 +1196,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       } else if (await canLaunchUrl(appleMapsUrl)) {
         await launchUrl(appleMapsUrl);
       } else {
-        final webUrl =
-            Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
-        if (await canLaunchUrl(webUrl)) {
-          await launchUrl(webUrl, mode: LaunchMode.externalApplication);
-        } else {
-          if (mounted) {
-            CustomSnackBar.showError(context, "Could not launch maps");
-          }
+        if (mounted) {
+          CustomSnackBar.showError(context, "Could not launch maps navigation");
         }
       }
     } catch (e) {
@@ -1436,14 +1367,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               // NEW: Info Banner only when waiting
               if (_isWaiting && !_isLoading) _buildInfoBanner(),
 
-              Padding(
-                padding: EdgeInsets.only(bottom: R.h(20)),
-                child: DutyStatusCard(
-                  isOnline: isOnline,
-                  onToggle: () => widget.onStatusChanged(!isOnline),
-                ),
-              ),
-
               if (_isLoading)
                 const DashboardContentShimmer()
               else
@@ -1590,7 +1513,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   // Delivery Queue (Priority)
                                   if (_myOrders.length > 1) ...[
                                     _sectionHeader(
-                                      title: 'Order Queue',
+                                      title: 'My Queue',
                                       count: _myOrders.length - 1,
                                       icon: RemixIcons.box_3_fill,
                                       iconColor: AppColors.primaryGreen,
@@ -1714,6 +1637,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                                     .bodyText)))
                                                     : Column(
                                                         children: _newRequests
+                                                            .where((order) =>
+                                                                !_removingOrderIds
+                                                                    .contains(
+                                                                        order
+                                                                            .id))
                                                             .map((order) =>
                                                                 NewRequestCard(
                                                                   order: order,
@@ -1739,12 +1667,32 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       _sectionHeader(
-                                        title: 'Available Orders',
+                                        title: 'Nearby Available',
                                         icon: RemixIcons.compass_3_fill,
                                         iconColor:
                                             const Color(0xFFFF8A65), // Orange
-                                        action: _availableOrders.length > 2
-                                            ? GestureDetector(
+                                        count: _availableOrders.length,
+                                        action: Row(
+                                          children: [
+                                            if (_availableOrders.isNotEmpty)
+                                              GestureDetector(
+                                                onTap: () {
+                                                  // Optional: Implement batch accept
+                                                },
+                                                child: Text(
+                                                  'Batch All',
+                                                  style: TextStyle(
+                                                    fontSize: R.sp(14),
+                                                    color:
+                                                        AppColors.primaryGreen,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                            if (_availableOrders.length >
+                                                2) ...[
+                                              SizedBox(width: R.w(16)),
+                                              GestureDetector(
                                                 onTap: () {
                                                   setState(() {
                                                     _isAvailableExpanded =
@@ -1762,8 +1710,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                     fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
-                                              )
-                                            : null,
+                                              ),
+                                            ],
+                                          ],
+                                        ),
                                       ),
                                       SizedBox(height: R.h(12)),
                                       // ... logic for available list or mock
@@ -1781,11 +1731,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                           AppColors.bodyText)));
                                         }
                                         final ordersToShow =
-                                            _isAvailableExpanded
-                                                ? _availableOrders
-                                                : _availableOrders
-                                                    .take(2)
-                                                    .toList();
+                                            (_isAvailableExpanded
+                                                    ? _availableOrders
+                                                    : _availableOrders.take(2))
+                                                .where((order) =>
+                                                    !_removingOrderIds
+                                                        .contains(order.id))
+                                                .toList();
                                         return Column(
                                           children: ordersToShow
                                               .map((order) =>
@@ -1892,144 +1844,109 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _fetchOrders(refresh: false);
   }
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) {
-      return 'Good Morning,';
-    } else if (hour >= 12 && hour < 17) {
-      return 'Good Afternoon,';
-    } else if (hour >= 17 && hour < 22) {
-      return 'Good Evening,';
-    } else {
-      return 'Good Night,';
-    }
-  }
-
   Widget _dashboardHeader(bool isOnline) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(R.w(4), R.h(6), R.w(4), R.h(20)),
+      padding: EdgeInsets.only(bottom: R.h(24)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          /// LEFT SIDE - Profile & Greeting
+          /// LEFT SIDE - Duty Mode Toggle
+          DutyStatusCard(
+            isOnline: isOnline,
+            onToggle: () => widget.onStatusChanged(!isOnline),
+          ),
+
+          /// RIGHT SIDE - Timer & Notification
           Row(
             children: [
+              // Timer Display
               Container(
-                padding: EdgeInsets.all(R.w(2)),
+                padding:
+                    EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(8)),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                    width: 2,
-                  ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(R.r(100)),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withValues(alpha: 0.05),
+                      color: AppColors.shadow.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: ClipOval(
-                  child: (_userProfile?.profilePhoto != null &&
-                          _userProfile!.profilePhoto!.isNotEmpty)
-                      ? CustomNetworkImage(
-                          imageUrl: _userProfile!.profilePhoto!,
-                          width: R.r(44), // 2 * radius 22
-                          height: R.r(44),
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          width: R.r(44),
-                          height: R.r(44),
-                          color: AppColors.grey.withValues(alpha: 0.1),
-                          child: Icon(Icons.person,
-                              color: AppColors.grey, size: R.sp(20)),
-                        ),
-                ),
-              ),
-              SizedBox(width: R.w(12)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _getGreeting(),
-                    style: TextStyle(
-                      fontSize: R.sp(12),
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.bodyText,
-                    ),
-                  ),
-                  Text(
-                    _userProfile?.name ?? 'Agent',
-                    style: TextStyle(
-                      fontSize: R.sp(18),
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.headingText,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          /// RIGHT SIDE - Notification
-          Container(
-            width: R.w(42),
-            height: R.w(42),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              shape: BoxShape.circle,
-              border: Border.all(
-                  color: AppColors.borderLight.withValues(alpha: 0.5),
-                  width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Consumer<NotificationsViewModel>(
-              builder: (context, vm, _) {
-                return Stack(
+                child: Row(
                   children: [
-                    IconButton(
-                      onPressed: () {
-                        PersistentNavBarNavigator.pushNewScreen(
-                          context,
-                          screen: const NotificationsView(),
-                          withNavBar: false, // Hide bottom nav bar
-                          pageTransitionAnimation:
-                              PageTransitionAnimation.cupertino,
-                        );
-                      },
-                      icon: Icon(
-                        RemixIcons.notification_4_line,
-                        size: R.sp(20),
+                    Icon(RemixIcons.time_fill,
+                        color: AppColors.primaryGreen, size: R.sp(18)),
+                    SizedBox(width: R.w(8)),
+                    Text(
+                      '04:22:15', // Mock timer value
+                      style: TextStyle(
+                        fontSize: R.sp(14),
+                        fontWeight: FontWeight.w800,
                         color: AppColors.headingText,
                       ),
                     ),
-                    if (vm.unreadCount > 0)
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          width: R.w(8),
-                          height: R.w(8),
-                          decoration: const BoxDecoration(
-                            color: AppColors.error,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
                   ],
-                );
-              },
-            ),
+                ),
+              ),
+              SizedBox(width: R.w(12)),
+
+              // Notification Bell
+              Consumer<NotificationsViewModel>(
+                builder: (context, vm, _) {
+                  return GestureDetector(
+                    onTap: () {
+                      PersistentNavBarNavigator.pushNewScreen(
+                        context,
+                        screen: const NotificationsView(),
+                        withNavBar: false,
+                        pageTransitionAnimation:
+                            PageTransitionAnimation.cupertino,
+                      );
+                    },
+                    child: Container(
+                      width: R.w(42),
+                      height: R.w(42),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadow.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            RemixIcons.notification_4_fill,
+                            size: R.sp(22),
+                            color: AppColors.headingText,
+                          ),
+                          if (vm.unreadCount > 0)
+                            Positioned(
+                              top: R.h(10),
+                              right: R.w(10),
+                              child: Container(
+                                width: R.w(8),
+                                height: R.w(8),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.error,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),

@@ -5,6 +5,7 @@ class SharedPrefsUtil {
   static const String _keyUserName = 'user_name';
   static const String _keyAgentId = 'agent_id';
   static const String _keyUserId = 'user_id';
+  static const String _keyDutyStatus = 'duty_status';
 
   static Future<void> saveUserSession({
     required String token,
@@ -39,6 +40,11 @@ class SharedPrefsUtil {
     await prefs.setString(_keyUserId, id);
   }
 
+  static Future<void> setDutyStatus(String status) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyDutyStatus, status);
+  }
+
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyToken);
@@ -57,6 +63,11 @@ class SharedPrefsUtil {
   static Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyUserId);
+  }
+
+  static Future<String?> getDutyStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyDutyStatus);
   }
 
   static Future<void> clearSession() async {

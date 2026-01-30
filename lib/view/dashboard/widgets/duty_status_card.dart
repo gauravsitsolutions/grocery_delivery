@@ -15,84 +15,67 @@ class DutyStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: R.w(20),
-        vertical: R.h(16),
-      ),
-      decoration: BoxDecoration(
-        // Use a pale green for online, light grey or white for offline
-        color: isOnline ? const Color(0xFFE8F5E9) : AppColors.white,
-        borderRadius:
-            BorderRadius.circular(R.r(40)), // High radius for pill shape
-        border: Border.all(
-          color: isOnline
-              ? AppColors.primaryGreen.withValues(alpha: 0.2)
-              : AppColors.borderLight,
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: R.w(6),
+          vertical: R.h(6),
         ),
-        boxShadow: [
-          if (!isOnline)
-            BoxShadow(
-              color: AppColors.shadow.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+        decoration: BoxDecoration(
+          color: isOnline ? const Color(0xFF00C853) : const Color(0xFFF1F3F5),
+          borderRadius: BorderRadius.circular(R.r(100)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(R.w(4)),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: isOnline
+                  ? Icon(
+                      Icons.check,
+                      size: R.sp(14),
+                      color: const Color(0xFF00C853),
+                    )
+                  : SizedBox(
+                      width: R.w(14),
+                      height: R.w(14),
+                    ),
             ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              // Use a dot indicator
-              Container(
-                width: R.w(8),
-                height: R.w(8),
-                decoration: BoxDecoration(
-                  color: isOnline ? const Color(0xFF00C853) : AppColors.grey,
-                  shape: BoxShape.circle,
+            SizedBox(width: R.w(8)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isOnline ? 'Online' : 'Offline',
+                  style: TextStyle(
+                    fontSize: R.sp(14),
+                    fontWeight: FontWeight.w800,
+                    color: isOnline ? Colors.white : AppColors.headingText,
+                    height: 1.1,
+                  ),
                 ),
-              ),
-              SizedBox(width: R.w(10)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Status: ${isOnline ? 'Online' : 'Offline'}',
-                    style: TextStyle(
-                      fontSize: R.sp(16),
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.headingText,
-                    ),
+                Text(
+                  'DUTY MODE',
+                  style: TextStyle(
+                    fontSize: R.sp(8),
+                    color: isOnline
+                        ? Colors.white.withValues(alpha: 0.8)
+                        : AppColors.bodyText,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
                   ),
-                  Text(
-                    isOnline
-                        ? 'Ready for delivery'
-                        : 'You are offline', // Matching design
-                    style: TextStyle(
-                      fontSize: R.sp(13),
-                      color: isOnline
-                          ? AppColors.primaryGreen
-                          : AppColors.bodyText,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          // Custom Cupertino Switch for the premium toggle look
-          Transform.scale(
-            scale: 0.9,
-            child: CupertinoSwitch(
-              value: isOnline,
-              onChanged: (_) => onToggle(),
-              activeColor: AppColors.primaryGreen,
+                ),
+              ],
             ),
-          ),
-        ],
+            SizedBox(width: R.w(10)),
+          ],
+        ),
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'package:samrudhi_delivery_agent_app/view_model/delivery_history_view_mod
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:intl/intl.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class DeliveryHistoryView extends StatefulWidget {
   const DeliveryHistoryView({super.key});
@@ -57,7 +58,7 @@ class _DeliveryHistoryViewState extends State<DeliveryHistoryView> {
           fontSize: R.sp(18),
           fontWeight: FontWeight.w700,
         ),
-        leading: const BackButton(color: AppColors.headingText),
+        leading: const CustomBackButton(color: AppColors.headingText),
       ),
       body: viewModel.isLoading
           ? const Center(

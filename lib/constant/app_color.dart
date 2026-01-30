@@ -85,4 +85,13 @@ class AppColors {
   static Color? grey400 = Colors.grey[400];
   static Color? grey500 = Colors.grey[500];
   static Color? grey600 = Colors.grey[600];
+
+  // Dashboard Redesign
+  static const Color badgeGreenBg = Color(0xFFE8FFF3);
+  static const Color badgeGreenText = Color(0xFF00D166);
+  static const Color badgeBlueBg = Color(0xFFEAF1FF);
+  static const Color badgeBlueText = Color(0xFF2F6BFF);
+  static const Color timerBg = Color(0xFFF9FAF7);
+  static const Color ghostButtonBg = Color(0xFFF1F4F7);
+  static const Color ghostButtonText = Color(0xFF64748B);
 }

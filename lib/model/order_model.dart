@@ -139,6 +139,7 @@ class Order {
   final String? pickupProof;
   final String? cancelReason;
   final String? cancelComment;
+  final String? deliveryInstructions;
   final DateTime? cancelledAt;
   final DateTime? deliveredAt;
 
@@ -175,6 +176,7 @@ class Order {
     this.cancelledAt,
     this.deliveredAt,
     this.distance,
+    this.deliveryInstructions,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -222,6 +224,8 @@ class Order {
       pickupProof: json['pickup_proof'],
       cancelReason: json['cancel_reason'],
       cancelComment: json['cancel_comment'],
+      deliveryInstructions:
+          json['delivery_instructions'] ?? json['instructions'],
       cancelledAt: _parseDate(json['cancelled_at']),
       deliveredAt: _parseDate(json['delivered_at']),
       distance: json['distance']?.toString(),
@@ -261,6 +265,7 @@ class Order {
     DateTime? cancelledAt,
     DateTime? deliveredAt,
     String? distance,
+    String? deliveryInstructions,
   }) {
     return Order(
       id: id ?? this.id,
@@ -292,6 +297,7 @@ class Order {
       pickupProof: pickupProof ?? this.pickupProof,
       cancelReason: cancelReason ?? this.cancelReason,
       cancelComment: cancelComment ?? this.cancelComment,
+      deliveryInstructions: deliveryInstructions ?? this.deliveryInstructions,
       cancelledAt: cancelledAt ?? this.cancelledAt,
       deliveredAt: deliveredAt ?? this.deliveredAt,
       distance: distance ?? this.distance,

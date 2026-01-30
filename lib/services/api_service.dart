@@ -355,9 +355,22 @@ class ApiService {
     return PartnerSummary.fromJson(response);
   }
 
-  Future<List<DailyPerformance>> getPartnerPerformanceGraph(
-      String token) async {
-    final uri = Uri.parse(AppUrls.partnerPerformanceGraph);
+  Future<List<DailyPerformance>> getPartnerPerformanceGraph(String token,
+      {String? filter, String? startDate, String? endDate}) async {
+    var url = AppUrls.partnerPerformanceGraph;
+
+    // Add query parameters if present
+    final queryParams = <String, String>{};
+    if (filter != null) queryParams['filter'] = filter;
+    if (startDate != null) queryParams['start_date'] = startDate;
+    if (endDate != null) queryParams['end_date'] = endDate;
+
+    if (queryParams.isNotEmpty) {
+      final queryString = Uri(queryParameters: queryParams).query;
+      url = '$url?$queryString';
+    }
+
+    final uri = Uri.parse(url);
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(

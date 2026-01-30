@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class ForgotPasswordOTPView extends StatefulWidget {
   const ForgotPasswordOTPView({super.key});
@@ -84,7 +85,7 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
-        leading: const BackButton(color: AppColors.black),
+        leading: const CustomBackButton(color: AppColors.black),
         title: Text(
           'OTP Verification',
           style: AppTextStyles.heading.copyWith(fontSize: R.sp(18)),

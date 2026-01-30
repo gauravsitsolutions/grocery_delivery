@@ -4,19 +4,21 @@ import 'package:in_app_review/in_app_review.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:samrudhi_delivery_agent_app/widget/agent_bottom_nav_item.dart';
-import 'package:animations/animations.dart';
+import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:intl/intl.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
-class DeliverySummaryView extends StatefulWidget {
-  const DeliverySummaryView({super.key});
+class DeliveryCompletedView extends StatefulWidget {
+  final Order? order;
+  const DeliveryCompletedView({super.key, this.order});
 
   @override
-  State<DeliverySummaryView> createState() => _DeliverySummaryViewState();
+  State<DeliveryCompletedView> createState() => _DeliveryCompletedViewState();
 }
 
-class _DeliverySummaryViewState extends State<DeliverySummaryView> {
+class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
   final InAppReview _inAppReview = InAppReview.instance;
-  int rating = 4;
+  int rating = 5;
 
   Future<void> _requestReview() async {
     try {
@@ -37,7 +39,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
-        leading: const BackButton(color: AppColors.headingText),
+        leading: const CustomBackButton(color: AppColors.headingText),
         centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
         title: Text(
           'Summary',
@@ -132,6 +134,10 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
   }
 
   Widget _orderMeta() {
+    final timeStr = widget.order?.deliveredAt != null
+        ? DateFormat('h:mm a').format(widget.order!.deliveredAt!)
+        : DateFormat('h:mm a').format(DateTime.now());
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: R.w(16),
@@ -142,7 +148,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
         borderRadius: BorderRadius.circular(R.r(20)),
       ),
       child: Text(
-        'Order #2938 • 2:30 PM',
+        'Order #${widget.order?.orderNumber ?? '0000'} • $timeStr',
         style: TextStyle(
           fontSize: R.sp(14),
           color: AppColors.bodyText,
@@ -176,7 +182,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
                   vertical: R.h(6),
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.softGreyBg,
+                  color: AppColors.primaryGreen.withAlpha(20),
                   borderRadius: BorderRadius.circular(R.r(20)),
                 ),
                 child: Text(
@@ -192,7 +198,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
           ),
           SizedBox(height: R.h(12)),
           Text(
-            '₹ 14.50',
+            '₹ ${widget.order?.totalAmount ?? '0.00'}',
             style: TextStyle(
               fontSize: R.sp(36),
               fontWeight: FontWeight.w800,
@@ -203,21 +209,18 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
           Row(
             children: [
               Text(
-                'Base: ₹ 10.00',
+                'Subtotal: ₹ ${widget.order?.totalAmount ?? '0.00'}',
                 style: TextStyle(
                   fontSize: R.sp(14),
                   color: AppColors.bodyText,
                 ),
               ),
-              SizedBox(width: R.w(8)),
-              Text('•', style: TextStyle(color: AppColors.bodyText)),
-              SizedBox(width: R.w(8)),
+              const Spacer(),
               Text(
-                'Tip: ₹ 4.50',
+                'Payment: ${widget.order?.paymentMethod ?? 'Online'}',
                 style: TextStyle(
                   fontSize: R.sp(14),
-                  color: AppColors.primaryGreen,
-                  fontWeight: FontWeight.w700,
+                  color: AppColors.bodyText,
                 ),
               ),
             ],
@@ -235,8 +238,13 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
         children: [
           CircleAvatar(
             radius: R.r(26),
-            backgroundImage: const NetworkImage(
-              'https://randomuser.me/api/portraits/women/44.jpg',
+            backgroundColor: AppColors.primaryGreen.withAlpha(30),
+            child: Text(
+              widget.order?.user?.fullName.substring(0, 1).toUpperCase() ?? 'C',
+              style: TextStyle(
+                color: AppColors.primaryGreen,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           SizedBox(width: R.w(12)),
@@ -245,7 +253,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Alice M.',
+                  widget.order?.user?.fullName ?? 'Customer',
                   style: TextStyle(
                     fontSize: R.sp(16),
                     fontWeight: FontWeight.w700,
@@ -253,7 +261,9 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
                 ),
                 SizedBox(height: R.h(4)),
                 Text(
-                  '123 Main St, Apt 4B',
+                  widget.order?.deliveryAddress?.addressLine1 ?? 'No address',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: R.sp(14),
                     color: AppColors.bodyText,
@@ -295,7 +305,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
               ),
               const Spacer(),
               Text(
-                'ID: #938122',
+                'ID: #${widget.order?.orderNumber ?? '0000'}',
                 style: TextStyle(
                   fontSize: R.sp(13),
                   color: AppColors.bodyText,
@@ -320,7 +330,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Grocery Delivery',
+                    'Order Delivered',
                     style: TextStyle(
                       fontSize: R.sp(15),
                       fontWeight: FontWeight.w700,
@@ -328,7 +338,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
                   ),
                   SizedBox(height: R.h(4)),
                   Text(
-                    '2 Bags • 15 Items',
+                    '${widget.order?.orderItems.length ?? 0} Items',
                     style: TextStyle(
                       fontSize: R.sp(13),
                       color: AppColors.bodyText,
@@ -338,15 +348,20 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
               ),
             ],
           ),
-          SizedBox(height: R.h(12)),
-          Text(
-            'Whole Wheat Bread, Organic Eggs (12ct), Almond Milk, '
-            'Bananas (x5), Avocados...',
-            style: TextStyle(
-              fontSize: R.sp(14),
-              color: AppColors.bodyText,
+          if (widget.order?.orderItems.isNotEmpty == true) ...[
+            SizedBox(height: R.h(12)),
+            Text(
+              widget.order!.orderItems
+                  .map((e) => e.product?.name ?? 'Item')
+                  .join(', '),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: R.sp(14),
+                color: AppColors.bodyText,
+              ),
             ),
-          ),
+          ]
         ],
       ),
     );
@@ -362,22 +377,10 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
         onPressed: () async {
           await _requestReview();
           if (!mounted) return;
-          Navigator.pushReplacement(
+          Navigator.pushNamedAndRemoveUntil(
             context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const AgentBottomNavView(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return SharedAxisTransition(
-                  animation: animation,
-                  secondaryAnimation: secondaryAnimation,
-                  transitionType: SharedAxisTransitionType.horizontal,
-                  child: child,
-                );
-              },
-              transitionDuration: const Duration(milliseconds: 300),
-            ),
+            '/', // Splash or main entry
+            (route) => false,
           );
         },
         style: ElevatedButton.styleFrom(
@@ -404,7 +407,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
     return Column(
       children: [
         Text(
-          'Rate Delivery Agent',
+          'Rate Customer',
           style: TextStyle(
             fontSize: R.sp(20),
             fontWeight: FontWeight.w700,
@@ -413,7 +416,7 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
         ),
         SizedBox(height: R.h(8)),
         Text(
-          'How was your experience with Alice?',
+          'How was your experience with ${widget.order?.user?.fullName ?? 'the customer'}?',
           style: TextStyle(
             fontSize: R.sp(14),
             color: AppColors.bodyText,
@@ -424,9 +427,8 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(5, (i) {
             return IconButton(
-              onPressed: () async {
+              onPressed: () {
                 setState(() => rating = i + 1);
-                if (rating == 5) await _requestReview();
               },
               icon: Icon(
                 RemixIcons.star_fill,
@@ -442,8 +444,8 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
           spacing: R.w(10),
           children: [
             _chip('Friendly', selected: true),
-            _chip('Easy Parking'),
-            _chip('Tip Received'),
+            _chip('Quick Handover'),
+            _chip('Easy to Find'),
           ],
         ),
       ],
@@ -457,7 +459,8 @@ class _DeliverySummaryViewState extends State<DeliverySummaryView> {
         vertical: R.h(12),
       ),
       decoration: BoxDecoration(
-        color: selected ? AppColors.softGreyBg : AppColors.white,
+        color:
+            selected ? AppColors.primaryGreen.withAlpha(20) : AppColors.white,
         borderRadius: BorderRadius.circular(R.r(20)),
         border: Border.all(
           color: selected ? AppColors.primaryGreen : AppColors.borderLight,

@@ -12,6 +12,7 @@ import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/agent_bottom_nav_item.dart';
 
 import 'package:samrudhi_delivery_agent_app/view/splash_view.dart';
@@ -53,19 +54,57 @@ class AppPages {
         );
         break;
       case AppRoutes.customerInfo:
-        page = const CustomerInfoView();
+        final dynamic args = settings.arguments;
+        if (args is int) {
+          page = CustomerInfoView(orderId: args);
+        } else if (args != null) {
+          try {
+            page = CustomerInfoView(orderId: args.id, order: args);
+          } catch (_) {
+            page = const CustomerInfoView();
+          }
+        } else {
+          page = const CustomerInfoView();
+        }
         break;
       case AppRoutes.deliverySummary:
-        page = const DeliverySummaryView();
+        final dynamic args = settings.arguments;
+        if (args is Order) {
+          page = DeliveryCompletedView(order: args);
+        } else {
+          page = const DeliveryCompletedView();
+        }
         break;
       case AppRoutes.deliveryHistory:
         page = const DeliveryHistoryView();
         break;
       case AppRoutes.navigationView:
-        page = const NavigationView();
+        final dynamic args = settings.arguments;
+        if (args is int) {
+          page = NavigationView(orderId: args);
+        } else if (args != null) {
+          try {
+            page = NavigationView(orderId: args.id, order: args);
+          } catch (_) {
+            page = const NavigationView();
+          }
+        } else {
+          page = const NavigationView();
+        }
         break;
       case AppRoutes.verificationView:
-        page = const VerificationView();
+        final dynamic args = settings.arguments;
+        if (args is int) {
+          page = VerificationView(orderId: args);
+        } else if (args != null) {
+          try {
+            page = VerificationView(orderId: args.id, order: args);
+          } catch (_) {
+            page = const VerificationView();
+          }
+        } else {
+          page = const VerificationView();
+        }
         break;
       case AppRoutes.notificationView:
         page = const NotificationsView();

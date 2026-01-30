@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
-import 'package:animations/animations.dart';
+import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../utils/responsive.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class NavigationView extends StatelessWidget {
-  const NavigationView({super.key});
+  final int? orderId;
+  final Order? order;
+  const NavigationView({super.key, this.orderId, this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +43,7 @@ class NavigationView extends StatelessWidget {
                 CircleAvatar(
                   radius: R.r(24),
                   backgroundColor: AppColors.white,
-                  child: BackButton(color: AppColors.headingText),
+                  child: const CustomBackButton(color: AppColors.headingText),
                 ),
                 SizedBox(width: R.w(12)),
                 Expanded(child: Center(child: _orderPill())),
@@ -147,7 +151,7 @@ class NavigationView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'ORDER #5592',
+                    'ORDER #${order?.orderNumber ?? '0000'}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -156,7 +160,7 @@ class NavigationView extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Navigating to Market St',
+                    'Navigating to ${order?.deliveryAddress?.city ?? 'Customer'}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -232,6 +236,7 @@ class NavigationView extends StatelessWidget {
   // ================= BOTTOM SHEET =================
 
   Widget _bottomSheet(BuildContext context) {
+    final address = order?.deliveryAddress;
     return Container(
       padding: EdgeInsets.fromLTRB(
         R.w(16),
@@ -276,13 +281,26 @@ class NavigationView extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              CircleAvatar(
-                radius: R.r(22),
-                backgroundColor: const Color(0xFFEAF7F0),
-                child: Icon(
-                  RemixIcons.direction_fill,
-                  color: AppColors.primaryGreen,
-                  size: R.sp(20),
+              InkWell(
+                onTap: () async {
+                  if (address != null) {
+                    final query = Uri.encodeComponent(
+                        "${address.addressLine1}, ${address.city}, ${address.postcode}");
+                    final url = Uri.parse(
+                        "https://www.google.com/maps/search/?api=1&query=$query");
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    }
+                  }
+                },
+                child: CircleAvatar(
+                  radius: R.r(22),
+                  backgroundColor: const Color(0xFFEAF7F0),
+                  child: Icon(
+                    RemixIcons.direction_fill,
+                    color: AppColors.primaryGreen,
+                    size: R.sp(20),
+                  ),
                 ),
               ),
             ],
@@ -308,8 +326,13 @@ class NavigationView extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: R.r(26),
-                backgroundImage: const NetworkImage(
-                  'https://randomuser.me/api/portraits/women/44.jpg',
+                backgroundColor: AppColors.primaryGreen.withAlpha(30),
+                child: Text(
+                  order?.user?.fullName.substring(0, 1).toUpperCase() ?? 'C',
+                  style: TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               SizedBox(width: R.w(12)),
@@ -318,7 +341,7 @@ class NavigationView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sarah J.',
+                      order?.user?.fullName ?? 'Customer',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: R.sp(16),
@@ -326,7 +349,9 @@ class NavigationView extends StatelessWidget {
                     ),
                     SizedBox(height: R.h(4)),
                     Text(
-                      '1024 Market St, Apt 4B',
+                      address?.addressLine1 ?? 'No address',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppColors.bodyText,
                         fontSize: R.sp(14),
@@ -335,9 +360,31 @@ class NavigationView extends StatelessWidget {
                   ],
                 ),
               ),
-              _circleButton(icon: RemixIcons.phone_line),
+              _circleButton(
+                icon: RemixIcons.phone_line,
+                onTap: () async {
+                  final phone = order?.user?.mobile;
+                  if (phone != null) {
+                    final url = Uri.parse('tel:$phone');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    }
+                  }
+                },
+              ),
               SizedBox(width: R.w(8)),
-              _circleButton(icon: RemixIcons.message_3_line),
+              _circleButton(
+                icon: RemixIcons.message_3_line,
+                onTap: () async {
+                  final phone = order?.user?.mobile;
+                  if (phone != null) {
+                    final url = Uri.parse('sms:$phone');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    }
+                  }
+                },
+              ),
             ],
           ),
 
@@ -356,7 +403,9 @@ class NavigationView extends StatelessWidget {
                 SizedBox(width: R.w(12)),
                 Expanded(
                   child: Text(
-                    '"Leave at front desk, code 4920"',
+                    order?.deliveryInstructions?.isNotEmpty == true
+                        ? '"${order!.deliveryInstructions}"'
+                        : 'No instructions',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: R.sp(14),
@@ -373,21 +422,10 @@ class NavigationView extends StatelessWidget {
           // MARK AS ARRIVED BUTTON
           InkWell(
             onTap: () {
-              Navigator.pushReplacement(
+              Navigator.pushReplacementNamed(
                 context,
-                PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const VerificationView(),
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                    return SharedAxisTransition(
-                      animation: animation,
-                      secondaryAnimation: secondaryAnimation,
-                      transitionType: SharedAxisTransitionType.horizontal,
-                      child: child,
-                    );
-                  },
-                  transitionDuration: const Duration(milliseconds: 300),
-                ),
+                AppRoutes.verificationView,
+                arguments: order,
               );
             },
             child: Container(

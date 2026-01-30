@@ -13,6 +13,7 @@ import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class OrderDetailsView extends StatefulWidget {
   final int orderId;
@@ -76,13 +77,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       elevation: 0,
       backgroundColor: AppColors.white,
       foregroundColor: AppColors.black,
-      leading: IconButton(
-        icon: Icon(
-          Icons.arrow_back_ios_new_rounded,
-          size: R.sp(20),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
+      leading: const CustomBackButton(color: AppColors.black),
       centerTitle: true,
       title: Column(
         children: [
@@ -582,6 +577,17 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       action =
           isEnabled ? () => _handleConfirmPickup(context, viewModel) : null;
       isLoading = viewModel.isPickupLoading;
+    } else if (order.status.toLowerCase() == 'checked_in' ||
+        order.status.toLowerCase() == 'in_progress') {
+      label = 'Start Navigation';
+      action = () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.customerInfo,
+          arguments: order,
+        );
+      };
+      isLoading = false;
     } else {
       // Delivery Actions?
       return null;

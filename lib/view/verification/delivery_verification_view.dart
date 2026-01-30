@@ -8,6 +8,7 @@ import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/delivery_success_view.dart';
 import 'package:animations/animations.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class DeliveryVerificationView extends StatefulWidget {
   final int orderId;
@@ -93,14 +94,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
-        leading: IconButton(
-          icon: Icon(
-            Theme.of(context).platform == TargetPlatform.iOS
-                ? Remix.arrow_left_s_line
-                : Remix.arrow_left_line,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const CustomBackButton(color: Colors.black),
       ),
       body: SingleChildScrollView(
         child: Padding(
