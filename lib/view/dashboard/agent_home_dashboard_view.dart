@@ -783,12 +783,16 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           Container(
             padding: EdgeInsets.all(R.w(12)),
             decoration: BoxDecoration(
-              color: AppColors.softGreenBg.withValues(alpha: 0.5),
+              color: isPickup
+                  ? AppColors.primaryGreen.withValues(alpha: 0.1)
+                  : Colors.blue.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              RemixIcons.box_3_fill,
-              color: AppColors.primaryGreen,
+              isPickup
+                  ? RemixIcons.shopping_bag_3_fill
+                  : RemixIcons.home_4_fill,
+              color: isPickup ? AppColors.primaryGreen : Colors.blue,
               size: R.sp(22),
             ),
           ),
@@ -798,17 +802,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ORDER #${order.orderNumber}',
-                  style: TextStyle(
-                    fontSize: R.sp(11),
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.bodyText.withValues(alpha: 0.4),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                SizedBox(height: R.h(3)),
-                Text(
-                  order.vendor?.storeName ?? "Main St. Grocery Hub",
+                  isPickup
+                      ? (order.vendor?.storeName ?? "Fresh Mart - Sector 45")
+                      : (order.deliveryAddress?.addressLine1 ??
+                          "Apt 402, Green Heights"),
                   style: TextStyle(
                     fontSize: R.sp(17),
                     fontWeight: FontWeight.w800,
@@ -816,6 +813,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: R.h(2)),
+                Text(
+                  isPickup
+                      ? '${order.orderItems.length} Items • Ready in 2 mins'
+                      : '1.4 km from Store',
+                  style: TextStyle(
+                    fontSize: R.sp(13),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.bodyText.withValues(alpha: 0.5),
+                  ),
                 ),
               ],
             ),
@@ -825,7 +833,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
             decoration: BoxDecoration(
               color: isPickup ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
-              borderRadius: BorderRadius.circular(R.r(6)),
+              borderRadius: BorderRadius.circular(R.r(8)),
             ),
             child: Text(
               isPickup ? 'PICKUP' : 'DROP',
@@ -839,6 +847,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               ),
             ),
           ),
+          SizedBox(width: R.w(8)),
+          Icon(RemixIcons.arrow_right_s_line,
+              color: AppColors.bodyText.withValues(alpha: 0.3), size: R.sp(20)),
         ],
       ),
     );
@@ -847,7 +858,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   Widget _availableOrderItem(Order order) {
     return Container(
       margin: EdgeInsets.only(bottom: R.h(12)),
-      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(12)),
+      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
@@ -861,81 +872,82 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       ),
       child: Row(
         children: [
-          Container(
-            padding: EdgeInsets.all(R.w(10)),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F4F9),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              RemixIcons.shopping_bag_3_fill,
-              color: AppColors.primaryGreen,
-              size: R.sp(20),
-            ),
-          ),
-          SizedBox(width: R.w(16)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: R.w(6), vertical: R.h(2)),
-                      decoration: BoxDecoration(
-                        color: AppColors.softGreenBg,
-                        borderRadius: BorderRadius.circular(R.r(4)),
-                      ),
-                      child: Text(
-                        'GROCERIES',
-                        style: TextStyle(
-                          fontSize: R.sp(8),
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primaryGreen,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: R.w(8)),
-                    Text(
-                      '${order.distance ?? '1.4'} km',
-                      style: TextStyle(
-                        fontSize: R.sp(12),
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.bodyText.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: R.h(4)),
                 Text(
-                  '₹${(double.tryParse(order.totalAmount) ?? 35.0).toStringAsFixed(2)}',
+                  order.vendor?.storeName ?? "Gourmet Grocery",
                   style: TextStyle(
-                    fontSize: R.sp(18),
+                    fontSize: R.sp(17),
                     fontWeight: FontWeight.w800,
                     color: AppColors.headingText,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: R.h(4)),
+                Text(
+                  '${order.distance ?? '0.8'} km away • ₹${(double.tryParse(order.totalAmount) ?? 65.0).toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: R.sp(14),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.bodyText.withValues(alpha: 0.5),
+                  ),
+                ),
+                SizedBox(height: R.h(12)),
+                Row(
+                  children: [
+                    _orderTag('Medium Task'),
+                    SizedBox(width: R.w(8)),
+                    _orderTag('No Cold Storage'),
+                  ],
                 ),
               ],
             ),
           ),
+          SizedBox(width: R.w(16)),
           GestureDetector(
             onTap: () => _acceptOrder(order.id),
             child: Container(
-              padding: EdgeInsets.all(R.w(8)),
+              padding:
+                  EdgeInsets.symmetric(horizontal: R.w(20), vertical: R.h(10)),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen,
-                borderRadius: BorderRadius.circular(R.r(12)),
-              ),
-              child: Icon(
-                RemixIcons.add_line,
                 color: Colors.white,
-                size: R.sp(20),
+                borderRadius: BorderRadius.circular(R.r(12)),
+                border: Border.all(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.5)),
+              ),
+              child: Text(
+                'Add',
+                style: TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w800,
+                  fontSize: R.sp(14),
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _orderTag(String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F4F9),
+        borderRadius: BorderRadius.circular(R.r(100)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: R.sp(10),
+          fontWeight: FontWeight.w700,
+          color: AppColors.ghostButtonText,
+          fontStyle: FontStyle.italic,
+        ),
       ),
     );
   }
@@ -1240,19 +1252,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       children: [
         Row(
           children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                color: iconColor ?? AppColors.primaryGreen,
-                size: R.sp(22),
-              ),
-              SizedBox(width: R.w(12)),
-            ],
             Text(
               title,
               style: TextStyle(
-                fontSize: R.sp(20),
-                fontWeight: FontWeight.w800,
+                fontSize: R.sp(22),
+                fontWeight: FontWeight.w900,
                 color: AppColors.headingText,
               ),
             ),
@@ -1260,17 +1264,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               SizedBox(width: R.w(12)),
               Container(
                 padding:
-                    EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(2)),
+                    EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(4)),
                 decoration: BoxDecoration(
-                  color: AppColors.grey.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(R.r(100)),
+                  color: AppColors.badgeBlueBg.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
                 ),
                 child: Text(
-                  count.toString(),
+                  '$count',
                   style: TextStyle(
-                    fontSize: R.sp(11),
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.bodyText.withValues(alpha: 0.6),
+                    fontSize: R.sp(14),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.badgeBlueText,
                   ),
                 ),
               ),

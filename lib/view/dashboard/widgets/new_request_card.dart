@@ -15,7 +15,7 @@ class NewRequestCard extends StatelessWidget {
     required this.order,
     required this.onAccept,
     required this.onDecline,
-    this.countdownSeconds = 45, // Default mock value if not provided
+    this.countdownSeconds = 45,
   });
 
   @override
@@ -25,12 +25,14 @@ class NewRequestCard extends StatelessWidget {
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(24)),
+        borderRadius: BorderRadius.circular(R.r(32)),
+        border: Border.all(
+            color: AppColors.primaryGreen.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: AppColors.primaryGreen.withValues(alpha: 0.08),
+            blurRadius: 30,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -44,35 +46,50 @@ class NewRequestCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: EdgeInsets.symmetric(
-                        horizontal: R.w(10), vertical: R.h(4)),
+                        horizontal: R.w(12), vertical: R.h(6)),
                     decoration: BoxDecoration(
                       color: AppColors.badgeGreenBg,
-                      borderRadius: BorderRadius.circular(R.r(6)),
+                      borderRadius: BorderRadius.circular(R.r(8)),
                     ),
                     child: Text(
                       'NEW REQUEST',
                       style: TextStyle(
-                        fontSize: R.sp(10),
+                        fontSize: R.sp(11),
                         fontWeight: FontWeight.w800,
                         color: AppColors.badgeGreenText,
                         letterSpacing: 0.5,
                       ),
                     ),
                   ),
-                  SizedBox(width: R.w(12)),
+                  SizedBox(width: R.w(10)),
                   Text(
-                    'ID: #${order.id}',
+                    'ID: #ORD-${order.id}',
                     style: TextStyle(
                       fontSize: R.sp(14),
-                      color: AppColors.bodyText.withValues(alpha: 0.5),
-                      fontWeight: FontWeight.w700,
+                      color: AppColors.bodyText.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Icon(RemixIcons.timer_fill,
+                      size: R.sp(16), color: Colors.orange),
+                  SizedBox(width: R.w(4)),
+                  Text(
+                    '${countdownSeconds}s',
+                    style: TextStyle(
+                      fontSize: R.sp(14),
+                      fontWeight: FontWeight.w800,
+                      color: Colors.orange,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          SizedBox(height: R.h(24)),
+          SizedBox(height: R.h(20)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -83,13 +100,13 @@ class NewRequestCard extends StatelessWidget {
                   Text(
                     '₹${(double.tryParse(order.totalAmount) ?? 0.0).toStringAsFixed(2)}',
                     style: TextStyle(
-                      fontSize: R.sp(36),
+                      fontSize: R.sp(32),
                       fontWeight: FontWeight.w900,
                       color: AppColors.headingText,
-                      letterSpacing: -1,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  SizedBox(height: R.h(4)),
+                  SizedBox(height: R.h(2)),
                   Text(
                     'Estimated Earnings',
                     style: TextStyle(
@@ -106,7 +123,8 @@ class NewRequestCard extends StatelessWidget {
                   Row(
                     children: [
                       Icon(RemixIcons.navigation_fill,
-                          size: R.sp(16), color: AppColors.primaryGreen),
+                          size: R.sp(16),
+                          color: AppColors.bodyText.withValues(alpha: 0.3)),
                       SizedBox(width: R.w(4)),
                       Text(
                         '3.2 km', // Mock distance
@@ -118,7 +136,7 @@ class NewRequestCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: R.h(4)),
+                  SizedBox(height: R.h(2)),
                   Text(
                     'Total Distance',
                     style: TextStyle(
@@ -131,28 +149,25 @@ class NewRequestCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: R.h(28)),
+          SizedBox(height: R.h(24)),
           Row(
             children: [
               Expanded(
-                flex: 4,
-                child: SizedBox(
-                  height: R.h(56),
-                  child: ElevatedButton(
-                    onPressed: onDecline,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.ghostButtonBg,
-                      foregroundColor: AppColors.ghostButtonText,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(16)),
-                      ),
+                child: GestureDetector(
+                  onTap: onDecline,
+                  child: Container(
+                    height: R.h(56),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.ghostButtonBg,
+                      borderRadius: BorderRadius.circular(R.r(16)),
                     ),
                     child: Text(
                       'Decline',
                       style: TextStyle(
                         fontSize: R.sp(16),
                         fontWeight: FontWeight.w800,
+                        color: AppColors.ghostButtonText,
                       ),
                     ),
                   ),
@@ -160,26 +175,28 @@ class NewRequestCard extends StatelessWidget {
               ),
               SizedBox(width: R.w(12)),
               Expanded(
-                flex: 6,
-                child: SizedBox(
-                  height: R.h(56),
-                  child: ElevatedButton(
-                    onPressed: onAccept,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      foregroundColor: AppColors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(16)),
-                      ),
-                      shadowColor:
-                          AppColors.primaryGreen.withValues(alpha: 0.3),
+                child: GestureDetector(
+                  onTap: onAccept,
+                  child: Container(
+                    height: R.h(56),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen,
+                      borderRadius: BorderRadius.circular(R.r(16)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Text(
                       'Accept Order',
                       style: TextStyle(
                         fontSize: R.sp(16),
                         fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
                   ),
