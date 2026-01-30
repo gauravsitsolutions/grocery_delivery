@@ -23,17 +23,9 @@ class DashboardShimmer extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _shimmerHeader(),
-              SizedBox(height: R.h(12)),
-              _shimmerStatsRow(),
-              SizedBox(height: R.h(24)),
-              _shimmerSectionHeader(),
-              SizedBox(height: R.h(12)),
-              _shimmerLargeCard(),
-              SizedBox(height: R.h(24)),
-              _shimmerSectionHeader(),
-              SizedBox(height: R.h(12)),
-              const OrderShimmer(),
-              const OrderShimmer(),
+              _shimmerDutyStatusCard(),
+              SizedBox(height: R.h(16)),
+              const DashboardContentShimmer(),
             ],
           ),
         ),
@@ -46,18 +38,19 @@ class DashboardShimmer extends StatelessWidget {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(R.w(4), R.h(6), R.w(4), R.h(12)),
+        padding: EdgeInsets.fromLTRB(R.w(4), R.h(6), R.w(4), R.h(20)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Left: Profile + Greeting
             Row(
               children: [
                 Container(
-                  width: R.w(58),
-                  height: R.h(30),
-                  decoration: BoxDecoration(
+                  width: R.w(44), // Profile radius * 2
+                  height: R.w(44),
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(100),
+                    shape: BoxShape.circle,
                   ),
                 ),
                 SizedBox(width: R.w(12)),
@@ -65,38 +58,64 @@ class DashboardShimmer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                        width: R.w(50), height: R.h(14), color: Colors.white),
+                        width: R.w(80), height: R.h(12), color: Colors.white),
                     SizedBox(height: R.h(4)),
                     Container(
-                        width: R.w(70), height: R.h(10), color: Colors.white),
+                        width: R.w(120), height: R.h(18), color: Colors.white),
                   ],
                 ),
               ],
             ),
-            Row(
-              children: [
-                Container(
-                  width: R.w(100),
-                  height: R.h(38),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                ),
-                SizedBox(width: R.w(12)),
-                Container(
-                  width: R.w(40),
-                  height: R.w(40),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
+            // Right: Notification Bubble
+            Container(
+              width: R.w(42),
+              height: R.w(42),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _shimmerDutyStatusCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: R.w(4), vertical: R.h(4)),
+        height: R.h(60), // Approx height of DutyStatusCard
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(R.r(16)),
+        ),
+      ),
+    );
+  }
+}
+
+class DashboardContentShimmer extends StatelessWidget {
+  const DashboardContentShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _shimmerStatsRow(),
+        SizedBox(height: R.h(24)),
+        _shimmerSectionHeader(),
+        SizedBox(height: R.h(12)),
+        _shimmerLargeCard(),
+        SizedBox(height: R.h(24)),
+        _shimmerSectionHeader(),
+        SizedBox(height: R.h(12)),
+        const OrderShimmer(),
+        const OrderShimmer(),
+      ],
     );
   }
 
@@ -107,30 +126,19 @@ class DashboardShimmer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+              width: R.w(160), height: R.h(20), color: Colors.white), // Title
+          SizedBox(height: R.h(16)),
           Row(
-            children: [
-              Container(
-                width: R.w(34),
-                height: R.w(34),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              SizedBox(width: R.w(8)),
-              Container(width: R.w(140), height: R.h(16), color: Colors.white),
-            ],
-          ),
-          SizedBox(height: R.h(12)),
-          Row(
-            children: List.generate(3, (index) {
+            children: List.generate(2, (index) {
               return Expanded(
                 child: Container(
-                  margin: EdgeInsets.only(right: index == 2 ? 0 : R.w(12)),
-                  height: R.h(100),
+                  margin: EdgeInsets.only(
+                      right: index == 1 ? 0 : R.w(16)), // Space between cards
+                  height: R.h(120), // Approx height
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(R.r(16)),
+                    borderRadius: BorderRadius.circular(R.r(24)),
                   ),
                 ),
               );

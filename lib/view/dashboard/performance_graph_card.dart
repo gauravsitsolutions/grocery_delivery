@@ -1,9 +1,10 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
+import 'package:remixicon/remixicon.dart';
+import 'package:intl/intl.dart';
+import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart';
 
 class PerformanceGraphCard extends StatefulWidget {
   final List<DailyPerformance> data;
@@ -16,21 +17,82 @@ class PerformanceGraphCard extends StatefulWidget {
 
 class _PerformanceGraphCardState extends State<PerformanceGraphCard> {
   int touchedIndex = -1;
+  String _selectedFilter = 'Weekly';
+  DateTime? _selectedEndDate;
+
+  List<DailyPerformance> get _filteredData {
+    if (widget.data.isEmpty) return [];
+
+    final sortedData = List<DailyPerformance>.from(widget.data)
+      ..sort(
+          (a, b) => DateTime.parse(a.date).compareTo(DateTime.parse(b.date)));
+
+    if (_selectedFilter == 'Weekly') {
+      // Last 7 days
+      return sortedData.length > 7
+          ? sortedData.sublist(sortedData.length - 7)
+          : sortedData;
+    } else if (_selectedFilter == 'Monthly') {
+      // Last 30 days
+      return sortedData.length > 30
+          ? sortedData.sublist(sortedData.length - 30)
+          : sortedData;
+    } else if (_selectedFilter == 'Date' && _selectedEndDate != null) {
+      // 7 Days ending on selected date
+      final endDate = _selectedEndDate!;
+      // Find index of the selected date or closest previous date
+      // This is a bit tricky with string dates. Let's filter by range.
+      final startDate = endDate.subtract(const Duration(days: 6));
+
+      return sortedData.where((element) {
+        try {
+          final date = DateTime.parse(element.date);
+          return date.isAfter(startDate.subtract(const Duration(seconds: 1))) &&
+              date.isBefore(endDate.add(const Duration(seconds: 1)));
+        } catch (e) {
+          return false;
+        }
+      }).toList();
+    }
+
+    // Default fallback (Weekly)
+    return sortedData.length > 7
+        ? sortedData.sublist(sortedData.length - 7)
+        : sortedData;
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedEndDate) {
+      setState(() {
+        _selectedEndDate = picked;
+        _selectedFilter = 'Date';
+      });
+    } else if (picked == null &&
+        _selectedFilter == 'Date' &&
+        _selectedEndDate == null) {
+      // Revert if cancelled and no date valid
+      setState(() {
+        _selectedFilter = 'Weekly';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     R.init(context);
-
-    // Show only last 7 days of data
-    final displayData = widget.data.length > 7
-        ? widget.data.sublist(widget.data.length - 7)
-        : widget.data;
+    final displayData = _filteredData;
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
-        color: AppColors.white, // Using white background
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(16)),
         boxShadow: [
           BoxShadow(
@@ -43,21 +105,64 @@ class _PerformanceGraphCardState extends State<PerformanceGraphCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Weekly Performance',
-            style: TextStyle(
-              fontSize: R.sp(16),
-              fontWeight: FontWeight.w700,
-              color: AppColors.headingText,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Performance Tracker',
+                style: TextStyle(
+                  fontSize: R.sp(16),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.headingText,
+                ),
+              ),
+              Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
+                decoration: BoxDecoration(
+                  color: AppColors.scaffoldBg,
+                  borderRadius: BorderRadius.circular(R.r(8)),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedFilter == 'Date' && _selectedEndDate == null
+                        ? 'Weekly'
+                        : _selectedFilter,
+                    icon: Icon(RemixIcons.arrow_down_s_line, size: R.sp(16)),
+                    isDense: true,
+                    style: TextStyle(
+                      fontSize: R.sp(12),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.bodyText,
+                    ),
+                    items: ['Weekly', 'Monthly', 'Date'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue == 'Date') {
+                        _pickDate();
+                      } else if (newValue != null) {
+                        setState(() {
+                          _selectedFilter = newValue;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: R.h(24)),
           if (displayData.isEmpty)
             Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: R.h(20)),
+                padding: EdgeInsets.symmetric(vertical: R.h(40)),
                 child: Text(
-                  'No performance data available',
+                  'No performance data for this period',
                   style: TextStyle(
                     color: AppColors.bodyText.withValues(alpha: 0.5),
                     fontSize: R.sp(14),
@@ -132,14 +237,25 @@ class _PerformanceGraphCardState extends State<PerformanceGraphCard> {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 30,
-                        interval: 1,
+                        interval: 1, // Show all if few, skip if many
                         getTitlesWidget: (double value, TitleMeta meta) {
                           final index = value.toInt();
                           if (index >= 0 && index < displayData.length) {
+                            // If showing Monthly, show fewer labels to avoid crowding
+                            if (_selectedFilter == 'Monthly' &&
+                                index % 5 != 0) {
+                              return const SizedBox.shrink();
+                            }
+
                             final dateStr = displayData[index].date;
                             try {
                               final date = DateTime.parse(dateStr);
-                              final formatted = DateFormat('E').format(date);
+                              // Format: 'Tue' for weekly, 'Mb d' for others?
+                              // Let's keep it simple 'E' (Tue) or 'd' (12)
+                              final formatted = _selectedFilter == 'Weekly'
+                                  ? DateFormat('E').format(date)
+                                  : DateFormat('d/M').format(date);
+
                               return SideTitleWidget(
                                 meta: meta,
                                 child: Text(
@@ -191,11 +307,13 @@ class _PerformanceGraphCardState extends State<PerformanceGraphCard> {
                   maxX: (displayData.length - 1).toDouble(),
                   minY: 0,
                   // Add buffer to top of chart
-                  maxY: (displayData.map((e) => e.totalOrders).fold<int>(
-                              0,
-                              (prev, element) =>
-                                  prev > element ? prev : element) +
-                          1)
+                  maxY: (displayData.isEmpty
+                          ? 10
+                          : displayData.map((e) => e.totalOrders).fold<int>(
+                                  0,
+                                  (prev, element) =>
+                                      prev > element ? prev : element) +
+                              1)
                       .toDouble(),
                   lineBarsData: [
                     LineChartBarData(
@@ -208,15 +326,7 @@ class _PerformanceGraphCardState extends State<PerformanceGraphCard> {
                       barWidth: 3,
                       isStrokeCapRound: true,
                       dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: Colors.white,
-                            strokeWidth: 2,
-                            strokeColor: AppColors.primaryGreen,
-                          );
-                        },
+                        show: false,
                       ),
                       belowBarData: BarAreaData(
                         show: false,

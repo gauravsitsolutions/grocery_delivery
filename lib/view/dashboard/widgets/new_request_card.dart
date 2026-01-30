@@ -76,22 +76,7 @@ class NewRequestCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  Icon(RemixIcons.timer_line,
-                      size: R.sp(16), color: const Color(0xFFFF6D00)),
-                  SizedBox(width: R.w(4)),
-                  Text(
-                    '${countdownSeconds}s',
-                    style: TextStyle(
-                      fontSize: R.sp(16),
-                      fontWeight: FontWeight.w800,
-                      color:
-                          const Color(0xFFFF6D00), // Orange/Red warning color
-                    ),
-                  ),
-                ],
-              ),
+              // Timer removed as per request
             ],
           ),
 

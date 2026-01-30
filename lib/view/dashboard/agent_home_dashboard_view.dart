@@ -1,6 +1,7 @@
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
+import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 import 'dart:async';
 import 'dart:developer';
@@ -32,7 +33,6 @@ import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_su
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/duty_status_card.dart';
-import 'package:samrudhi_delivery_agent_app/view_model/profile_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
 
 class AgentDashboardView extends StatefulWidget {
@@ -670,22 +670,29 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         return; // User dismissed
       }
 
+      // Find reason text
+      final selectedReason = reasons.firstWhere(
+        (r) => r.id == selectedReasonId,
+        orElse: () => CancellationReason(id: -1, reason: 'Unknown'),
+      );
+
       // 3. Perform Rejection
       setState(() {
         _removingOrderIds.add(orderId);
       });
 
-      log('Rejecting order $orderId with reason $selectedReasonId');
+      log('Rejecting order $orderId with reason ${selectedReason.reason}');
 
-      // Use cancelOrder if we have a reason, or rejectOrder as fallback
+      // Use rejectOrder for new/available orders
       final response =
-          await _apiService.cancelOrder(token, orderId, selectedReasonId);
+          await _apiService.rejectOrder(token, orderId, selectedReasonId);
 
       if (!mounted) return;
 
       if (response['status'] == true || response['status'] == 'success') {
         if (!context.mounted) return;
-        _showRejectSuccessDialog(orderId);
+        // Pass the actual reason string
+        _showRejectSuccessDialog(orderId, selectedReason.reason);
       } else {
         if (!context.mounted) return;
         CustomSnackBar.showError(
@@ -1233,14 +1240,73 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
+  bool get _isWaiting =>
+      _newRequests.isEmpty &&
+      _availableOrders.isEmpty &&
+      _myOrders.isEmpty &&
+      _currentOrder == null &&
+      !_isLoading &&
+      widget.isOnline;
+
+  Widget _buildInfoBanner() {
+    return Container(
+      margin: EdgeInsets.only(bottom: R.h(16)),
+      padding: EdgeInsets.all(R.w(12)),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(R.r(12)),
+        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(R.w(8)),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFF4E5), // Light Orange
+              shape: BoxShape.circle,
+            ),
+            child: Icon(RemixIcons.information_fill,
+                color: const Color(0xFFFF9800), size: R.sp(18)),
+          ),
+          SizedBox(width: R.w(12)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No new orders found.',
+                  style: TextStyle(
+                    fontSize: R.sp(14),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.headingText,
+                  ),
+                ),
+                Text(
+                  'We will notify you as soon as a task is assigned.',
+                  style: TextStyle(
+                    fontSize: R.sp(12),
+                    color: AppColors.bodyText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     R.init(context);
     final isOnline = widget.isOnline;
-
-    if (_isLoading) {
-      return const DashboardShimmer();
-    }
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -1256,6 +1322,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _dashboardHeader(isOnline),
+              // NEW: Info Banner only when waiting
+              if (_isWaiting && !_isLoading) _buildInfoBanner(),
+
               Padding(
                 padding: EdgeInsets.only(bottom: R.h(20)),
                 child: DutyStatusCard(
@@ -1263,6 +1332,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   onToggle: () => widget.onStatusChanged(!isOnline),
                 ),
               ),
+
+              if (_isLoading)
+                const DashboardContentShimmer()
+              else
+              // ... Rest of the method logic for paused timer ...
               if (widget.isOnline && _isTimerPaused)
                 Padding(
                   padding: EdgeInsets.only(bottom: R.h(16)),
@@ -1341,19 +1415,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 child: ColorFiltered(
                   colorFilter: isOnline
                       ? const ColorFilter.mode(
-                          AppColors.transparent, BlendMode.multiply)
+                          Colors.transparent, BlendMode.dst)
                       : const ColorFilter.mode(
                           AppColors.grey, BlendMode.saturation),
                   child: Opacity(
                     opacity: isOnline ? 1.0 : 0.8,
                     child: Column(
                       children: [
-                        (_newRequests.isEmpty &&
-                                _availableOrders.isEmpty &&
-                                _myOrders.isEmpty &&
-                                _currentOrder == null &&
-                                !_isLoading &&
-                                isOnline) // Only show waiting state if ONLINE
+                        _isWaiting // Use the new getter
                             ? Padding(
                                 padding: EdgeInsets.only(
                                     top: R.h(8), bottom: R.h(12)),
@@ -1640,15 +1709,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      AvatarGlow(
-                                        glowRadiusFactor: 0.5,
-                                        child: Container(
-                                          width: R.w(8),
-                                          height: R.w(8),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF00E676),
-                                            shape: BoxShape.circle,
-                                          ),
+                                      Container(
+                                        width: R.w(8),
+                                        height: R.w(8),
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF00E676),
+                                          shape: BoxShape.circle,
                                         ),
                                       ),
                                       SizedBox(width: R.w(10)),
@@ -1696,11 +1762,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
   }
 
-  Future<void> _showRejectSuccessDialog(int orderId) async {
+  Future<void> _showRejectSuccessDialog(int orderId, String reason) async {
     await Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            OrderRejectedFeedbackView(orderId: orderId),
+            OrderRejectedFeedbackView(orderId: orderId, reason: reason),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SharedAxisTransition(
             animation: animation,
@@ -1735,68 +1801,67 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           /// LEFT SIDE - Profile & Greeting
-          Consumer<ProfileViewModel>(
-            builder: (context, profileVM, _) {
-              final profile = profileVM.profile;
-              return Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(R.w(2)),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(R.w(2)),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                    child: CircleAvatar(
-                      radius: R.r(22),
-                      backgroundColor: AppColors.grey.withValues(alpha: 0.1),
-                      backgroundImage: (profile?.profilePhoto != null &&
-                              profile!.profilePhoto!.isNotEmpty)
-                          ? NetworkImage(profile.profilePhoto!)
-                          : null,
-                      child: (profile?.profilePhoto == null ||
-                              profile!.profilePhoto!.isEmpty)
-                          ? Icon(Icons.person,
-                              color: AppColors.grey, size: R.sp(20))
-                          : null,
+                  ],
+                ),
+                child: ClipOval(
+                  child: (_userProfile?.profilePhoto != null &&
+                          _userProfile!.profilePhoto!.isNotEmpty)
+                      ? CustomNetworkImage(
+                          imageUrl: _userProfile!.profilePhoto!,
+                          width: R.r(44), // 2 * radius 22
+                          height: R.r(44),
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          width: R.r(44),
+                          height: R.r(44),
+                          color: AppColors.grey.withValues(alpha: 0.1),
+                          child: Icon(Icons.person,
+                              color: AppColors.grey, size: R.sp(20)),
+                        ),
+                ),
+              ),
+              SizedBox(width: R.w(12)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getGreeting(),
+                    style: TextStyle(
+                      fontSize: R.sp(12),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.bodyText,
                     ),
                   ),
-                  SizedBox(width: R.w(12)),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getGreeting(),
-                        style: TextStyle(
-                          fontSize: R.sp(12),
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.bodyText,
-                        ),
-                      ),
-                      Text(
-                        profile?.name ?? 'Agent',
-                        style: TextStyle(
-                          fontSize: R.sp(18),
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.headingText,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    _userProfile?.name ?? 'Agent',
+                    style: TextStyle(
+                      fontSize: R.sp(18),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.headingText,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ],
-              );
-            },
+              ),
+            ],
           ),
 
           /// RIGHT SIDE - Notification

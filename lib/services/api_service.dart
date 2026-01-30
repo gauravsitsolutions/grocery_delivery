@@ -613,13 +613,22 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> rejectOrder(String? token, int orderId) async {
+  Future<Map<String, dynamic>> rejectOrder(String? token, int orderId,
+      [int? reasonId]) async {
     final uri = Uri.parse(AppUrls.rejectOrder(orderId));
     log('API Request: POST $uri');
+
+    final body = reasonId != null
+        ? jsonEncode({
+            'reason_id': reasonId,
+            'reasonId': reasonId,
+          })
+        : null;
 
     final response = await _processRequest(() async => http.post(
           uri,
           headers: await _getHeaders(token),
+          body: body,
         ));
 
     if (response['status'] == true || response['status'] == 'success') {
