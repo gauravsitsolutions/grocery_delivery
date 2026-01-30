@@ -1,5 +1,6 @@
-import 'package:avatar_glow/avatar_glow.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:animations/animations.dart';
 import 'package:provider/provider.dart';
 import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
@@ -14,7 +15,6 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
-import 'package:animations/animations.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
@@ -364,9 +364,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         setState(() {
           _authToken = token;
           log('Auth Token Set: ${_authToken?.substring(0, 10)}...'); // Debug log
-          _newRequests = newRequestsResponse.data;
-          _availableOrders = availableResponse.data;
-          _myOrders = myOrdersResponse.data;
+
+          // Filter out orders that are currently being removed locally
+          _newRequests = newRequestsResponse.data
+              .where((o) => !_removingOrderIds.contains(o.id))
+              .toList();
+          _availableOrders = availableResponse.data
+              .where((o) => !_removingOrderIds.contains(o.id))
+              .toList();
+          _myOrders = myOrdersResponse.data
+              .where((o) => !_removingOrderIds.contains(o.id))
+              .toList();
 
           _availablePage = 1;
           _myOrdersPage = 1;
@@ -394,7 +402,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             _currentOrder = null;
           }
 
-          _removingOrderIds.clear();
           _isLoading = false;
         });
       }
@@ -441,9 +448,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         if (mounted) {
           setState(() {
             _completedDeliveries = deliveryStatus.data!.deliveredOrders;
-            _pendingOrders = deliveryStatus.data!.pendingOrders;
+            // Always trust local queue length as the primary pending count if it's been fetched
+            _pendingOrders = _myOrders.length;
             _cancelledOrders = deliveryStatus.data!.cancelledOrders;
-            // If API returns target, set it here. For now using hardcoded _dailyGoal.
           });
         }
       }
@@ -561,10 +568,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       // Find the order object to pass to the next screen
       // Find the order object to pass to the next screen
       Order? orderToAccept;
-      bool isFromNewRequests = false;
       try {
         orderToAccept = _newRequests.firstWhere((o) => o.id == orderId);
-        isFromNewRequests = true;
       } catch (_) {
         try {
           orderToAccept = _availableOrders.firstWhere((o) => o.id == orderId);
@@ -596,16 +601,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
         // --- LOCAL STATE UPDATE ---
         setState(() {
-          // 1. Remove from source list
-          if (isFromNewRequests) {
-            _newRequests.removeWhere((o) => o.id == orderId);
-          } else {
-            _availableOrders.removeWhere((o) => o.id == orderId);
-          }
+          // Broadly remove from all source lists to be safe
+          _newRequests.removeWhere((o) => o.id == orderId);
+          _availableOrders.removeWhere((o) => o.id == orderId);
 
           // 2. Add to My Queue (at the end usually, or sorted by creation)
-          // Ideally we clone it and status=accepted, but for now moving the object is fine
-          // We assume the API returns the updated list on next refresh, but for immediate UI:
           _myOrders.add(orderToAccept!);
 
           // 3. Update Pending Count (Active Queue)
@@ -616,7 +616,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             _currentOrder = _myOrders.first;
           }
 
-          _removingOrderIds.remove(orderId);
+          // Do NOT remove from _removingOrderIds here.
+          // Let it stay until _fetchOrders is complete to ensure it stays invisible.
         });
 
         // 5. Sync with Deliveries Tab ViewModel
@@ -626,7 +627,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               .fetchActiveOrders(refresh: true);
         }
 
-        _showAcceptSuccessDialog(orderToAccept);
+        await _showAcceptSuccessDialog(orderToAccept);
+
+        // Clear it now that everything is done and list is likely refreshed
+        if (mounted) {
+          setState(() {
+            _removingOrderIds.remove(orderId);
+          });
+        }
       } else {
         if (!context.mounted) return;
         CustomSnackBar.showError(
@@ -691,10 +699,49 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
       if (response['status'] == true || response['status'] == 'success') {
         if (!context.mounted) return;
+
+        // --- IMMEDIATE LOCAL REMOVAL ---
+        setState(() {
+          _newRequests.removeWhere((o) => o.id == orderId);
+          _availableOrders.removeWhere((o) => o.id == orderId);
+          _myOrders.removeWhere((o) => o.id == orderId);
+          _pendingOrders = _myOrders.length;
+        });
+
         // Pass the actual reason string
-        _showRejectSuccessDialog(orderId, selectedReason.reason);
+        await _showRejectSuccessDialog(orderId, selectedReason.reason);
+
+        if (mounted) {
+          setState(() {
+            _removingOrderIds.remove(orderId);
+          });
+        }
       } else {
         if (!context.mounted) return;
+
+        // Handle 404 - Order not available as a success (already removed from server)
+        if (response['message']?.toString().contains('Order not available') ==
+            true) {
+          log('Order $orderId already not available on server, removing from local state.');
+
+          // --- IMMEDIATE LOCAL REMOVAL ---
+          setState(() {
+            _newRequests.removeWhere((o) => o.id == orderId);
+            _availableOrders.removeWhere((o) => o.id == orderId);
+            _myOrders.removeWhere((o) => o.id == orderId);
+            _pendingOrders = _myOrders.length;
+          });
+
+          await _showRejectSuccessDialog(orderId, selectedReason.reason);
+
+          if (mounted) {
+            setState(() {
+              _removingOrderIds.remove(orderId);
+            });
+          }
+          return;
+        }
+
         CustomSnackBar.showError(
             context, response['message'] ?? 'Failed to reject order');
         setState(() {
@@ -704,6 +751,29 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     } catch (e) {
       if (mounted) {
         log('Error in rejection flow: $e');
+
+        // Check if the error message indicates the order is already gone
+        if (e.toString().contains('Order not available')) {
+          log('Caught "Order not available" exception, removing from local state.');
+
+          // --- IMMEDIATE LOCAL REMOVAL ---
+          setState(() {
+            _newRequests.removeWhere((o) => o.id == orderId);
+            _availableOrders.removeWhere((o) => o.id == orderId);
+            _myOrders.removeWhere((o) => o.id == orderId);
+            _pendingOrders = _myOrders.length;
+          });
+
+          await _showRejectSuccessDialog(orderId, 'Order already removed');
+
+          if (mounted) {
+            setState(() {
+              _removingOrderIds.remove(orderId);
+            });
+          }
+          return;
+        }
+
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
         setState(() {
           _removingOrderIds.remove(orderId);
@@ -1119,19 +1189,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    PersistentNavBarNavigator.pushNewScreen(
-                      context,
-                      screen: OrderDetailsView(
-                        orderId: order.id,
-                        orderNumber: order.orderNumber,
-                        order: order,
-                      ),
-                      withNavBar: false,
-                      pageTransitionAnimation:
-                          PageTransitionAnimation.cupertino,
-                    );
-                  },
+                  onPressed: () => _launchMapsNavigation(order),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     padding: EdgeInsets.symmetric(vertical: R.h(16)),
@@ -1144,7 +1202,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Navigate to Dropoff',
+                        order.status == 'in_progress'
+                            ? 'Navigate to Dropoff'
+                            : 'Navigate to Pickup',
                         style: TextStyle(
                           fontSize: R.sp(16),
                           fontWeight: FontWeight.w700,
@@ -1163,6 +1223,57 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         ),
       ),
     );
+  }
+
+  Future<void> _launchMapsNavigation(Order order) async {
+    final bool isPickup = order.status != 'in_progress';
+    String query = '';
+
+    if (isPickup) {
+      // Navigate to Vendor
+      query = Uri.encodeComponent(order.vendor?.address ?? '');
+    } else {
+      // Navigate to Customer
+      if (order.deliveryAddress?.latitude != null &&
+          order.deliveryAddress?.longitude != null) {
+        query =
+            '${order.deliveryAddress!.latitude},${order.deliveryAddress!.longitude}';
+      } else {
+        final addr = order.deliveryAddress;
+        query = Uri.encodeComponent(
+            '${addr?.addressLine1 ?? ''} ${addr?.city ?? ''}');
+      }
+    }
+
+    if (query.isEmpty) {
+      CustomSnackBar.showError(context, "Location address not available");
+      return;
+    }
+
+    final googleMapsUrl = Uri.parse("google.navigation:q=$query");
+    final appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$query");
+
+    try {
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(googleMapsUrl);
+      } else if (await canLaunchUrl(appleMapsUrl)) {
+        await launchUrl(appleMapsUrl);
+      } else {
+        final webUrl =
+            Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
+        if (await canLaunchUrl(webUrl)) {
+          await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+        } else {
+          if (mounted) {
+            CustomSnackBar.showError(context, "Could not launch maps");
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.showError(context, "Error opening maps: $e");
+      }
+    }
   }
 
   Widget _iconButton({required IconData icon, required VoidCallback onTap}) {

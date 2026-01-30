@@ -379,12 +379,12 @@ class _ProfileViewState extends State<ProfileView> {
           ],
         ),
         SizedBox(height: R.h(24)),
-        _barChartSection(),
+        _lineChartSection(),
       ],
     );
   }
 
-  Widget _barChartSection() {
+  Widget _lineChartSection() {
     // Colors
     final Color ordersColor = AppColors.primaryGreen;
     final Color hoursColor = AppColors.info; // Blue for hours
@@ -395,11 +395,6 @@ class _ProfileViewState extends State<ProfileView> {
         _performanceData.isNotEmpty ? _performanceData : [];
 
     log('Graph Debug: Data Length: ${displayData.length}');
-    if (displayData.isNotEmpty) {
-      for (var e in displayData) {
-        log('Date: ${e.date}, Orders: ${e.totalOrders}, Hours: ${e.totalHours}');
-      }
-    }
 
     // Max Y for scale
     double maxY = 10;
@@ -414,8 +409,7 @@ class _ProfileViewState extends State<ProfileView> {
 
       // Use the larger of the two maxes for the scale
       final overallMax = maxOrders > maxHours ? maxOrders : maxHours;
-      maxY = overallMax + 5;
-      log('Graph Debug: MaxY Calculated: $maxY (MaxOrders: $maxOrders, MaxHours: $maxHours)');
+      maxY = (overallMax + 2).ceilToDouble();
     }
 
     return Container(
@@ -490,22 +484,18 @@ class _ProfileViewState extends State<ProfileView> {
           else
             SizedBox(
               height: R.h(220),
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: maxY,
-                  barTouchData: BarTouchData(
-                    enabled: true,
-                    touchTooltipData: BarTouchTooltipData(
+              child: LineChart(
+                LineChartData(
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
                       getTooltipColor: (_) => AppColors.headingText,
-                      tooltipPadding: EdgeInsets.symmetric(
-                          horizontal: R.w(12), vertical: R.h(8)),
-                      tooltipMargin: 8,
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        final item = displayData[group.x.toInt()];
-                        // Provide tooltip for the specific rod hovered or a combined view?
-                        // Using a robust approach: show both values regardless of which bar is touched for clarity
-                        return BarTooltipItem(
+                      getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                        return touchedBarSpots.map((barSpot) {
+                          final flSpot = barSpot;
+                          final item = displayData[flSpot.x.toInt()];
+                          final isOrders = barSpot.barIndex == 0;
+
+                          return LineTooltipItem(
                             '${item.date}\n',
                             const TextStyle(
                               color: Colors.white,
@@ -514,111 +504,136 @@ class _ProfileViewState extends State<ProfileView> {
                             ),
                             children: [
                               TextSpan(
-                                text: '${item.totalOrders} Orders\n',
+                                text: isOrders
+                                    ? '${item.totalOrders} Orders'
+                                    : '${item.totalHours} Hours',
                                 style: TextStyle(
-                                  color: ordersColor,
+                                  color: isOrders ? ordersColor : hoursColor,
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              TextSpan(
-                                text: '${item.totalHours} Hours',
-                                style: TextStyle(
-                                  color: hoursColor, // Using hours color
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ]);
+                            ],
+                          );
+                        }).toList();
                       },
+                    ),
+                    handleBuiltInTouches: true,
+                  ),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: maxY / 4,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: AppColors.grey.withValues(alpha: 0.1),
+                      strokeWidth: 1,
                     ),
                   ),
                   titlesData: FlTitlesData(
                     show: true,
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          if (value < 0 || value >= displayData.length) {
-                            return const SizedBox();
-                          }
-                          final dateStr = displayData[value.toInt()].date;
-                          final label = dateStr.length > 3
-                              ? dateStr.substring(0, 3)
-                              : dateStr;
-
-                          return SideTitleWidget(
-                            meta: meta,
-                            space: 12,
-                            child: Text(
-                              label,
-                              style: TextStyle(
-                                color: AppColors.bodyText,
-                                fontWeight: FontWeight.w600,
-                                fontSize: R.sp(11),
-                              ),
-                            ),
-                          );
-                        },
                         reservedSize: 32,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          final index = value.toInt();
+                          if (index >= 0 && index < displayData.length) {
+                            final dateStr = displayData[index].date;
+                            final label = dateStr.length > 3
+                                ? dateStr.substring(0, 3)
+                                : dateStr;
+                            return SideTitleWidget(
+                              meta: meta,
+                              space: 8,
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  color:
+                                      AppColors.bodyText.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: R.sp(10),
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox();
+                        },
                       ),
                     ),
-                    leftTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  gridData: FlGridData(
-                    show: true,
-                    checkToShowHorizontalLine: (value) => value % 5 == 0,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: AppColors.grey.withValues(alpha: 0.1),
-                      strokeWidth: 1,
-                      dashArray: [5, 5],
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: (maxY / 4).clamp(1.0, 100.0),
+                        getTitlesWidget: (value, meta) => SideTitleWidget(
+                          meta: meta,
+                          child: Text(
+                            value.toInt().toString(),
+                            style: TextStyle(
+                              color: AppColors.bodyText.withValues(alpha: 0.5),
+                              fontSize: R.sp(10),
+                            ),
+                          ),
+                        ),
+                        reservedSize: 28,
+                      ),
                     ),
-                    drawVerticalLine: false,
                   ),
                   borderData: FlBorderData(show: false),
-                  barGroups: List.generate(displayData.length, (index) {
-                    final item = displayData[index];
-                    return BarChartGroupData(
-                      x: index,
-                      barsSpace: 4, // Space between bars in the same group
-                      barRods: [
-                        // Orders Rod
-                        BarChartRodData(
-                          toY: item.totalOrders.toDouble(),
-                          width: R.w(8),
-                          color: ordersColor,
-                          borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(R.r(4))),
-                          backDrawRodData: BackgroundBarChartRodData(
-                            show: true,
-                            toY: maxY,
-                            color: AppColors.softGreyBg,
-                          ),
+                  minX: 0,
+                  maxX: (displayData.length - 1).toDouble(),
+                  minY: 0,
+                  maxY: maxY,
+                  lineBarsData: [
+                    // Orders Line
+                    LineChartBarData(
+                      spots: displayData.asMap().entries.map((e) {
+                        return FlSpot(
+                            e.key.toDouble(), e.value.totalOrders.toDouble());
+                      }).toList(),
+                      isCurved: true,
+                      color: ordersColor,
+                      barWidth: 4,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            ordersColor.withValues(alpha: 0.2),
+                            ordersColor.withValues(alpha: 0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
-                        // Hours Rod
-                        BarChartRodData(
-                          toY: item.totalHours,
-                          width: R.w(8),
-                          color: hoursColor,
-                          borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(R.r(4))),
-                          // No background bar for second rod to avoid clutter or keep consistency?
-                          // Let's keep consistency but maybe faint? Or just hide it for second one.
-                          // Usually one bg is enough visual guide, or both. Let's do both for uniform look.
-                          backDrawRodData: BackgroundBarChartRodData(
-                            show: true,
-                            toY: maxY,
-                            color: AppColors.softGreyBg.withValues(alpha: 0.5),
-                          ),
+                      ),
+                    ),
+                    // Hours Line
+                    LineChartBarData(
+                      spots: displayData.asMap().entries.map((e) {
+                        return FlSpot(e.key.toDouble(), e.value.totalHours);
+                      }).toList(),
+                      isCurved: true,
+                      color: hoursColor,
+                      barWidth: 4,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            hoursColor.withValues(alpha: 0.15),
+                            hoursColor.withValues(alpha: 0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
-                      ],
-                    );
-                  }),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

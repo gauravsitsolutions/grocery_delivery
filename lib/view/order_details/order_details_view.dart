@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
@@ -258,27 +259,45 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
             child: Icon(statusIcon, color: statusColor, size: R.sp(24)),
           ),
           SizedBox(width: R.w(16)),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Current Status',
-                style: TextStyle(
-                  fontSize: R.sp(12),
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.bodyText.withValues(alpha: 0.6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Current Status',
+                  style: TextStyle(
+                    fontSize: R.sp(12),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.bodyText.withValues(alpha: 0.6),
+                  ),
                 ),
-              ),
-              Text(
-                statusText.replaceAll('_', ' '),
-                style: TextStyle(
-                  fontSize: R.sp(16),
-                  fontWeight: FontWeight.bold,
-                  color: statusColor,
+                Text(
+                  statusText.replaceAll('_', ' '),
+                  style: TextStyle(
+                    fontSize: R.sp(16),
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          if (['in_progress', 'accepted', 'checked_in']
+              .contains(order.status.toLowerCase()))
+            AvatarGlow(
+              glowColor: const Color(0xFF00E676),
+              glowRadiusFactor: 0.4,
+              duration: const Duration(milliseconds: 2000),
+              repeat: true,
+              child: Container(
+                width: R.w(12),
+                height: R.w(12),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF00E676),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
         ],
       ),
     );

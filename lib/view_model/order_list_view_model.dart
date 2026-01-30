@@ -399,6 +399,13 @@ class OrderListViewModel extends ChangeNotifier {
       return false;
     } catch (e) {
       debugPrint('Error rejecting order: $e');
+      // If order is already gone (404), treat as success local-wise
+      if (e.toString().contains('404') ||
+          e.toString().contains('Order not available')) {
+        _newOrders.removeWhere((o) => o.id == orderId);
+        notifyListeners();
+        return true;
+      }
       return false;
     }
   }
