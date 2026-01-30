@@ -94,4 +94,9 @@ class AppColors {
   static const Color timerBg = Color(0xFFF9FAF7);
   static const Color ghostButtonBg = Color(0xFFF1F4F7);
   static const Color ghostButtonText = Color(0xFF64748B);
+
+  // Navigation
+  static const Color lightRedBg = Color(0xFFFFEAEA);
+  static const Color red = Colors.red;
+  static const Color lightGreenBg = Color(0xFFEAF7F0);
 }

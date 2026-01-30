@@ -16,7 +16,7 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper>
     with SingleTickerProviderStateMixin {
   late StreamSubscription<List<ConnectivityResult>> _subscription;
   bool _isOffline = false;
-  bool _showOnlineBanner = false;
+
   Timer? _onlineBannerTimer;
 
   // Animation for sliding the banner in/out
@@ -68,27 +68,17 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper>
     if (_isOffline) {
       // Show Offline Banner immediately (Red)
       _animationController.forward();
-      _showOnlineBanner = false;
       _onlineBannerTimer?.cancel();
     } else {
       // Just came back online
       // Show Online Banner (Green) for a few seconds
-      setState(() {
-        _showOnlineBanner = true;
-      });
       _animationController.forward();
 
       // Ensure animation stays for a bit, then hide
       _onlineBannerTimer?.cancel();
       _onlineBannerTimer = Timer(const Duration(seconds: 3), () {
         if (mounted) {
-          _animationController.reverse().then((_) {
-            if (mounted) {
-              setState(() {
-                _showOnlineBanner = false;
-              });
-            }
-          });
+          _animationController.reverse();
         }
       });
     }

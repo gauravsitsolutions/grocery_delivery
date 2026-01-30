@@ -151,6 +151,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                     });
                     await SharedPrefsUtil.setDutyStatus(revertedStatus);
 
+                    if (!context.mounted) return;
                     CustomSnackBar.showError(
                         context, 'Error: Authentication token not found');
                     return;
@@ -188,8 +189,10 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   });
                   await SharedPrefsUtil.setDutyStatus(revertedStatus);
 
-                  CustomSnackBar.showError(
-                      context, e.toString().replaceAll('Exception: ', ''));
+                  if (context.mounted) {
+                    CustomSnackBar.showError(
+                        context, e.toString().replaceAll('Exception: ', ''));
+                  }
                 }
               },
               onViewDeliveries: () {

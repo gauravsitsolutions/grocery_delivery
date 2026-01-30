@@ -26,7 +26,7 @@ class NavigationView extends StatelessWidget {
               'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=1200',
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                color: Colors.grey.shade300,
+                color: AppColors.grey300,
                 alignment: Alignment.center,
                 child: Icon(Icons.map, size: R.sp(64)),
               ),
@@ -100,11 +100,11 @@ class NavigationView extends StatelessWidget {
   Widget _sosButton() {
     return CircleAvatar(
       radius: R.r(24),
-      backgroundColor: const Color(0xFFFFEAEA),
+      backgroundColor: AppColors.lightRedBg,
       child: Text(
         'SOS',
         style: TextStyle(
-          color: Colors.red,
+          color: AppColors.red,
           fontWeight: FontWeight.w700,
           fontSize: R.sp(14),
         ),
@@ -127,7 +127,7 @@ class NavigationView extends StatelessWidget {
           borderRadius: BorderRadius.circular(R.r(40)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: AppColors.shadow.withValues(alpha: 0.12),
               blurRadius: R.r(12),
             ),
           ],
@@ -186,17 +186,17 @@ class NavigationView extends StatelessWidget {
         vertical: R.h(10),
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.85),
+        color: AppColors.black.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(R.r(30)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.traffic, color: Colors.white, size: R.sp(18)),
+          Icon(Icons.traffic, color: AppColors.white, size: R.sp(18)),
           SizedBox(width: R.w(8)),
           Text(
             'Traffic is heavier than usual (+4m)',
-            style: TextStyle(color: Colors.white, fontSize: R.sp(13)),
+            style: TextStyle(color: AppColors.white, fontSize: R.sp(13)),
           ),
         ],
       ),
@@ -224,7 +224,7 @@ class NavigationView extends StatelessWidget {
         borderRadius: BorderRadius.circular(R.r(14)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: AppColors.shadow.withValues(alpha: 0.12),
             blurRadius: R.r(8),
           ),
         ],
@@ -256,7 +256,7 @@ class NavigationView extends StatelessWidget {
             width: R.w(36),
             height: R.h(4),
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: AppColors.grey300,
               borderRadius: BorderRadius.circular(R.r(4)),
             ),
           ),
@@ -295,7 +295,7 @@ class NavigationView extends StatelessWidget {
                 },
                 child: CircleAvatar(
                   radius: R.r(22),
-                  backgroundColor: const Color(0xFFEAF7F0),
+                  backgroundColor: AppColors.lightGreenBg,
                   child: Icon(
                     RemixIcons.direction_fill,
                     color: AppColors.primaryGreen,
