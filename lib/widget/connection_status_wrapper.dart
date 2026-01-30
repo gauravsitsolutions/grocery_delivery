@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 
 class ConnectionStatusWrapper extends StatefulWidget {
   final Widget child;
   const ConnectionStatusWrapper({super.key, required this.child});
 
   @override
-  State<ConnectionStatusWrapper> createState() => _ConnectionStatusWrapperState();
+  State<ConnectionStatusWrapper> createState() =>
+      _ConnectionStatusWrapperState();
 }
 
-class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper> with SingleTickerProviderStateMixin {
+class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper>
+    with SingleTickerProviderStateMixin {
   late StreamSubscription<List<ConnectivityResult>> _subscription;
   bool _isOffline = false;
   bool _showOnlineBanner = false;
@@ -23,7 +26,7 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper> with 
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize Animation Controller
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -54,7 +57,7 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper> with 
 
   void _updateStatus(List<ConnectivityResult> results) {
     bool isNone = results.contains(ConnectivityResult.none);
-    
+
     // Avoid redrawing if status hasn't changed effectively
     if (_isOffline == isNone) return;
 
@@ -64,9 +67,9 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper> with 
 
     if (_isOffline) {
       // Show Offline Banner immediately (Red)
-       _animationController.forward();
-       _showOnlineBanner = false;
-       _onlineBannerTimer?.cancel();
+      _animationController.forward();
+      _showOnlineBanner = false;
+      _onlineBannerTimer?.cancel();
     } else {
       // Just came back online
       // Show Online Banner (Green) for a few seconds
@@ -79,13 +82,13 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper> with 
       _onlineBannerTimer?.cancel();
       _onlineBannerTimer = Timer(const Duration(seconds: 3), () {
         if (mounted) {
-           _animationController.reverse().then((_) {
-             if (mounted) {
-               setState(() {
-                 _showOnlineBanner = false;
-               });
-             }
-           });
+          _animationController.reverse().then((_) {
+            if (mounted) {
+              setState(() {
+                _showOnlineBanner = false;
+              });
+            }
+          });
         }
       });
     }
@@ -106,43 +109,46 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper> with 
         widget.child,
         SlideTransition(
           position: _offsetAnimation,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Material(
-              color: Colors.transparent,
-              elevation: 4,
+          child: SafeArea(
+            bottom: false,
+            child: Align(
+              alignment: Alignment.topCenter,
               child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 5,
-                  bottom: 10,
-                  left: 20,
-                  right: 20,
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _isOffline ? AppColors.error : AppColors.success,
+                  borderRadius: BorderRadius.circular(50),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isOffline ? AppColors.error : AppColors.success)
+                          .withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                color: _isOffline 
-                  ? Colors.red 
-                  : (_showOnlineBanner ? Colors.green : Colors.transparent),
-                child: SafeArea(
-                  bottom: false,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _isOffline ? Icons.wifi_off : Icons.wifi,
-                        color: Colors.white,
-                        size: 20,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _isOffline ? Icons.wifi_off : Icons.wifi,
+                      color: AppColors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _isOffline ? 'No Internet Connection' : 'Back Online',
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        letterSpacing: 0.3,
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        _isOffline ? 'No Internet Connection' : 'Back Online',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

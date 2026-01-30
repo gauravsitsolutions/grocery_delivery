@@ -219,7 +219,7 @@ class _PerformanceGraphCardState extends State<PerformanceGraphCard> {
                         },
                       ),
                       belowBarData: BarAreaData(
-                        show: true,
+                        show: false,
                         gradient: LinearGradient(
                           colors: [
                             AppColors.primaryGreen.withValues(alpha: 0.3),

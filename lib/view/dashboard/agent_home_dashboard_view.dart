@@ -31,6 +31,9 @@ import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedbac
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/duty_status_card.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/profile_view_model.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -62,7 +65,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   // Timer State
   Timer? _dutyTimer;
-  int _secondsOnDuty = 0;
+
   bool _isTimerPaused = false;
   Timer? _dataRefreshTimer;
 
@@ -109,14 +112,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     super.didUpdateWidget(oldWidget);
     if (widget.isOnline != oldWidget.isOnline) {
       if (widget.isOnline) {
-        _isTimerPaused = false; // Reset pause state when going online
-        _startTimer();
+        if (widget.dutyStatus == 'paused') {
+          _isTimerPaused = true;
+        } else {
+          _isTimerPaused = false;
+          _startTimer();
+        }
       } else {
         _stopTimer();
         // Reset timer when explicitly stopping duty (User Request)
-        setState(() {
-          _secondsOnDuty = 0;
-        });
       }
     }
   }
@@ -132,11 +136,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _stopTimer(); // Ensure no duplicate timers
     _dutyTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isTimerPaused) {
-        if (mounted) {
-          setState(() {
-            _secondsOnDuty++;
-          });
-        }
+        if (mounted) {}
       }
     });
   }
@@ -284,11 +284,16 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         if (mounted) {
           setState(() {
             _partnerSummary = summary;
-            // Sync local timer with server time ONLY if valid to avoid unwanted resets
-            // User requested: "Timer reset only when stop duty"
-            // So if server returns 0 or negative (invalid), ignore it to keep local count.
-            if (summary.todayDutyTime > 0) {
-              _secondsOnDuty = summary.todayDutyTime;
+
+            // Sync local pause state with server status
+            if (summary.dutyStatus == 'paused') {
+              _isTimerPaused = true;
+            } else if (summary.dutyStatus == 'online') {
+              // Only auto-resume if we were paused locally but server says online
+              // This handles cases where resume happened elsewhere or we were out of sync
+              if (_isTimerPaused) {
+                _isTimerPaused = false;
+              }
             }
 
             // Update stats from the new API
@@ -305,15 +310,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         log('Error fetching partner summary: $e');
       }
     }
-  }
-
-  String _formatDutyTime(int totalSeconds) {
-    if (totalSeconds <= 0) return '00:00:00';
-    final duration = Duration(seconds: totalSeconds);
-    final hours = duration.inHours.toString().padLeft(2, '0');
-    final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
-    return '$hours:$minutes:$seconds';
   }
 
   Future<void> _fetchOrders({bool refresh = true}) async {
@@ -707,195 +703,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         });
       }
     }
-  }
-
-  Widget _newRequestCard(Order order) {
-    // Determine image URL
-    String? imageUrl;
-    if (order.orderItems.isNotEmpty && order.orderItems.first.product != null) {
-      final product = order.orderItems.first.product!;
-      if (product.productImageUrls.isNotEmpty) {
-        imageUrl = product.productImageUrls.first;
-      } else if (product.productImages.isNotEmpty) {
-        imageUrl = AppUrls.productImages + product.productImages.first;
-      }
-    }
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: R.w(4), vertical: R.h(8)),
-      padding: EdgeInsets.all(R.w(16)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(24)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Store/Product Image
-              Container(
-                width: R.w(56),
-                height: R.w(56),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(R.r(12)),
-                  border: Border.all(color: AppColors.borderLight),
-                  color: AppColors.softGreyBg,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(R.r(12)),
-                  child: imageUrl != null
-                      ? CustomNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          errorWidget: Icon(RemixIcons.store_2_line,
-                              color: AppColors.grey),
-                        )
-                      : Icon(RemixIcons.store_2_line,
-                          size: R.sp(24), color: AppColors.grey),
-                ),
-              ),
-              SizedBox(width: R.w(12)),
-              // Store Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      order.orderNumber,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: R.sp(18),
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.headingText,
-                      ),
-                    ),
-                    SizedBox(height: R.h(6)),
-                    Row(
-                      children: [
-                        Icon(RemixIcons.map_pin_2_fill,
-                            size: R.sp(16), color: AppColors.grey),
-                        SizedBox(width: R.w(4)),
-                        Text(
-                          '2.1 mi away', // Mock distance
-                          style: TextStyle(
-                            fontSize: R.sp(14),
-                            color: AppColors.bodyText.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // Price and Items
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '₹ ${order.totalAmount}',
-                    style: TextStyle(
-                      fontSize: R.sp(20),
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.headingText,
-                    ),
-                  ),
-                  SizedBox(height: R.h(4)),
-                  Text(
-                    '${order.orderItems.length} items',
-                    style: TextStyle(
-                      fontSize: R.sp(13),
-                      color: AppColors.bodyText.withValues(alpha: 0.5),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: R.h(16)),
-          // Action Buttons
-          Row(
-            children: [
-              // Reject Button
-              Expanded(
-                child: SizedBox(
-                  height: R.h(50),
-                  child: ElevatedButton(
-                    onPressed: () => _rejectOrder(order.id),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.softGreyBg,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(14)),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(RemixIcons.close_line,
-                            size: R.sp(18), color: AppColors.headingText),
-                        SizedBox(width: R.w(8)),
-                        Text(
-                          'Reject',
-                          style: TextStyle(
-                            color: AppColors.headingText,
-                            fontWeight: FontWeight.w800,
-                            fontSize: R.sp(15),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: R.w(12)),
-              // Accept Button
-              Expanded(
-                child: SizedBox(
-                  height: R.h(50),
-                  child: ElevatedButton(
-                    onPressed: () => _acceptOrder(order.id),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(R.r(14)),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(RemixIcons.check_line,
-                            size: R.sp(18), color: AppColors.white),
-                        SizedBox(width: R.w(8)),
-                        Text(
-                          'Accept',
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: R.sp(15),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   // Removed unused _tag method
@@ -1449,6 +1256,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _dashboardHeader(isOnline),
+              Padding(
+                padding: EdgeInsets.only(bottom: R.h(20)),
+                child: DutyStatusCard(
+                  isOnline: isOnline,
+                  onToggle: () => widget.onStatusChanged(!isOnline),
+                ),
+              ),
               if (widget.isOnline && _isTimerPaused)
                 Padding(
                   padding: EdgeInsets.only(bottom: R.h(16)),
@@ -1538,7 +1352,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                 _availableOrders.isEmpty &&
                                 _myOrders.isEmpty &&
                                 _currentOrder == null &&
-                                !_isLoading)
+                                !_isLoading &&
+                                isOnline) // Only show waiting state if ONLINE
                             ? Padding(
                                 padding: EdgeInsets.only(
                                     top: R.h(8), bottom: R.h(12)),
@@ -1720,8 +1535,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                     : Column(
                                                         children: _newRequests
                                                             .map((order) =>
-                                                                _newRequestCard(
-                                                                    order))
+                                                                NewRequestCard(
+                                                                  order: order,
+                                                                  onAccept: () =>
+                                                                      _acceptOrder(
+                                                                          order
+                                                                              .id),
+                                                                  onDecline: () =>
+                                                                      _rejectOrder(
+                                                                          order
+                                                                              .id),
+                                                                ))
                                                             .toList(),
                                                       ),
                                       ),
@@ -1891,204 +1715,145 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _fetchOrders(refresh: false);
   }
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return 'Good Morning,';
+    } else if (hour >= 12 && hour < 17) {
+      return 'Good Afternoon,';
+    } else if (hour >= 17 && hour < 22) {
+      return 'Good Evening,';
+    } else {
+      return 'Good Night,';
+    }
+  }
+
   Widget _dashboardHeader(bool isOnline) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(R.w(4), R.h(6), R.w(4), R.h(12)),
+      padding: EdgeInsets.fromLTRB(R.w(4), R.h(6), R.w(4), R.h(20)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          /// LEFT SIDE
-          Row(
-            children: [
-              // Toggle
-              GestureDetector(
-                onTap: () => widget.onStatusChanged(!isOnline),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  width: R.w(58),
-                  height: R.h(30),
-                  padding: EdgeInsets.all(R.w(3)),
-                  decoration: BoxDecoration(
-                    color: isOnline
-                        ? AppColors.primaryGreen
-                        : AppColors.borderLight,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: AnimatedAlign(
-                    duration: const Duration(milliseconds: 250),
-                    alignment:
-                        isOnline ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      width: R.w(26),
-                      height: R.w(26),
-                      decoration: BoxDecoration(
-                        color: isOnline ? AppColors.white : AppColors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.black12,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
+          /// LEFT SIDE - Profile & Greeting
+          Consumer<ProfileViewModel>(
+            builder: (context, profileVM, _) {
+              final profile = profileVM.profile;
+              return Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(R.w(2)),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                        width: 2,
                       ),
-                      child: isOnline
-                          ? Icon(Icons.check,
-                              size: R.sp(16), color: AppColors.primaryGreen)
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: R.r(22),
+                      backgroundColor: AppColors.grey.withValues(alpha: 0.1),
+                      backgroundImage: (profile?.profilePhoto != null &&
+                              profile!.profilePhoto!.isNotEmpty)
+                          ? NetworkImage(profile.profilePhoto!)
+                          : null,
+                      child: (profile?.profilePhoto == null ||
+                              profile!.profilePhoto!.isEmpty)
+                          ? Icon(Icons.person,
+                              color: AppColors.grey, size: R.sp(20))
                           : null,
                     ),
                   ),
-                ),
-              ),
-
-              SizedBox(width: R.w(12)),
-
-              // Status Text
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _isTimerPaused || widget.dutyStatus == 'paused'
-                        ? 'Paused'
-                        : (isOnline ? 'Online' : 'Offline'),
-                    style: TextStyle(
-                      fontSize: R.sp(16),
-                      fontWeight: FontWeight.w800,
-                      color: (_isTimerPaused || widget.dutyStatus == 'paused')
-                          ? AppColors.warning
-                          : AppColors.headingText,
-                    ),
-                  ),
-                  Text(
-                    'DUTY MODE',
-                    style: TextStyle(
-                      fontSize: R.sp(10),
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.bodyText.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          /// RIGHT SIDE
-          Row(
-            children: [
-              // Timer Pill
-              GestureDetector(
-                onTap: () {
-                  if (isOnline) {
-                    // If "Resume" is needed (i.e. paused), calling toggle might not be enough if we have a specific API
-                    // But for now, using the pause toggle logic
-                    _toggleTimerPause();
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: R.w(16), vertical: R.h(10)),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(100),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
+                  SizedBox(width: R.w(12)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: R.w(18),
-                        height: R.w(18),
-                        decoration: BoxDecoration(
-                          color: isOnline
-                              ? (_isTimerPaused
-                                  ? AppColors.warning
-                                  : AppColors.primaryGreen)
-                              : AppColors.grey,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isOnline
-                              ? (_isTimerPaused
-                                  ? RemixIcons.play_fill
-                                  : RemixIcons.time_line)
-                              : RemixIcons.time_fill,
-                          size: R.sp(11),
-                          color: AppColors.white,
+                      Text(
+                        _getGreeting(),
+                        style: TextStyle(
+                          fontSize: R.sp(12),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.bodyText,
                         ),
                       ),
-                      SizedBox(width: R.w(6)),
                       Text(
-                        _formatDutyTime(_secondsOnDuty),
+                        profile?.name ?? 'Agent',
                         style: TextStyle(
-                          fontSize: R.sp(13),
-                          fontWeight: FontWeight.w700,
+                          fontSize: R.sp(18),
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.headingText,
                           letterSpacing: 0.5,
                         ),
                       ),
                     ],
                   ),
+                ],
+              );
+            },
+          ),
+
+          /// RIGHT SIDE - Notification
+          Container(
+            width: R.w(42),
+            height: R.w(42),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: AppColors.borderLight.withValues(alpha: 0.5),
+                  width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-
-              SizedBox(width: R.w(12)),
-
-              // Notification
-              Consumer<NotificationsViewModel>(
-                builder: (context, vm, _) {
-                  return Stack(
-                    children: [
-                      Container(
-                        width: R.w(40),
-                        height: R.w(40),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shadow.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          onPressed: () {
-                            PersistentNavBarNavigator.pushNewScreen(
-                              context,
-                              screen: const NotificationsView(),
-                              withNavBar: false, // Hide bottom nav bar
-                              pageTransitionAnimation:
-                                  PageTransitionAnimation.cupertino,
-                            );
-                          },
-                          icon: Icon(RemixIcons.notification_4_line,
-                              size: R.sp(22)),
-                        ),
+              ],
+            ),
+            child: Consumer<NotificationsViewModel>(
+              builder: (context, vm, _) {
+                return Stack(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        PersistentNavBarNavigator.pushNewScreen(
+                          context,
+                          screen: const NotificationsView(),
+                          withNavBar: false, // Hide bottom nav bar
+                          pageTransitionAnimation:
+                              PageTransitionAnimation.cupertino,
+                        );
+                      },
+                      icon: Icon(
+                        RemixIcons.notification_4_line,
+                        size: R.sp(20),
+                        color: AppColors.headingText,
                       ),
-                      if (vm.unreadCount > 0)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Container(
-                            width: R.w(8),
-                            height: R.w(8),
-                            decoration: const BoxDecoration(
-                              color: AppColors.error,
-                              shape: BoxShape.circle,
-                            ),
+                    ),
+                    if (vm.unreadCount > 0)
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Container(
+                          width: R.w(8),
+                          height: R.w(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.error,
+                            shape: BoxShape.circle,
                           ),
                         ),
-                    ],
-                  );
-                },
-              ),
-            ],
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),

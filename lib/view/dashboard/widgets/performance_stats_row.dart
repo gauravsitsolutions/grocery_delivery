@@ -7,7 +7,7 @@ class PerformanceStatsRow extends StatelessWidget {
   final int pending;
   final int completed;
   final int cancelled;
-  final double loginHours; // Added
+  final double loginHours;
 
   const PerformanceStatsRow({
     super.key,
@@ -22,109 +22,156 @@ class PerformanceStatsRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          "Performance Today",
+          style: TextStyle(
+            fontSize: R.sp(18),
+            fontWeight: FontWeight.w800,
+            color: AppColors.headingText,
+            letterSpacing: 0.5,
+          ),
+        ),
+        SizedBox(height: R.h(16)),
         Row(
           children: [
-            Container(
-              padding: EdgeInsets.all(R.w(8)),
-              decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.analytics_rounded,
-                color: AppColors.primaryGreen,
-                size: R.sp(18),
+            // Card 1: Completed
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(R.w(16)),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(R.r(24)), // High radius
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadow.withValues(alpha: 0.05),
+                      blurRadius: 15,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'COMPLETED',
+                      style: TextStyle(
+                        fontSize: R.sp(11),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.bodyText.withValues(alpha: 0.7),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    SizedBox(height: R.h(8)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$completed',
+                          style: TextStyle(
+                            fontSize: R.sp(36),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.headingText,
+                          ),
+                        ),
+                        Icon(
+                          RemixIcons.checkbox_circle_line,
+                          color: AppColors.primaryGreen,
+                          size: R.sp(24),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: R.h(8)),
+                    Text(
+                      '+2 from average', // Mock data as per design request, logic can be added later
+                      style: TextStyle(
+                        fontSize: R.sp(11),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            SizedBox(width: R.w(8)),
-            Text(
-              "Today's Performance",
-              style: TextStyle(
-                fontSize: R.sp(16),
-                fontWeight: FontWeight.w700,
-                color: AppColors.headingText,
+
+            SizedBox(width: R.w(16)),
+
+            // Card 2: On-Time
+            Expanded(
+              child: Container(
+                padding:
+                    EdgeInsets.fromLTRB(R.w(16), R.w(16), R.w(16), R.w(12)),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(R.r(24)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadow.withValues(alpha: 0.05),
+                      blurRadius: 15,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'LOGIN TIME',
+                      style: TextStyle(
+                        fontSize: R.sp(11),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.bodyText.withValues(alpha: 0.7),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    SizedBox(height: R.h(8)),
+                    // Using a Stack for the floating green circle effect if needed,
+                    // or just a Row for simplicity first.
+                    // Design has a big green circle with refresh icon hanging off the edge?
+                    // Simulating the layout with standard Row for now to stay clean.
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${loginHours.toStringAsFixed(1)}h', // Show login hours
+                          style: TextStyle(
+                            fontSize: R.sp(36),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.headingText,
+                          ),
+                        ),
+                        // The design has a large green circle button thing.
+                        Container(
+                          padding: EdgeInsets.all(R.w(10)),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryGreen, // Bright green
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            RemixIcons.time_line, // Changed to clock icon
+                            color: AppColors.white,
+                            size: R.sp(20),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: R.h(8)),
+                    Text(
+                      'Active Today',
+                      style: TextStyle(
+                        fontSize: R.sp(11),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-        SizedBox(height: R.h(12)),
-        IntrinsicHeight(
-          child: Row(
-            children: [
-              Expanded(
-                  child: _statCard('Login Hours',
-                      '${loginHours.toStringAsFixed(1)}h', Remix.time_fill)),
-              SizedBox(width: R.w(12)),
-              Expanded(
-                  child: _statCard(
-                      'Completed', '$completed', Remix.checkbox_circle_line)),
-              SizedBox(width: R.w(12)),
-              Expanded(
-                  child: _statCard(
-                      'Pending',
-                      '$pending',
-                      Remix
-                          .time_line)), // Swapped Pending/Cancelled for space if needed, or just added
-            ],
-          ),
-        ),
       ],
-    );
-  }
-
-  Widget _statCard(String label, String value, IconData icon) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(R.w(6), R.h(12), R.w(6), R.h(8)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(16)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryGreen.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-        ],
-        border: Border.all(
-            color: AppColors.primaryGreen.withValues(alpha: 0.1), width: 1),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: EdgeInsets.all(R.w(8)),
-            decoration: BoxDecoration(
-              color: AppColors.softGreenBg,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: AppColors.primaryGreen,
-              size: R.sp(18),
-            ),
-          ),
-          SizedBox(height: R.h(6)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: R.sp(20),
-              fontWeight: FontWeight.w800,
-              color: AppColors.headingText,
-            ),
-          ),
-          SizedBox(height: R.h(2)),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: R.sp(11),
-              fontWeight: FontWeight.w600,
-              color: AppColors.bodyText.withValues(alpha: 0.8),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
     );
   }
 }
