@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:provider/provider.dart';
 import 'package:remixicon/remixicon.dart';
@@ -85,19 +86,20 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
           Text(
             'PICKUP TASK',
             style: TextStyle(
-              fontSize: R.sp(18),
+              fontSize: R.sp(14),
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
-              color: AppColors.headingText,
+              letterSpacing: 1.2,
+              color: AppColors.primaryGreen,
             ),
           ),
+          SizedBox(height: 2),
           if (viewModel.order != null)
             Text(
               '#${viewModel.order!.orderNumber}',
               style: TextStyle(
-                fontSize: R.sp(13),
-                fontWeight: FontWeight.w700,
-                color: AppColors.primaryGreen,
+                fontSize: R.sp(20),
+                fontWeight: FontWeight.w900,
+                color: AppColors.headingText,
               ),
             ),
         ],
@@ -302,7 +304,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
   Widget _buildPickupSection(Order order) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(R.w(20)),
+      padding: EdgeInsets.all(R.w(24)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
@@ -318,70 +320,98 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: EdgeInsets.all(R.w(10)),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(RemixIcons.store_2_fill,
-                    color: AppColors.primaryGreen, size: R.sp(20)),
-              ),
-              SizedBox(width: R.w(12)),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      order.vendor?.storeName ?? 'Warehouse #5',
-                      style: TextStyle(
-                        fontSize: R.sp(18),
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.headingText,
-                      ),
-                    ),
-                    Text(
-                      '${order.distance ?? '3.2'} km from your location',
+                      'INTERNAL WAREHOUSE',
                       style: TextStyle(
                         fontSize: R.sp(13),
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.bodyText.withValues(alpha: 0.5),
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryGreen,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    SizedBox(height: R.h(8)),
+                    Text(
+                      order.vendor?.storeName ?? 'AISLE 4, BAY B',
+                      style: TextStyle(
+                        fontSize: R.sp(28),
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.headingText,
+                        height: 1.1,
                       ),
                     ),
                   ],
                 ),
               ),
+              Container(
+                width: R.w(56),
+                height: R.w(56),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F7FA), // Light Mint
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(RemixIcons.store_2_fill,
+                      color: const Color(0xFF00E676), size: R.sp(28)),
+                ),
+              ),
             ],
           ),
-          SizedBox(height: R.h(16)),
-          Text(
-            order.vendor?.address ?? 'Industrial Area, Noida, UP',
-            style: TextStyle(
-              fontSize: R.sp(15),
-              fontWeight: FontWeight.w600,
-              color: AppColors.bodyText,
-              height: 1.4,
-            ),
-          ),
-          SizedBox(height: R.h(20)),
+          SizedBox(height: R.h(24)),
           Row(
             children: [
               Expanded(
-                child: _locationActionButton(
-                  icon: RemixIcons.map_pin_2_fill,
-                  label: 'Show on Map',
-                  onTap: () {
-                    // Implement map navigation
-                  },
+                child: SizedBox(
+                  height: R.h(50),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Show on Map
+                    },
+                    icon: Icon(RemixIcons.map_2_fill,
+                        size: R.sp(20), color: Colors.black),
+                    label: Text('Show on Map',
+                        style: TextStyle(
+                            fontSize: R.sp(15),
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00E676), // Bright Green
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(100)),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               SizedBox(width: R.w(12)),
               Expanded(
-                child: _locationActionButton(
-                  icon: RemixIcons.phone_fill,
-                  label: 'Call Manager',
-                  onTap: () => _makePhoneCall(order.vendor?.mobile ?? ''),
+                child: SizedBox(
+                  height: R.h(50),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _makePhoneCall(order.vendor?.mobile ?? ''),
+                    icon: Icon(RemixIcons.phone_fill,
+                        size: R.sp(20), color: AppColors.headingText),
+                    label: Text('Call Manager',
+                        style: TextStyle(
+                            fontSize: R.sp(15),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.headingText)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF5F7FA), // Light Grey
+                      foregroundColor: AppColors.headingText,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(R.r(100)),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -598,155 +628,174 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
   }
 
   Widget _buildItemsChecklist(OrderViewModel viewModel) {
-    if (viewModel.orderItems.isEmpty) return SizedBox();
+    // if (viewModel.orderItems.isEmpty) return SizedBox(); // Keep visible even if empty maybe?
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(R.w(20)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(24)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'CHECKLIST',
-            style: TextStyle(
-              fontSize: R.sp(14),
-              fontWeight: FontWeight.w900,
-              color: AppColors.headingText.withValues(alpha: 0.4),
-              letterSpacing: 1.0,
-            ),
-          ),
-          SizedBox(height: R.h(16)),
-          ...viewModel.orderItems.map((item) {
-            final bool isChecked = viewModel.checkedItems.contains(item.id);
-            return GestureDetector(
-              onTap: () => viewModel.toggleItem(item.id),
-              child: Padding(
-                padding: EdgeInsets.only(bottom: R.h(16)),
-                child: Row(
-                  children: [
-                    Container(
-                      width: R.w(24),
-                      height: R.w(24),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isChecked
-                              ? AppColors.primaryGreen
-                              : AppColors.bodyText.withValues(alpha: 0.2),
-                          width: 2,
-                        ),
-                        color: isChecked ? AppColors.primaryGreen : null,
-                      ),
-                      child: isChecked
-                          ? Icon(RemixIcons.check_line,
-                              size: R.sp(16), color: Colors.white)
-                          : null,
-                    ),
-                    SizedBox(width: R.w(16)),
-                    Container(
-                      width: R.w(40),
-                      height: R.w(40),
-                      decoration: BoxDecoration(
-                        color: AppColors.softGreyBg,
-                        borderRadius: BorderRadius.circular(R.r(10)),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(R.r(10)),
-                        child: CustomNetworkImage(
-                          imageUrl:
-                              item.product?.productImageUrls.firstOrNull ?? '',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: R.w(16)),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.product?.name ?? 'Unknown Item',
-                            style: TextStyle(
-                              fontSize: R.sp(16),
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.headingText,
-                            ),
-                          ),
-                          Text(
-                            '• ${item.quantity} ${item.product?.unitValue ?? 'Items'}',
-                            style: TextStyle(
-                              fontSize: R.sp(13),
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.bodyText.withValues(alpha: 0.4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+    final totalItems = viewModel.orderItems.length;
+    final checkedCount = viewModel.checkedItems.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: R.w(4)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Items to Pick',
+                style: TextStyle(
+                  fontSize: R.sp(18),
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.headingText,
                 ),
               ),
-            );
-          }),
-        ],
-      ),
+              Text(
+                '$checkedCount / $totalItems Done',
+                style: TextStyle(
+                  fontSize: R.sp(15),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: R.h(16)),
+        ...viewModel.orderItems.map((item) {
+          final bool isChecked = viewModel.checkedItems.contains(item.id);
+          return GestureDetector(
+            onTap: () => viewModel.toggleItem(item.id),
+            child: Container(
+              margin: EdgeInsets.only(bottom: R.h(12)),
+              padding: EdgeInsets.all(R.w(12)),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius:
+                    BorderRadius.circular(R.r(50)), // Rounded pill/card
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadow.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Item Image
+                  Container(
+                    width: R.w(60),
+                    height: R.w(60),
+                    decoration: BoxDecoration(
+                      color: AppColors.softGreyBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: CustomNetworkImage(
+                        imageUrl:
+                            item.product?.productImageUrls.firstOrNull ?? '',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: R.w(16)),
+                  // Item Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.product?.name ?? 'Unknown Item',
+                          style: TextStyle(
+                            fontSize: R.sp(16),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.headingText,
+                          ),
+                        ),
+                        SizedBox(height: R.h(4)),
+                        Row(
+                          children: [
+                            Text(
+                              'Qty: ',
+                              style: TextStyle(
+                                fontSize: R.sp(15),
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    AppColors.bodyText.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            Text(
+                              '${item.quantity}',
+                              style: TextStyle(
+                                fontSize: R.sp(16),
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Large Selection Circle
+                  Container(
+                    width: R.w(32),
+                    height: R.w(32),
+                    margin: EdgeInsets.only(right: R.w(8)),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isChecked
+                            ? Colors.transparent
+                            : AppColors.grey.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                      color: isChecked
+                          ? AppColors.primaryGreen
+                          : Colors.transparent,
+                    ),
+                    child: isChecked
+                        ? Icon(Icons.check, color: Colors.white, size: R.sp(20))
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 
   Widget _buildProofUpload(OrderViewModel viewModel) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(R.w(20)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(24)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'PICKUP PROOF',
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: R.w(4)),
+          child: Text(
+            'Pickup Proof',
             style: TextStyle(
-              fontSize: R.sp(14),
-              fontWeight: FontWeight.w900,
-              color: AppColors.headingText.withValues(alpha: 0.4),
-              letterSpacing: 1.0,
+              fontSize: R.sp(18),
+              fontWeight: FontWeight.w800,
+              color: AppColors.headingText,
             ),
           ),
-          SizedBox(height: R.h(16)),
-          InkWell(
-            onTap: () => viewModel.pickProofImage(ImageSource.camera),
+        ),
+        SizedBox(height: R.h(16)),
+        InkWell(
+          onTap: () => viewModel.pickProofImage(ImageSource.camera),
+          child: CustomPaint(
+            painter: _DashedBorderPainter(
+              color: AppColors.grey.withValues(alpha: 0.3),
+              strokeWidth: 2.0,
+              gap: 8.0,
+              radius: 24.0,
+            ),
             child: Container(
-              height: R.h(160),
+              height: R.h(200),
               width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.softGreyBg.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(R.r(20)),
-                border: Border.all(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
-                  style: BorderStyle
-                      .solid, // Will look dashed with custom painter if needed, but solid is fine for now if styled well
-                  width: 1.5,
-                ),
-              ),
+              padding: EdgeInsets.all(R.w(20)),
               child: viewModel.pickupProofImage != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(R.r(20)),
@@ -757,30 +806,40 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: EdgeInsets.all(R.w(12)),
+                          padding: EdgeInsets.all(R.w(16)),
                           decoration: BoxDecoration(
-                            color:
-                                AppColors.primaryGreen.withValues(alpha: 0.1),
+                            color: AppColors.softGreyBg,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(RemixIcons.camera_fill,
-                              color: AppColors.primaryGreen, size: R.sp(28)),
+                          child: Icon(RemixIcons.camera_3_fill,
+                              color:
+                                  AppColors.headingText.withValues(alpha: 0.6),
+                              size: R.sp(32)),
                         ),
-                        SizedBox(height: R.h(12)),
+                        SizedBox(height: R.h(16)),
                         Text(
                           'Take Photo of Items',
                           style: TextStyle(
-                            fontSize: R.sp(15),
+                            fontSize: R.sp(16),
                             fontWeight: FontWeight.w800,
                             color: AppColors.headingText,
+                          ),
+                        ),
+                        SizedBox(height: R.h(6)),
+                        Text(
+                          'Mandatory for verification',
+                          style: TextStyle(
+                            fontSize: R.sp(13),
+                            color: AppColors.bodyText.withValues(alpha: 0.6),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -930,5 +989,59 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
 
   Widget _buildLoadingShimmer() {
     return Center(child: CircularProgressIndicator());
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+  final double radius;
+
+  _DashedBorderPainter({
+    required this.color,
+    this.strokeWidth = 1.0,
+    this.gap = 5.0,
+    this.radius = 0.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final Path path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Radius.circular(radius),
+      ));
+
+    final Path dashedPath = _dashPath(path, width: 10, space: gap);
+    canvas.drawPath(dashedPath, paint);
+  }
+
+  Path _dashPath(Path source, {required double width, required double space}) {
+    final Path path = Path();
+    for (final PathMetric metric in source.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        path.addPath(
+          metric.extractPath(distance, distance + width),
+          Offset.zero,
+        );
+        distance += width + space;
+      }
+    }
+    return path;
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) {
+    return color != oldDelegate.color ||
+        strokeWidth != oldDelegate.strokeWidth ||
+        gap != oldDelegate.gap ||
+        radius != oldDelegate.radius;
   }
 }

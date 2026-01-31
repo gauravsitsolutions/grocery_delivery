@@ -34,7 +34,6 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
     });
   }
 
-
   @override
   void dispose() {
     _scrollController.dispose();
@@ -269,20 +268,14 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Hero(
-                              tag: 'order_number_${order.id}',
-                              child: Material(
-                                color: Colors.transparent,
-                                child: Text(
-                                  order.orderNumber,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: R.sp(16),
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.headingText,
-                                  ),
-                                ),
+                            Text(
+                              order.orderNumber,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: R.sp(16),
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.headingText,
                               ),
                             ),
                             SizedBox(height: R.h(4)),

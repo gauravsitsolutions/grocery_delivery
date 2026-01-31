@@ -16,65 +16,66 @@ class DutyStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onToggle,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: R.w(6),
-          vertical: R.h(6),
-        ),
-        decoration: BoxDecoration(
-          color: isOnline ? const Color(0xFF00C853) : const Color(0xFFF1F3F5),
-          borderRadius: BorderRadius.circular(R.r(100)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(R.w(4)),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Toggle Switch
+          Container(
+            width: R.w(52),
+            height: R.h(32),
+            padding: EdgeInsets.all(R.w(4)),
+            decoration: BoxDecoration(
+              color: isOnline ? const Color(0xFF00C853) : AppColors.softGreyBg,
+              borderRadius: BorderRadius.circular(R.r(20)),
+            ),
+            child: AnimatedAlign(
+              duration: const Duration(milliseconds: 200),
+              alignment:
+                  isOnline ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                width: R.w(24),
+                height: R.w(24),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: isOnline
+                    ? Icon(
+                        Icons.check,
+                        size: R.sp(16),
+                        color: const Color(0xFF00C853),
+                      )
+                    : null,
               ),
-              child: isOnline
-                  ? Icon(
-                      Icons.check,
-                      size: R.sp(14),
-                      color: const Color(0xFF00C853),
-                    )
-                  : SizedBox(
-                      width: R.w(14),
-                      height: R.w(14),
-                    ),
             ),
-            SizedBox(width: R.w(8)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isOnline ? 'Online' : 'Offline',
-                  style: TextStyle(
-                    fontSize: R.sp(14),
-                    fontWeight: FontWeight.w800,
-                    color: isOnline ? Colors.white : AppColors.headingText,
-                    height: 1.1,
-                  ),
+          ),
+          SizedBox(width: R.w(12)),
+          // Text Details
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isOnline ? 'Online' : 'Offline',
+                style: TextStyle(
+                  fontSize: R.sp(16),
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.headingText,
+                  height: 1.1,
                 ),
-                Text(
-                  'DUTY MODE',
-                  style: TextStyle(
-                    fontSize: R.sp(8),
-                    color: isOnline
-                        ? Colors.white.withValues(alpha: 0.8)
-                        : AppColors.bodyText,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
+              ),
+              Text(
+                'DUTY MODE',
+                style: TextStyle(
+                  fontSize: R.sp(10),
+                  color: AppColors.bodyText.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
                 ),
-              ],
-            ),
-            SizedBox(width: R.w(10)),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

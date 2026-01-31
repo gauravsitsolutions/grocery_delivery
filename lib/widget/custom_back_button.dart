@@ -18,7 +18,9 @@ class CustomBackButton extends StatelessWidget {
     return IconButton(
       onPressed: onPressed ?? () => Navigator.maybePop(context),
       icon: Icon(
-        RemixIcons.arrow_left_s_line,
+        Theme.of(context).platform == TargetPlatform.iOS
+            ? RemixIcons.arrow_left_s_line
+            : RemixIcons.arrow_left_line,
         color: color ?? AppColors.headingText,
         size: R.sp(28),
       ),

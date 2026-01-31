@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 
-class NewRequestCard extends StatelessWidget {
+class NewRequestCard extends StatefulWidget {
   final Order order;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
@@ -17,6 +18,44 @@ class NewRequestCard extends StatelessWidget {
     required this.onDecline,
     this.countdownSeconds = 45,
   });
+
+  @override
+  State<NewRequestCard> createState() => _NewRequestCardState();
+}
+
+class _NewRequestCardState extends State<NewRequestCard>
+    with SingleTickerProviderStateMixin {
+  late int _remainingTime;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingTime = widget.countdownSeconds;
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_remainingTime > 0) {
+            _remainingTime--;
+          } else {
+            _timer?.cancel();
+            // Automatically decline? Or just show 0?
+            // For now, let's just stop at 0 to avoid unintended side effects without user confirmation
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,26 +83,8 @@ class NewRequestCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: R.w(12), vertical: R.h(6)),
-                    decoration: BoxDecoration(
-                      color: AppColors.badgeGreenBg,
-                      borderRadius: BorderRadius.circular(R.r(8)),
-                    ),
-                    child: Text(
-                      'NEW REQUEST',
-                      style: TextStyle(
-                        fontSize: R.sp(11),
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.badgeGreenText,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: R.w(10)),
                   Text(
-                    'ID: #ORD-${order.id}',
+                    'ID: #ORD-${widget.order.id}',
                     style: TextStyle(
                       fontSize: R.sp(14),
                       color: AppColors.bodyText.withValues(alpha: 0.4),
@@ -78,7 +99,7 @@ class NewRequestCard extends StatelessWidget {
                       size: R.sp(16), color: Colors.orange),
                   SizedBox(width: R.w(4)),
                   Text(
-                    '${countdownSeconds}s',
+                    '${_remainingTime}s',
                     style: TextStyle(
                       fontSize: R.sp(14),
                       fontWeight: FontWeight.w800,
@@ -98,7 +119,7 @@ class NewRequestCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '₹${(double.tryParse(order.totalAmount) ?? 0.0).toStringAsFixed(2)}',
+                    '₹${(double.tryParse(widget.order.totalAmount) ?? 0.0).toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: R.sp(32),
                       fontWeight: FontWeight.w900,
@@ -154,7 +175,7 @@ class NewRequestCard extends StatelessWidget {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: onDecline,
+                  onTap: widget.onDecline,
                   child: Container(
                     height: R.h(56),
                     alignment: Alignment.center,
@@ -176,7 +197,7 @@ class NewRequestCard extends StatelessWidget {
               SizedBox(width: R.w(12)),
               Expanded(
                 child: GestureDetector(
-                  onTap: onAccept,
+                  onTap: widget.onAccept,
                   child: Container(
                     height: R.h(56),
                     alignment: Alignment.center,

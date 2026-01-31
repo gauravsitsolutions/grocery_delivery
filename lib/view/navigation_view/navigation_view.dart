@@ -248,230 +248,232 @@ class NavigationView extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(R.r(28))),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // HANDLE
-          Container(
-            width: R.w(36),
-            height: R.h(4),
-            decoration: BoxDecoration(
-              color: AppColors.grey300,
-              borderRadius: BorderRadius.circular(R.r(4)),
-            ),
-          ),
-          SizedBox(height: R.h(16)),
-
-          // ETA
-          Row(
-            children: [
-              Text(
-                '12',
-                style: TextStyle(
-                  fontSize: R.sp(34),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              SizedBox(width: R.w(6)),
-              Text(
-                'min • 2.4 km',
-                style: TextStyle(
-                  fontSize: R.sp(16),
-                  color: AppColors.bodyText,
-                ),
-              ),
-              const Spacer(),
-              InkWell(
-                onTap: () async {
-                  if (address != null) {
-                    final query = Uri.encodeComponent(
-                        "${address.addressLine1}, ${address.city}, ${address.postcode}");
-                    final url = Uri.parse(
-                        "https://www.google.com/maps/search/?api=1&query=$query");
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url);
-                    }
-                  }
-                },
-                child: CircleAvatar(
-                  radius: R.r(22),
-                  backgroundColor: AppColors.lightGreenBg,
-                  child: Icon(
-                    RemixIcons.direction_fill,
-                    color: AppColors.primaryGreen,
-                    size: R.sp(20),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: R.h(4)),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              '14:35 Arrival',
-              style: TextStyle(
-                color: AppColors.primaryGreen,
-                fontWeight: FontWeight.w600,
-                fontSize: R.sp(14),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // HANDLE
+            Container(
+              width: R.w(36),
+              height: R.h(4),
+              decoration: BoxDecoration(
+                color: AppColors.grey300,
+                borderRadius: BorderRadius.circular(R.r(4)),
               ),
             ),
-          ),
+            SizedBox(height: R.h(16)),
 
-          SizedBox(height: R.h(20)),
-          const Divider(),
-
-          // CUSTOMER
-          Row(
-            children: [
-              CircleAvatar(
-                radius: R.r(26),
-                backgroundColor: AppColors.primaryGreen.withAlpha(30),
-                child: Text(
-                  order?.user?.fullName.substring(0, 1).toUpperCase() ?? 'C',
-                  style: TextStyle(
-                    color: AppColors.primaryGreen,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              SizedBox(width: R.w(12)),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      order?.user?.fullName ?? 'Customer',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: R.sp(16),
-                      ),
-                    ),
-                    SizedBox(height: R.h(4)),
-                    Text(
-                      address?.addressLine1 ?? 'No address',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: AppColors.bodyText,
-                        fontSize: R.sp(14),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _circleButton(
-                icon: RemixIcons.phone_line,
-                onTap: () async {
-                  final phone = order?.user?.mobile;
-                  if (phone != null) {
-                    final url = Uri.parse('tel:$phone');
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url);
-                    }
-                  }
-                },
-              ),
-              SizedBox(width: R.w(8)),
-              _circleButton(
-                icon: RemixIcons.message_3_line,
-                onTap: () async {
-                  final phone = order?.user?.mobile;
-                  if (phone != null) {
-                    final url = Uri.parse('sms:$phone');
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url);
-                    }
-                  }
-                },
-              ),
-            ],
-          ),
-
-          SizedBox(height: R.h(16)),
-
-          // INSTRUCTIONS
-          Container(
-            padding: EdgeInsets.all(R.w(14)),
-            decoration: BoxDecoration(
-              color: AppColors.scaffoldBg,
-              borderRadius: BorderRadius.circular(R.r(14)),
-            ),
-            child: Row(
+            // ETA
+            Row(
               children: [
-                Icon(Icons.menu, size: R.sp(20)),
-                SizedBox(width: R.w(12)),
-                Expanded(
-                  child: Text(
-                    order?.deliveryInstructions?.isNotEmpty == true
-                        ? '"${order!.deliveryInstructions}"'
-                        : 'No instructions',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: R.sp(14),
+                Text(
+                  '12',
+                  style: TextStyle(
+                    fontSize: R.sp(34),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(width: R.w(6)),
+                Text(
+                  'min • 2.4 km',
+                  style: TextStyle(
+                    fontSize: R.sp(16),
+                    color: AppColors.bodyText,
+                  ),
+                ),
+                const Spacer(),
+                InkWell(
+                  onTap: () async {
+                    if (address != null) {
+                      final query = Uri.encodeComponent(
+                          "${address.addressLine1}, ${address.city}, ${address.postcode}");
+                      final url = Uri.parse(
+                          "https://www.google.com/maps/search/?api=1&query=$query");
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      }
+                    }
+                  },
+                  child: CircleAvatar(
+                    radius: R.r(22),
+                    backgroundColor: AppColors.lightGreenBg,
+                    child: Icon(
+                      RemixIcons.direction_fill,
+                      color: AppColors.primaryGreen,
+                      size: R.sp(20),
                     ),
                   ),
                 ),
-                Icon(Icons.keyboard_arrow_down, size: R.sp(20)),
               ],
             ),
-          ),
+            SizedBox(height: R.h(4)),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '14:35 Arrival',
+                style: TextStyle(
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w600,
+                  fontSize: R.sp(14),
+                ),
+              ),
+            ),
 
-          SizedBox(height: R.h(20)),
+            SizedBox(height: R.h(20)),
+            const Divider(),
 
-          // MARK AS ARRIVED BUTTON
-          InkWell(
-            onTap: () {
-              Navigator.pushReplacementNamed(
-                context,
-                AppRoutes.verificationView,
-                arguments: order,
-              );
-            },
-            child: Container(
-              height: R.h(60),
-              margin: EdgeInsets.only(bottom: R.h(8)),
-              decoration: BoxDecoration(
-                color: AppColors.primaryGreen,
-                borderRadius: BorderRadius.circular(R.r(18)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.35),
-                    blurRadius: R.r(14),
-                    offset: Offset(0, R.h(6)),
+            // CUSTOMER
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: R.r(26),
+                  backgroundColor: AppColors.primaryGreen.withAlpha(30),
+                  child: Text(
+                    order?.user?.fullName.substring(0, 1).toUpperCase() ?? 'C',
+                    style: TextStyle(
+                      color: AppColors.primaryGreen,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ],
+                ),
+                SizedBox(width: R.w(12)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order?.user?.fullName ?? 'Customer',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: R.sp(16),
+                        ),
+                      ),
+                      SizedBox(height: R.h(4)),
+                      Text(
+                        address?.addressLine1 ?? 'No address',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.bodyText,
+                          fontSize: R.sp(14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _circleButton(
+                  icon: RemixIcons.phone_line,
+                  onTap: () async {
+                    final phone = order?.user?.mobile;
+                    if (phone != null) {
+                      final url = Uri.parse('tel:$phone');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      }
+                    }
+                  },
+                ),
+                SizedBox(width: R.w(8)),
+                _circleButton(
+                  icon: RemixIcons.message_3_line,
+                  onTap: () async {
+                    final phone = order?.user?.mobile;
+                    if (phone != null) {
+                      final url = Uri.parse('sms:$phone');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+
+            SizedBox(height: R.h(16)),
+
+            // INSTRUCTIONS
+            Container(
+              padding: EdgeInsets.all(R.w(14)),
+              decoration: BoxDecoration(
+                color: AppColors.scaffoldBg,
+                borderRadius: BorderRadius.circular(R.r(14)),
               ),
               child: Row(
                 children: [
-                  SizedBox(width: R.w(16)),
-                  CircleAvatar(
-                    radius: R.r(18),
-                    backgroundColor: AppColors.white,
-                    child: Icon(
-                      RemixIcons.check_fill,
-                      color: AppColors.primaryGreen,
-                      size: R.sp(18),
+                  Icon(Icons.menu, size: R.sp(20)),
+                  SizedBox(width: R.w(12)),
+                  Expanded(
+                    child: Text(
+                      order?.deliveryInstructions?.isNotEmpty == true
+                          ? '"${order!.deliveryInstructions}"'
+                          : 'No instructions',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: R.sp(14),
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    'Mark as Arrived',
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontSize: R.sp(18),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(Icons.double_arrow,
-                      color: AppColors.white, size: R.sp(18)),
-                  SizedBox(width: R.w(16)),
+                  Icon(Icons.keyboard_arrow_down, size: R.sp(20)),
                 ],
               ),
             ),
-          ),
-        ],
+
+            SizedBox(height: R.h(20)),
+
+            // MARK AS ARRIVED BUTTON
+            InkWell(
+              onTap: () {
+                Navigator.pushReplacementNamed(
+                  context,
+                  AppRoutes.verificationView,
+                  arguments: order,
+                );
+              },
+              child: Container(
+                height: R.h(60),
+                margin: EdgeInsets.only(bottom: R.h(8)),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  borderRadius: BorderRadius.circular(R.r(18)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.35),
+                      blurRadius: R.r(14),
+                      offset: Offset(0, R.h(6)),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(width: R.w(16)),
+                    CircleAvatar(
+                      radius: R.r(18),
+                      backgroundColor: AppColors.white,
+                      child: Icon(
+                        RemixIcons.check_fill,
+                        color: AppColors.primaryGreen,
+                        size: R.sp(18),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Mark as Arrived',
+                      style: TextStyle(
+                        color: AppColors.white,
+                        fontSize: R.sp(18),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.double_arrow,
+                        color: AppColors.white, size: R.sp(18)),
+                    SizedBox(width: R.w(16)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

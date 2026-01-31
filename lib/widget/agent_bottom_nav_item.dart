@@ -172,12 +172,18 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                 } catch (e) {
                   if (!context.mounted) return;
 
-                  // Check if it's an "Already online" validation error
+                  // Check if it's an "Already online" or "Already offline" validation error
                   final errorMessage = e.toString().toLowerCase();
                   if (val && errorMessage.contains('already online')) {
                     // It's actually a success state (we are online), so don't revert.
                     CustomSnackBar.showSuccess(
                         context, 'You are already Online');
+                    return;
+                  } else if (!val && errorMessage.contains('already offline')) {
+                    // It's actually a success state (we are offline), so don't revert.
+                    CustomSnackBar.showSuccess(
+                        context, 'You are already Offline',
+                        title: 'Offline', color: AppColors.error);
                     return;
                   }
 

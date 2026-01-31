@@ -1,4 +1,3 @@
-import 'package:url_launcher/url_launcher.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:animations/animations.dart';
 import 'package:provider/provider.dart';
@@ -87,7 +86,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   int _completedDeliveries = 0;
   int _pendingOrders = 0;
   int _cancelledOrders = 0;
-  double _loginHours = 0.0; // Added for stats
+  double _serverLoginHours = 0.0; // Synced from API
+  int _localSessionSeconds = 0; // Incremented locally
 
   final int _dailyGoal = 15; // Hardcoded goal for now
 
@@ -135,8 +135,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   void _startTimer() {
     _stopTimer(); // Ensure no duplicate timers
     _dutyTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!_isTimerPaused) {
-        if (mounted) {}
+      if (!_isTimerPaused && mounted) {
+        setState(() {
+          // Just tick the local seconds counter
+          _localSessionSeconds++;
+        });
       }
     });
   }
@@ -341,12 +344,22 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       Order? activeOrder;
 
       if (activeOrderData != null && mounted) {
-        activeOrder = Order.fromJson(activeOrderData);
-        log('Found active order: ${activeOrder.id}');
+        try {
+          // The current order API returns a partial object. We need to fetch the full details
+          // to get vendor, items, etc. correctly.
+          final minimalOrder = Order.fromJson(activeOrderData);
+          log('Found active order ID: ${minimalOrder.id}. Fetching full details...');
 
-        // Only auto-navigate if it's a fresh app launch or explicit refresh
-        // For now, let's prioritize showing it on dashboard cleanly
-        // If we want auto-nav, we can keep it, but let's make sure _currentOrder is set below
+          activeOrder =
+              await _apiService.getOrderDetails(token, minimalOrder.id);
+          log('Successfully fetched full details for order: ${activeOrder.id}');
+        } catch (e) {
+          log('Failed to fetch full details for current order: $e');
+          // Fallback to minimal order if full fetch fails, or just ignore it?
+          // For now, let's use minimal if we can, but it might lack data.
+          // Better to show nothing than broken data, but let's try-catch safe.
+          activeOrder = Order.fromJson(activeOrderData);
+        }
       }
 
       // Fetch new orders (New Requests)
@@ -365,7 +378,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           _authToken = token;
           log('Auth Token Set: ${_authToken?.substring(0, 10)}...'); // Debug log
 
-          // Filter out orders that are currently being removed locally
+          // Filter out orders that are currently being removed (or have been processed locally)
+          // We only filter new/available lists to hide them. We do NOT filter _myOrders,
+          // so that if we just Accepted one, it can appear (if server has it), or if we are optimistic, we keep it.
+          // Note: If server is stale and misses the Accepted order, it will disappear from _myOrders momentarily
+          // until server syncs. This is an accepted tradeoff for now to ensure it CLEARS from Available.
           _newRequests = newRequestsResponse.data
               .where((o) => !_removingOrderIds.contains(o.id))
               .toList();
@@ -373,7 +390,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               .where((o) => !_removingOrderIds.contains(o.id))
               .toList();
           _myOrders = myOrdersResponse.data
-              .where((o) => !_removingOrderIds.contains(o.id))
+              // .where((o) => !_removingOrderIds.contains(o.id)) // <--- REMOVED FILTER for MyOrders
               .toList();
 
           _availablePage = 1;
@@ -469,7 +486,43 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       final hours = await _apiService.getLoginHours(token);
       if (mounted) {
         setState(() {
-          _loginHours = hours;
+          // Only update server hours if they have increased or it's the first sync
+          if (hours > _serverLoginHours) {
+            _serverLoginHours = hours;
+            // Reset local, but keep any fractional overlap if needed.
+            // Simplified: Reset local to 0 when we get a fresh authoritative update
+            // However, to prevent "rewind", we only reset if the new server time is
+            // indeed accounting for the time we just spent.
+            // If server update is slow, _serverLoginHours might be old.
+            // Strategy: _serverLoginHours accepts the new value.
+            // We do NOT reset _localSessionSeconds immediately to 0 unless we are sure.
+            // Actually, best approach for a "stopwatch" that syncs:
+            // Total = Max(ServerValue, OldTotal) --> This handles "server lag"
+            // But we want to show ticking.
+            // Better: _serverLoginHours = hours; _localSessionSeconds = 0;
+            // But this causes the "jump back" if server < (oldServer + local).
+            //
+            // Fix: We assume `hours` from server is the "truth" as of moment X.
+            // We just set _serverLoginHours. To avoid jump back, we can dampen:
+            final double currentTotal =
+                _serverLoginHours + (_localSessionSeconds / 3600.0);
+            if (hours > currentTotal) {
+              // Server has caught up and passed us (likely). Sync up.
+              _serverLoginHours = hours;
+              _localSessionSeconds = 0;
+            } else {
+              // Server is lagging behind our local count.
+              // We do NOT update _serverLoginHours to the lower value,
+              // OR we update it but adjust local seconds to maintain the total.
+              // Let's do the latter to keep base fresh.
+              // newServer (10.0) < currentTotal (10.1)
+              // We want displayed to still be 10.1
+              // So newLocal = (currentTotal - newServer) converted to seconds
+              final diffHours = currentTotal - hours;
+              _serverLoginHours = hours;
+              _localSessionSeconds = (diffHours * 3600).round();
+            }
+          }
         });
       }
     } catch (e) {
@@ -565,64 +618,67 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       // Show loading
       CustomSnackBar.showSuccess(context, 'Accepting order...');
 
-      // Find the order object to pass to the next screen
-      // Find the order object to pass to the next screen
-      Order? orderToAccept;
-      try {
-        orderToAccept = _newRequests.firstWhere((o) => o.id == orderId);
-      } catch (_) {
-        try {
-          orderToAccept = _availableOrders.firstWhere((o) => o.id == orderId);
-        } catch (_) {
-          // Fallback if not found in lists (shouldn't happen mainly)
-          orderToAccept = Order(
-            id: orderId,
-            userId: _userProfile?.userId ?? 0,
-            orderNumber: '',
-            subtotal: '0',
-            deliveryCharge: '0',
-            discount: '0',
-            couponDiscount: '0',
-            totalAmount: '0',
-            orderItems: [],
-            status: 'accepted',
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
-        }
-      }
-
       final response = await _apiService.acceptOrder(token, orderId);
 
       if (!mounted) return;
 
       if (response['status'] == true || response['status'] == 'success') {
+        // Parse the accepted order from the response
+        Order? orderToAccept;
+        if (response['data'] != null) {
+          orderToAccept = Order.fromJson(response['data']);
+        }
+
+        // Fallback: If response doesn't have data, try to find it locally
+        if (orderToAccept == null) {
+          try {
+            orderToAccept = _newRequests.firstWhere((o) => o.id == orderId);
+          } catch (_) {
+            try {
+              orderToAccept =
+                  _availableOrders.firstWhere((o) => o.id == orderId);
+            } catch (_) {
+              // Last resort fallback
+              orderToAccept = Order(
+                id: orderId,
+                userId: _userProfile?.userId ?? 0,
+                orderNumber: '',
+                subtotal: '0',
+                deliveryCharge: '0',
+                discount: '0',
+                couponDiscount: '0',
+                totalAmount: '0',
+                orderItems: [],
+                status: 'queued', // Default to queued as per API
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              );
+            }
+          }
+        }
+
         if (!context.mounted) return;
 
         // --- LOCAL STATE UPDATE ---
         setState(() {
-          // Broadly remove from all source lists to be safe
+          // Broadly remove from all source lists
           _newRequests.removeWhere((o) => o.id == orderId);
           _availableOrders.removeWhere((o) => o.id == orderId);
 
-          // 2. Add to My Queue (at the end usually, or sorted by creation)
+          // Add to My Queue
           _myOrders.add(orderToAccept!);
 
-          // 3. Update Pending Count (Active Queue)
+          // Update Pending Count
           _pendingOrders = _myOrders.length;
 
-          // 4. Update Current Order if null
+          // Update Current Order if null
           if (_currentOrder == null && _myOrders.isNotEmpty) {
             _currentOrder = _myOrders.first;
           }
-
-          // Do NOT remove from _removingOrderIds here.
-          // Let it stay until _fetchOrders is complete to ensure it stays invisible.
         });
 
-        // 5. Sync with Deliveries Tab ViewModel
+        // Sync with Deliveries Tab ViewModel
         if (context.mounted) {
-          // We use read() here because we are in a callback/async function, not build
           Provider.of<OrderListViewModel>(context, listen: false)
               .fetchActiveOrders(refresh: true);
         }
@@ -632,18 +688,21 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         if (!context.mounted) return;
         CustomSnackBar.showError(
             context, response['message'] ?? 'Failed to accept order');
+        if (mounted) {
+          setState(() {
+            _removingOrderIds.remove(orderId);
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
-      }
-    } finally {
-      if (mounted) {
         setState(() {
           _removingOrderIds.remove(orderId);
         });
       }
     }
+    // Finally block removed to persist the hidden state
   }
 
   Future<void> _rejectOrder(int orderId) async {
@@ -725,6 +784,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
         CustomSnackBar.showError(
             context, response['message'] ?? 'Failed to reject order');
+        if (mounted) {
+          setState(() {
+            _removingOrderIds.remove(orderId);
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -747,14 +811,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         }
 
         CustomSnackBar.showError(context, 'Error: ${e.toString()}');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _removingOrderIds.remove(orderId);
-        });
+        if (mounted) {
+          setState(() {
+            _removingOrderIds.remove(orderId);
+          });
+        }
       }
     }
+    // Finally block removed to persist the hidden state
   }
 
   // Removed unused _tag method
@@ -1028,18 +1092,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Hero(
-                          tag: 'order_number_${order.id}',
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Text(
-                              order.orderNumber, // e.g. "Whole Foods Market"
-                              style: TextStyle(
-                                fontSize: R.sp(18),
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.headingText,
-                              ),
-                            ),
+                        Text(
+                          order.orderNumber, // e.g. "Whole Foods Market"
+                          style: TextStyle(
+                            fontSize: R.sp(18),
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.headingText,
                           ),
                         ),
                         SizedBox(height: R.h(4)),
@@ -1111,18 +1169,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         ],
                       ),
                     ),
-                    SizedBox(width: R.w(12)),
-                    // Chat Button
-                    _iconButton(
-                      icon: RemixIcons.message_2_line,
-                      onTap: () {},
-                    ),
-                    SizedBox(width: R.w(8)),
-                    // Phone Button
-                    _iconButton(
-                      icon: RemixIcons.phone_fill,
-                      onTap: () {},
-                    ),
+                    // Buttons removed as per request
                   ],
                 ),
               ),
@@ -1132,7 +1179,19 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _launchMapsNavigation(order),
+                  onPressed: () {
+                    PersistentNavBarNavigator.pushNewScreen(
+                      context,
+                      screen: OrderDetailsView(
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        order: order,
+                      ),
+                      withNavBar: false,
+                      pageTransitionAnimation:
+                          PageTransitionAnimation.cupertino,
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     padding: EdgeInsets.symmetric(vertical: R.h(16)),
@@ -1166,57 +1225,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         ),
       ),
     );
-  }
-
-  Future<void> _launchMapsNavigation(Order order) async {
-    final bool isPickup = order.status != 'in_progress';
-    String query = '';
-
-    if (isPickup) {
-      // Navigate to Vendor
-      final vendorAddr = order.vendor?.address;
-      if (vendorAddr != null && vendorAddr.isNotEmpty) {
-        query = Uri.encodeComponent(vendorAddr);
-      } else {
-        // Fallback to vendor name if address is missing
-        query = Uri.encodeComponent(order.vendor?.storeName ?? '');
-      }
-    } else {
-      // Navigate to Customer
-      if (order.deliveryAddress?.latitude != null &&
-          order.deliveryAddress?.longitude != null) {
-        query =
-            '${order.deliveryAddress!.latitude},${order.deliveryAddress!.longitude}';
-      } else {
-        final addr = order.deliveryAddress;
-        query = Uri.encodeComponent(
-            '${addr?.addressLine1 ?? ''} ${addr?.city ?? ''}');
-      }
-    }
-
-    if (query.isEmpty) {
-      CustomSnackBar.showError(context, "Location address not available");
-      return;
-    }
-
-    final googleMapsUrl = Uri.parse("google.navigation:q=$query");
-    final appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$query");
-
-    try {
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(googleMapsUrl);
-      } else if (await canLaunchUrl(appleMapsUrl)) {
-        await launchUrl(appleMapsUrl);
-      } else {
-        if (mounted) {
-          CustomSnackBar.showError(context, "Could not launch maps navigation");
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        CustomSnackBar.showError(context, "Error opening maps: $e");
-      }
-    }
   }
 
   Widget _iconButton({required IconData icon, required VoidCallback onTap}) {
@@ -1260,25 +1268,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 color: AppColors.headingText,
               ),
             ),
-            if (count != null) ...[
-              SizedBox(width: R.w(12)),
-              Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(4)),
-                decoration: BoxDecoration(
-                  color: AppColors.badgeBlueBg.withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '$count',
-                  style: TextStyle(
-                    fontSize: R.sp(14),
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.badgeBlueText,
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
         if (action != null) action,
@@ -1483,7 +1472,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                   .length, // Fallback to queue length
                                           completed: _completedDeliveries,
                                           cancelled: _cancelledOrders,
-                                          loginHours: _loginHours,
+                                          loginHours:
+                                              (_serverLoginHours * 3600) +
+                                                  _localSessionSeconds,
                                         ),
                                       ),
                                   ],
@@ -1502,7 +1493,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                               .length, // Fallback to queue length
                                       completed: _completedDeliveries,
                                       cancelled: _cancelledOrders,
-                                      loginHours: _loginHours,
+                                      loginHours: (_serverLoginHours * 3600) +
+                                          _localSessionSeconds,
                                     ),
                                   ),
                                   // Current Task (Priority)
@@ -1581,6 +1573,22 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                       _sectionHeader(
                                         title: 'New Order Request',
                                         count: null,
+                                        action: _newRequests.length > 1
+                                            ? GestureDetector(
+                                                onTap: () {
+                                                  // Add View All logic for new requests here
+                                                },
+                                                child: Text(
+                                                  'View All',
+                                                  style: TextStyle(
+                                                    fontSize: R.sp(14),
+                                                    color:
+                                                        AppColors.primaryGreen,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              )
+                                            : null,
                                       ),
                                       SizedBox(height: R.h(12)),
                                       AnimatedSwitcher(
@@ -1646,19 +1654,38 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                                     .contains(
                                                                         order
                                                                             .id))
-                                                            .map((order) =>
-                                                                NewRequestCard(
-                                                                  order: order,
-                                                                  onAccept: () =>
-                                                                      _acceptOrder(
-                                                                          order
-                                                                              .id),
-                                                                  onDecline: () =>
-                                                                      _rejectOrder(
-                                                                          order
-                                                                              .id),
-                                                                ))
-                                                            .toList(),
+                                                            .map((order) {
+                                                          // Calculate remaining time
+                                                          // Assuming 60 seconds timeout from creation
+                                                          // Adjust '60' to match backend configuration if different
+                                                          final now =
+                                                              DateTime.now();
+                                                          final difference = now
+                                                              .difference(order
+                                                                  .createdAt);
+                                                          final remaining = 60 -
+                                                              difference
+                                                                  .inSeconds;
+
+                                                          // If expired, maybe we shouldn't show it?
+                                                          // But let's show 0 if negative.
+                                                          final countdown =
+                                                              remaining > 0
+                                                                  ? remaining
+                                                                  : 0;
+
+                                                          return NewRequestCard(
+                                                            order: order,
+                                                            countdownSeconds:
+                                                                countdown,
+                                                            onAccept: () =>
+                                                                _acceptOrder(
+                                                                    order.id),
+                                                            onDecline: () =>
+                                                                _rejectOrder(
+                                                                    order.id),
+                                                          );
+                                                        }).toList(),
                                                       ),
                                       ),
                                     ],
@@ -1676,27 +1703,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                         iconColor:
                                             const Color(0xFFFF8A65), // Orange
                                         count: _availableOrders.length,
-                                        action: Row(
-                                          children: [
-                                            if (_availableOrders.isNotEmpty)
-                                              GestureDetector(
-                                                onTap: () {
-                                                  // Optional: Implement batch accept
-                                                },
-                                                child: Text(
-                                                  'Batch All',
-                                                  style: TextStyle(
-                                                    fontSize: R.sp(14),
-                                                    color:
-                                                        AppColors.primaryGreen,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                              ),
-                                            if (_availableOrders.length >
-                                                2) ...[
-                                              SizedBox(width: R.w(16)),
-                                              GestureDetector(
+                                        action: _availableOrders.length > 2
+                                            ? GestureDetector(
                                                 onTap: () {
                                                   setState(() {
                                                     _isAvailableExpanded =
@@ -1714,10 +1722,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                     fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
+                                              )
+                                            : null,
                                       ),
                                       SizedBox(height: R.h(12)),
                                       // ... logic for available list or mock
@@ -1848,6 +1854,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _fetchOrders(refresh: false);
   }
 
+  String _formatLoginTime(double seconds) {
+    if (seconds <= 0) return '00:00:00';
+    int h = seconds ~/ 3600;
+    int m = (seconds % 3600) ~/ 60;
+    int s = (seconds % 60).toInt();
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
   Widget _dashboardHeader(bool isOnline) {
     return Padding(
       padding: EdgeInsets.only(bottom: R.h(24)),
@@ -1864,34 +1878,55 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           Row(
             children: [
               // Timer Display
-              Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(8)),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(R.r(100)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.shadow.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(RemixIcons.time_fill,
-                        color: AppColors.primaryGreen, size: R.sp(18)),
-                    SizedBox(width: R.w(8)),
-                    Text(
-                      '04:22:15', // Mock timer value
-                      style: TextStyle(
-                        fontSize: R.sp(14),
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.headingText,
+              // Timer Display (Tap to Pause/Resume)
+              GestureDetector(
+                onTap: _toggleTimerPause,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: R.w(12), vertical: R.h(8)),
+                  decoration: BoxDecoration(
+                    color: _isTimerPaused
+                        ? AppColors.warning.withValues(alpha: 0.1)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(R.r(100)),
+                    border: _isTimerPaused
+                        ? Border.all(
+                            color: AppColors.warning.withValues(alpha: 0.5))
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isTimerPaused
+                            ? RemixIcons.pause_circle_fill
+                            : RemixIcons.time_fill,
+                        color: _isTimerPaused
+                            ? AppColors.warning
+                            : AppColors.primaryGreen,
+                        size: R.sp(18),
                       ),
-                    ),
-                  ],
+                      SizedBox(width: R.w(8)),
+                      Text(
+                        _isTimerPaused
+                            ? 'Paused'
+                            : _formatLoginTime((_serverLoginHours * 3600) +
+                                _localSessionSeconds),
+                        style: TextStyle(
+                          fontSize: R.sp(14),
+                          fontWeight: FontWeight.w800,
+                          color: _isTimerPaused
+                              ? AppColors.warning
+                              : AppColors.headingText,
+                        ),
+                      ),
+                      if (!_isTimerPaused) ...[
+                        SizedBox(width: R.w(4)),
+                        Icon(RemixIcons.pause_mini_fill,
+                            size: R.sp(16),
+                            color: AppColors.grey.withValues(alpha: 0.5)),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               SizedBox(width: R.w(12)),
