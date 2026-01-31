@@ -6,7 +6,7 @@ import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
-import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,6 +14,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:samrudhi_delivery_agent_app/view/pickup/widgets/pickup_task_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
+import 'package:samrudhi_delivery_agent_app/view/customer_info/customer_info_view.dart';
+import 'package:samrudhi_delivery_agent_app/auth/login/login_view.dart';
 import 'dart:ui';
 
 class PickupTaskView extends StatefulWidget {
@@ -54,7 +56,11 @@ class _PickupTaskViewState extends State<PickupTaskView> {
   Future<void> _checkAuth(BuildContext context) async {
     final token = await SharedPrefsUtil.getToken();
     if (token == null && context.mounted) {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginView()),
+        (route) => false,
+      );
     }
   }
 
@@ -597,10 +603,14 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     if (success && context.mounted) {
       CustomSnackBar.showSuccess(context, "Pickup Confirmed");
       // Navigate to customer info or whatever is next
-      Navigator.pushReplacementNamed(
+      Navigator.pushReplacement(
         context,
-        AppRoutes.customerInfo,
-        arguments: viewModel.order,
+        MaterialPageRoute(
+          builder: (context) => CustomerInfoView(
+            order: viewModel.order,
+            orderId: viewModel.order?.id,
+          ),
+        ),
       );
     } else if (context.mounted) {
       CustomSnackBar.showError(context,

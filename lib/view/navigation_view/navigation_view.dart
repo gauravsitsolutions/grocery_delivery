@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
+import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
 
 class NavigationView extends StatelessWidget {
   final int? orderId;
@@ -591,10 +592,14 @@ class NavigationView extends StatelessWidget {
       ),
       child: ElevatedButton(
         onPressed: () {
-          Navigator.pushReplacementNamed(
+          Navigator.pushReplacement(
             context,
-            AppRoutes.verificationView,
-            arguments: order,
+            MaterialPageRoute(
+              builder: (context) => VerificationView(
+                order: order,
+                orderId: order?.id,
+              ),
+            ),
           );
         },
         style: ElevatedButton.styleFrom(

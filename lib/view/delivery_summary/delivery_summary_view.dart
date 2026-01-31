@@ -4,9 +4,11 @@ import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/delivery_summary_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/delivery_summary_model.dart';
 import 'package:intl/intl.dart';
+import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 
 class DeliverySummaryView extends StatefulWidget {
-  const DeliverySummaryView({super.key});
+  final Order? order;
+  const DeliverySummaryView({super.key, this.order});
 
   @override
   State<DeliverySummaryView> createState() => _DeliverySummaryViewState();

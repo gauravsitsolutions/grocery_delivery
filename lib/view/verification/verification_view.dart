@@ -2,10 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
+import 'package:provider/provider.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
+import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_summary_view.dart';
 
 class VerificationView extends StatefulWidget {
   final int? orderId;
@@ -62,11 +65,24 @@ class _VerificationViewState extends State<VerificationView> {
     });
   }
 
-  void _onVerify() {
-    Navigator.of(context).pushReplacementNamed(
-      AppRoutes.deliverySummary,
-      arguments: widget.order,
-    );
+  void _onVerify(OrderViewModel viewModel) async {
+    final otp = _controllers.map((c) => c.text).join();
+
+    final success = await viewModel.verifyDeliveryOtp(otp);
+
+    if (success && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DeliverySummaryView(
+            order: viewModel.order,
+          ),
+        ),
+        (route) => false, // Or clear until dashboard if preferred
+      );
+    } else if (mounted && viewModel.error != null) {
+      CustomSnackBar.showError(context, viewModel.error!);
+    }
   }
 
   @override
@@ -85,45 +101,75 @@ class _VerificationViewState extends State<VerificationView> {
   Widget build(BuildContext context) {
     R.init(context);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: const CustomBackButton(color: AppColors.headingText),
-        title: Text(
-          'Verification',
-          style: TextStyle(
-            fontSize: R.sp(18),
-            fontWeight: FontWeight.w800,
-            color: AppColors.headingText,
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: R.w(24)),
-          child: Column(
+    return ChangeNotifierProvider(
+      create: (_) {
+        final vm = OrderViewModel(
+          orderId: widget.orderId ?? widget.order?.id ?? 0,
+          initialOrder: widget.order,
+        );
+        vm.sendDeliveryOtp().then((success) {
+          if (!success && vm.error != null && mounted) {
+            CustomSnackBar.showError(context, vm.error!);
+          }
+        });
+        return vm;
+      },
+      child: Consumer<OrderViewModel>(
+        builder: (context, viewModel, child) {
+          return Stack(
             children: [
-              SizedBox(height: R.h(40)),
-              _icon(),
-              SizedBox(height: R.h(32)),
-              _title(),
-              SizedBox(height: R.h(8)),
-              _subtitle(),
-              SizedBox(height: R.h(40)),
-              _otpFields(),
-              SizedBox(height: R.h(32)),
-              _timerWidget(),
-              SizedBox(height: R.h(40)),
-              _resend(),
-              SizedBox(height: R.h(50)),
-              _verifyButton(),
-              SizedBox(height: R.h(40)),
+              Scaffold(
+                backgroundColor: Colors.white,
+                appBar: AppBar(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  centerTitle: true,
+                  leading: const CustomBackButton(color: AppColors.headingText),
+                  title: Text(
+                    'Verification',
+                    style: TextStyle(
+                      fontSize: R.sp(18),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.headingText,
+                    ),
+                  ),
+                ),
+                body: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: R.w(24)),
+                    child: Column(
+                      children: [
+                        SizedBox(height: R.h(40)),
+                        _icon(),
+                        SizedBox(height: R.h(32)),
+                        _title(),
+                        SizedBox(height: R.h(8)),
+                        _subtitle(),
+                        SizedBox(height: R.h(40)),
+                        _otpFields(),
+                        SizedBox(height: R.h(32)),
+                        _timerWidget(),
+                        SizedBox(height: R.h(40)),
+                        _resend(viewModel),
+                        SizedBox(height: R.h(50)),
+                        _verifyButton(viewModel),
+                        SizedBox(height: R.h(40)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (viewModel.isLoading)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                        color: AppColors.primaryGreen),
+                  ),
+                ),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -274,35 +320,66 @@ class _VerificationViewState extends State<VerificationView> {
     );
   }
 
-  Widget _resend() {
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(
-          fontSize: R.sp(14),
-          color: AppColors.bodyText.withValues(alpha: 0.6),
-          fontWeight: FontWeight.w600,
-        ),
-        children: [
-          const TextSpan(text: "Didn't receive code? "),
-          TextSpan(
-            text: 'Resend',
-            style: const TextStyle(
-              color: AppColors.primaryGreen,
-              fontWeight: FontWeight.w900,
+  Widget _resend(OrderViewModel viewModel) {
+    return Column(
+      children: [
+        RichText(
+          text: TextSpan(
+            style: TextStyle(
+              fontSize: R.sp(14),
+              color: AppColors.bodyText.withValues(alpha: 0.6),
+              fontWeight: FontWeight.w600,
             ),
-            recognizer: null, // Add recognizer if needed
+            children: [
+              const TextSpan(text: "Didn't receive code? "),
+              TextSpan(
+                text: 'Resend',
+                style: TextStyle(
+                  color: _seconds == 0
+                      ? AppColors.primaryGreen
+                      : AppColors.bodyText.withValues(alpha: 0.3),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (_seconds == 0)
+          TextButton(
+            onPressed: viewModel.isLoading
+                ? null
+                : () async {
+                    final success = await viewModel.resendDeliveryOtp();
+                    if (success && mounted) {
+                      CustomSnackBar.showSuccess(
+                          context, "OTP Resent successfully");
+                      _startTimer();
+                    } else if (mounted) {
+                      CustomSnackBar.showError(
+                          context, viewModel.error ?? "Failed to resend OTP");
+                    }
+                  },
+            child: Text(
+              "Resend Code",
+              style: TextStyle(
+                color: AppColors.primaryGreen,
+                fontWeight: FontWeight.w800,
+                fontSize: R.sp(14),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _verifyButton() {
+  Widget _verifyButton(OrderViewModel viewModel) {
     return SizedBox(
       width: double.infinity,
       height: R.h(60),
       child: ElevatedButton(
-        onPressed: _isOtpComplete ? _onVerify : null,
+        onPressed: (_isOtpComplete && !viewModel.isLoading)
+            ? () => _onVerify(viewModel)
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
           disabledBackgroundColor:
@@ -312,14 +389,23 @@ class _VerificationViewState extends State<VerificationView> {
             borderRadius: BorderRadius.circular(R.r(18)),
           ),
         ),
-        child: Text(
-          'Verify Now',
-          style: TextStyle(
-            fontSize: R.sp(18),
-            fontWeight: FontWeight.w900,
-            color: AppColors.white,
-          ),
-        ),
+        child: viewModel.isLoading
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
+                ),
+              )
+            : Text(
+                'Verify Now',
+                style: TextStyle(
+                  fontSize: R.sp(18),
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.white,
+                ),
+              ),
       ),
     );
   }

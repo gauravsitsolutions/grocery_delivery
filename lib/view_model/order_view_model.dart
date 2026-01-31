@@ -96,7 +96,7 @@ class OrderViewModel extends ChangeNotifier {
 
   Future<void> fetchOrderDetails() async {
     if (_order == null) {
-      _isLoading = true;
+      _isLoading = false;
     }
     _error = null;
     notifyListeners();

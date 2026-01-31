@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
+import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
@@ -132,10 +132,14 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                       child: ElevatedButton(
                         onPressed: instructionsRead
                             ? () {
-                                Navigator.pushNamed(
+                                Navigator.push(
                                   context,
-                                  AppRoutes.navigationView,
-                                  arguments: order,
+                                  MaterialPageRoute(
+                                    builder: (context) => NavigationView(
+                                      order: order,
+                                      orderId: order.id,
+                                    ),
+                                  ),
                                 );
                               }
                             : null,
