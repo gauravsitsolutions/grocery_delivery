@@ -22,7 +22,9 @@ import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/dashboard_shimmer.dart';
-import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/dashboard_waiting_state.dart';
 import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
@@ -828,94 +830,136 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     final bool isPickup =
         order.status == 'ready_for_pickup' || order.status == 'pending';
 
-    return Container(
-      margin: EdgeInsets.only(bottom: R.h(12)),
-      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(16)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(24)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(R.w(12)),
-            decoration: BoxDecoration(
-              color: isPickup
-                  ? AppColors.primaryGreen.withValues(alpha: 0.1)
-                  : Colors.blue.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () => _navigateToOrder(order),
+      child: Container(
+        margin: EdgeInsets.only(bottom: R.h(12)),
+        padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(16)),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(R.r(24)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow.withValues(alpha: 0.04),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
             ),
-            child: Icon(
-              isPickup
-                  ? RemixIcons.shopping_bag_3_fill
-                  : RemixIcons.home_4_fill,
-              color: isPickup ? AppColors.primaryGreen : Colors.blue,
-              size: R.sp(22),
-            ),
-          ),
-          SizedBox(width: R.w(16)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isPickup
-                      ? (order.vendor?.storeName ?? "Fresh Mart - Sector 45")
-                      : (order.deliveryAddress?.addressLine1 ??
-                          "Apt 402, Green Heights"),
-                  style: TextStyle(
-                    fontSize: R.sp(17),
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.headingText,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: R.h(2)),
-                Text(
-                  isPickup
-                      ? '${order.orderItems.length} Items • Ready in 2 mins'
-                      : '1.4 km from Store',
-                  style: TextStyle(
-                    fontSize: R.sp(13),
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.bodyText.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding:
-                EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
-            decoration: BoxDecoration(
-              color: isPickup ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
-              borderRadius: BorderRadius.circular(R.r(8)),
-            ),
-            child: Text(
-              isPickup ? 'PICKUP' : 'DROP',
-              style: TextStyle(
-                fontSize: R.sp(10),
-                fontWeight: FontWeight.w800,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(R.w(12)),
+              decoration: BoxDecoration(
                 color: isPickup
-                    ? AppColors.badgeGreenText
-                    : AppColors.badgeBlueText,
-                letterSpacing: 0.5,
+                    ? AppColors.primaryGreen.withValues(alpha: 0.1)
+                    : Colors.blue.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isPickup
+                    ? RemixIcons.shopping_bag_3_fill
+                    : RemixIcons.home_4_fill,
+                color: isPickup ? AppColors.primaryGreen : Colors.blue,
+                size: R.sp(22),
               ),
             ),
-          ),
-          SizedBox(width: R.w(8)),
-          Icon(RemixIcons.arrow_right_s_line,
-              color: AppColors.bodyText.withValues(alpha: 0.3), size: R.sp(20)),
-        ],
+            SizedBox(width: R.w(16)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isPickup
+                        ? (order.vendor?.storeName ?? "Fresh Mart - Sector 45")
+                        : (order.deliveryAddress?.addressLine1 ??
+                            "Apt 402, Green Heights"),
+                    style: TextStyle(
+                      fontSize: R.sp(17),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.headingText,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: R.h(2)),
+                  Text(
+                    isPickup
+                        ? '${order.orderItems.length} Items • Ready in 2 mins'
+                        : '1.4 km from Store',
+                    style: TextStyle(
+                      fontSize: R.sp(13),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.bodyText.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding:
+                  EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
+              decoration: BoxDecoration(
+                color:
+                    isPickup ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
+                borderRadius: BorderRadius.circular(R.r(8)),
+              ),
+              child: Text(
+                isPickup ? 'PICKUP' : 'DROP',
+                style: TextStyle(
+                  fontSize: R.sp(10),
+                  fontWeight: FontWeight.w800,
+                  color: isPickup
+                      ? AppColors.badgeGreenText
+                      : AppColors.badgeBlueText,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            SizedBox(width: R.w(8)),
+            Icon(RemixIcons.arrow_right_s_line,
+                color: AppColors.bodyText.withValues(alpha: 0.3),
+                size: R.sp(20)),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _navigateToOrder(Order order) {
+    // 1. If delivered/completed, show summary
+    if (order.status == 'delivered' || order.status == 'completed') {
+      PersistentNavBarNavigator.pushNewScreen(
+        context,
+        screen: DeliveryCompletedView(order: order),
+        withNavBar: false,
+        pageTransitionAnimation: PageTransitionAnimation.cupertino,
+      );
+      return;
+    }
+
+    // 2. If it is already picked up, go to navigation/delivery view
+    if (order.pickupProof != null ||
+        ['picked_up', 'in_progress'].contains(order.status.toLowerCase())) {
+      PersistentNavBarNavigator.pushNewScreen(
+        context,
+        screen: NavigationView(orderId: order.id, order: order),
+        withNavBar: false,
+        pageTransitionAnimation: PageTransitionAnimation.cupertino,
+      );
+      return;
+    }
+
+    // 3. Otherwise (accepted, ready_for_pickup, queued, pending), go to pickup task
+    PersistentNavBarNavigator.pushNewScreen(
+      context,
+      screen: PickupTaskView(
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        order: order,
+      ),
+      withNavBar: true,
+      pageTransitionAnimation: PageTransitionAnimation.cupertino,
     );
   }
 
@@ -1032,18 +1076,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       key: ValueKey(order.id),
       visible: !_removingOrderIds.contains(order.id),
       child: GestureDetector(
-        onTap: () {
-          PersistentNavBarNavigator.pushNewScreen(
-            context,
-            screen: OrderDetailsView(
-              orderId: order.id,
-              orderNumber: order.orderNumber,
-              order: order,
-            ),
-            withNavBar: false,
-            pageTransitionAnimation: PageTransitionAnimation.cupertino,
-          );
-        },
+        onTap: () => _navigateToOrder(order),
         child: Container(
           padding: EdgeInsets.all(R.w(16)),
           decoration: BoxDecoration(
@@ -1182,7 +1215,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   onPressed: () {
                     PersistentNavBarNavigator.pushNewScreen(
                       context,
-                      screen: OrderDetailsView(
+                      screen: PickupTaskView(
                         orderId: order.id,
                         orderNumber: order.orderNumber,
                         order: order,
@@ -1472,9 +1505,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                                   .length, // Fallback to queue length
                                           completed: _completedDeliveries,
                                           cancelled: _cancelledOrders,
-                                          loginHours:
-                                              (_serverLoginHours * 3600) +
-                                                  _localSessionSeconds,
+                                          loginHours: _serverLoginHours +
+                                              (_localSessionSeconds / 3600.0),
                                         ),
                                       ),
                                   ],
@@ -1493,8 +1525,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                               .length, // Fallback to queue length
                                       completed: _completedDeliveries,
                                       cancelled: _cancelledOrders,
-                                      loginHours: (_serverLoginHours * 3600) +
-                                          _localSessionSeconds,
+                                      loginHours: _serverLoginHours +
+                                          (_localSessionSeconds / 3600.0),
                                     ),
                                   ),
                                   // Current Task (Priority)

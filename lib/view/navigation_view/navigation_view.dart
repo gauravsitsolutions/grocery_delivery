@@ -83,20 +83,6 @@ class NavigationView extends StatelessWidget {
 
   // ================= COMMON =================
 
-  Widget _circleButton({
-    required IconData icon,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: CircleAvatar(
-        radius: R.r(24),
-        backgroundColor: AppColors.white,
-        child: Icon(icon, color: AppColors.headingText, size: R.sp(22)),
-      ),
-    );
-  }
-
   Widget _sosButton() {
     return CircleAvatar(
       radius: R.r(24),
@@ -236,242 +222,401 @@ class NavigationView extends StatelessWidget {
   // ================= BOTTOM SHEET =================
 
   Widget _bottomSheet(BuildContext context) {
-    final address = order?.deliveryAddress;
     return Container(
-      padding: EdgeInsets.fromLTRB(
-        R.w(16),
-        R.h(8),
-        R.w(16),
-        R.h(20),
-      ),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(R.r(28))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(R.r(40))),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // HANDLE
-            Container(
-              width: R.w(36),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: R.h(12)),
+            child: Container(
+              width: R.w(40),
               height: R.h(4),
               decoration: BoxDecoration(
-                color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(R.r(4)),
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(R.r(2)),
               ),
             ),
-            SizedBox(height: R.h(16)),
+          ),
 
-            // ETA
-            Row(
-              children: [
-                Text(
-                  '12',
-                  style: TextStyle(
-                    fontSize: R.sp(34),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(width: R.w(6)),
-                Text(
-                  'min • 2.4 km',
-                  style: TextStyle(
-                    fontSize: R.sp(16),
-                    color: AppColors.bodyText,
-                  ),
-                ),
-                const Spacer(),
-                InkWell(
-                  onTap: () async {
-                    if (address != null) {
-                      final query = Uri.encodeComponent(
-                          "${address.addressLine1}, ${address.city}, ${address.postcode}");
-                      final url = Uri.parse(
-                          "https://www.google.com/maps/search/?api=1&query=$query");
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url);
-                      }
-                    }
-                  },
-                  child: CircleAvatar(
-                    radius: R.r(22),
-                    backgroundColor: AppColors.lightGreenBg,
-                    child: Icon(
-                      RemixIcons.direction_fill,
-                      color: AppColors.primaryGreen,
-                      size: R.sp(20),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: R.h(4)),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '14:35 Arrival',
-                style: TextStyle(
-                  color: AppColors.primaryGreen,
-                  fontWeight: FontWeight.w600,
-                  fontSize: R.sp(14),
-                ),
-              ),
-            ),
-
-            SizedBox(height: R.h(20)),
-            const Divider(),
-
-            // CUSTOMER
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: R.r(26),
-                  backgroundColor: AppColors.primaryGreen.withAlpha(30),
-                  child: Text(
-                    order?.user?.fullName.substring(0, 1).toUpperCase() ?? 'C',
-                    style: TextStyle(
-                      color: AppColors.primaryGreen,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                SizedBox(width: R.w(12)),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        order?.user?.fullName ?? 'Customer',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: R.sp(16),
-                        ),
-                      ),
-                      SizedBox(height: R.h(4)),
-                      Text(
-                        address?.addressLine1 ?? 'No address',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.bodyText,
-                          fontSize: R.sp(14),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _circleButton(
-                  icon: RemixIcons.phone_line,
-                  onTap: () async {
-                    final phone = order?.user?.mobile;
-                    if (phone != null) {
-                      final url = Uri.parse('tel:$phone');
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url);
-                      }
-                    }
-                  },
-                ),
-                SizedBox(width: R.w(8)),
-                _circleButton(
-                  icon: RemixIcons.message_3_line,
-                  onTap: () async {
-                    final phone = order?.user?.mobile;
-                    if (phone != null) {
-                      final url = Uri.parse('sms:$phone');
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url);
-                      }
-                    }
-                  },
-                ),
-              ],
-            ),
-
-            SizedBox(height: R.h(16)),
-
-            // INSTRUCTIONS
-            Container(
-              padding: EdgeInsets.all(R.w(14)),
-              decoration: BoxDecoration(
-                color: AppColors.scaffoldBg,
-                borderRadius: BorderRadius.circular(R.r(14)),
-              ),
-              child: Row(
+          Flexible(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(R.w(20), 0, R.w(20), R.h(20)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.menu, size: R.sp(20)),
-                  SizedBox(width: R.w(12)),
-                  Expanded(
-                    child: Text(
-                      order?.deliveryInstructions?.isNotEmpty == true
-                          ? '"${order!.deliveryInstructions}"'
-                          : 'No instructions',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: R.sp(14),
-                      ),
+                  Text(
+                    'Active Order',
+                    style: TextStyle(
+                      fontSize: R.sp(22),
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.headingText,
                     ),
                   ),
-                  Icon(Icons.keyboard_arrow_down, size: R.sp(20)),
+                  SizedBox(height: R.h(20)),
+
+                  // Timeline Section
+                  _timelineSection(),
+                  SizedBox(height: R.h(24)),
+
+                  // Customer Profile Card
+                  _customerProfileCard(),
+                  SizedBox(height: R.h(24)),
+
+                  // Order Manifest
+                  _orderManifestSection(),
+                  SizedBox(height: R.h(24)),
+
+                  // COD Summary Card
+                  _codSummaryCard(),
+                  SizedBox(height: R.h(32)),
+
+                  // Mark as Arrived Button
+                  _markAsArrivedButton(context),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            SizedBox(height: R.h(20)),
+  Widget _timelineSection() {
+    return Row(
+      children: [
+        _timelineStep(
+          title: "Order Picked up",
+          isCompleted: true,
+          isActive: false,
+        ),
+        Expanded(
+          child: Container(
+            height: 2,
+            color: AppColors.primaryGreen,
+            margin: EdgeInsets.symmetric(horizontal: R.w(8)),
+          ),
+        ),
+        _timelineStep(
+          title: "Reach Location",
+          isCompleted: false,
+          isActive: true,
+        ),
+      ],
+    );
+  }
 
-            // MARK AS ARRIVED BUTTON
-            InkWell(
-              onTap: () {
-                Navigator.pushReplacementNamed(
-                  context,
-                  AppRoutes.verificationView,
-                  arguments: order,
-                );
-              },
-              child: Container(
-                height: R.h(60),
-                margin: EdgeInsets.only(bottom: R.h(8)),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  borderRadius: BorderRadius.circular(R.r(18)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.35),
-                      blurRadius: R.r(14),
-                      offset: Offset(0, R.h(6)),
+  Widget _timelineStep({
+    required String title,
+    required bool isCompleted,
+    required bool isActive,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: R.w(24),
+          height: R.w(24),
+          decoration: BoxDecoration(
+            color: isCompleted ? AppColors.primaryGreen : Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isCompleted
+                  ? AppColors.primaryGreen
+                  : (isActive ? AppColors.primaryGreen : Colors.grey.shade300),
+              width: 2,
+            ),
+          ),
+          child: isCompleted
+              ? Icon(RemixIcons.check_line, color: Colors.white, size: R.sp(14))
+              : Center(
+                  child: Container(
+                    width: R.w(8),
+                    height: R.w(8),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.primaryGreen
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
                     ),
-                  ],
+                  ),
                 ),
-                child: Row(
+        ),
+        SizedBox(width: R.w(8)),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: R.sp(14),
+            fontWeight:
+                isActive || isCompleted ? FontWeight.w800 : FontWeight.w600,
+            color: isCompleted
+                ? AppColors.primaryGreen
+                : (isActive
+                    ? AppColors.headingText
+                    : AppColors.bodyText.withValues(alpha: 0.5)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _customerProfileCard() {
+    final address = order?.deliveryAddress;
+    return Container(
+      padding: EdgeInsets.all(R.w(16)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(R.r(24)),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: R.r(24),
+                backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.1),
+                child: Text(
+                  order?.user?.fullName.substring(0, 1).toUpperCase() ?? 'C',
+                  style: TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontWeight: FontWeight.w800,
+                    fontSize: R.sp(18),
+                  ),
+                ),
+              ),
+              SizedBox(width: R.w(12)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(width: R.w(16)),
-                    CircleAvatar(
-                      radius: R.r(18),
-                      backgroundColor: AppColors.white,
-                      child: Icon(
-                        RemixIcons.check_fill,
-                        color: AppColors.primaryGreen,
-                        size: R.sp(18),
-                      ),
-                    ),
-                    const Spacer(),
                     Text(
-                      'Mark as Arrived',
+                      order?.user?.fullName ?? 'Customer Name',
                       style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: R.sp(18),
-                        fontWeight: FontWeight.w700,
+                        fontSize: R.sp(16),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.headingText,
                       ),
                     ),
-                    const Spacer(),
-                    Icon(Icons.double_arrow,
-                        color: AppColors.white, size: R.sp(18)),
-                    SizedBox(width: R.w(16)),
+                    SizedBox(height: R.h(2)),
+                    Text(
+                      address?.addressLine1 ?? 'No Address Provided',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: R.sp(13),
+                        color: AppColors.bodyText.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
+              _actionIconCircle(RemixIcons.phone_fill, () async {
+                final phone = order?.user?.mobile;
+                if (phone != null) {
+                  final url = Uri.parse('tel:$phone');
+                  if (await canLaunchUrl(url)) await launchUrl(url);
+                }
+              }),
+              SizedBox(width: R.w(8)),
+              _actionIconCircle(RemixIcons.message_3_fill, () async {
+                final phone = order?.user?.mobile;
+                if (phone != null) {
+                  final url = Uri.parse('sms:$phone');
+                  if (await canLaunchUrl(url)) await launchUrl(url);
+                }
+              }),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionIconCircle(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(R.w(10)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
             ),
+          ],
+        ),
+        child: Icon(icon, color: AppColors.primaryGreen, size: R.sp(18)),
+      ),
+    );
+  }
+
+  Widget _orderManifestSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ORDER MANIFEST',
+          style: TextStyle(
+            fontSize: R.sp(11),
+            fontWeight: FontWeight.w800,
+            color: AppColors.bodyText.withValues(alpha: 0.4),
+            letterSpacing: 1.0,
+          ),
+        ),
+        SizedBox(height: R.h(12)),
+        ...?order?.orderItems.map((item) => Padding(
+              padding: EdgeInsets.only(bottom: R.h(8)),
+              child: Row(
+                children: [
+                  Container(
+                    width: R.w(6),
+                    height: R.w(6),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryGreen,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  SizedBox(width: R.w(12)),
+                  Expanded(
+                    child: Text(
+                      item.product?.name ?? "Unknown Product",
+                      style: TextStyle(
+                        fontSize: R.sp(15),
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.headingText,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'x${item.quantity}',
+                    style: TextStyle(
+                      fontSize: R.sp(14),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.headingText,
+                    ),
+                  ),
+                ],
+              ),
+            )),
+      ],
+    );
+  }
+
+  Widget _codSummaryCard() {
+    return Container(
+      padding: EdgeInsets.all(R.w(20)),
+      decoration: BoxDecoration(
+        color: AppColors.primaryGreen.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(R.r(24)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(R.w(10)),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(RemixIcons.coins_fill,
+                    color: AppColors.primaryGreen, size: R.sp(20)),
+              ),
+              SizedBox(width: R.w(16)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'C.O.D',
+                    style: TextStyle(
+                      fontSize: R.sp(13),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                  Text(
+                    'Cash on Delivery',
+                    style: TextStyle(
+                      fontSize: R.sp(14),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.bodyText.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Text(
+            '₹${order?.totalAmount ?? "0"}',
+            style: TextStyle(
+              fontSize: R.sp(22),
+              fontWeight: FontWeight.w900,
+              color: AppColors.headingText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _markAsArrivedButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: R.h(60),
+      decoration: BoxDecoration(
+        color: AppColors.primaryGreen,
+        borderRadius: BorderRadius.circular(R.r(30)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryGreen.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.verificationView,
+            arguments: order,
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(R.r(30)),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Mark as Arrived',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: R.sp(18),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(width: R.w(12)),
+            const Icon(RemixIcons.arrow_right_line, color: Colors.white),
           ],
         ),
       ),

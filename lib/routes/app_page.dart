@@ -11,7 +11,7 @@ import 'package:samrudhi_delivery_agent_app/view/delivery_history/delivery_histo
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/agent_bottom_nav_item.dart';
 
@@ -109,16 +109,16 @@ class AppPages {
       case AppRoutes.notificationView:
         page = const NotificationsView();
         break;
-      case AppRoutes.orderDetails:
+      case AppRoutes.pickupTask:
         final args = settings.arguments;
         if (args is int) {
-          page = OrderDetailsView(orderId: args);
+          page = PickupTaskView(orderId: args);
         } else {
           try {
             final dynamic order = args;
-            page = OrderDetailsView(orderId: order.id, order: order);
+            page = PickupTaskView(orderId: order.id, order: order);
           } catch (_) {
-            page = const OrderDetailsView(orderId: 0); // Error fallback
+            page = const PickupTaskView(orderId: 0); // Error fallback
           }
         }
         break;

@@ -4,7 +4,6 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
-import 'package:samrudhi_delivery_agent_app/widget/slide_to_complete_widget.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:provider/provider.dart';
@@ -56,21 +55,33 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
             appBar: AppBar(
               backgroundColor: AppColors.white,
               elevation: 0,
-              centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
+              centerTitle: true,
               leading: const CustomBackButton(color: AppColors.headingText),
-              title: Text(
-                'Order #${order.orderNumber}',
-                style: TextStyle(
-                  color: AppColors.headingText,
-                  fontWeight: FontWeight.w700,
-                  fontSize: R.sp(20),
-                ),
+              title: Column(
+                children: [
+                  Text(
+                    'Delivery Details',
+                    style: TextStyle(
+                      color: AppColors.headingText,
+                      fontWeight: FontWeight.w800,
+                      fontSize: R.sp(18),
+                    ),
+                  ),
+                  Text(
+                    '#${order.orderNumber}',
+                    style: TextStyle(
+                      color: AppColors.bodyText.withValues(alpha: 0.5),
+                      fontWeight: FontWeight.w600,
+                      fontSize: R.sp(13),
+                    ),
+                  ),
+                ],
               ),
               actions: [
                 IconButton(
                   onPressed: () {},
                   icon: Icon(
-                    RemixIcons.customer_service_fill,
+                    RemixIcons.more_2_fill,
                     color: AppColors.headingText,
                     size: R.sp(24),
                   ),
@@ -115,23 +126,44 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'Confirm reading instructions before delivery',
-                      style: TextStyle(
-                        color: AppColors.bodyText,
-                        fontSize: R.sp(13),
+                    SizedBox(
+                      width: double.infinity,
+                      height: R.h(56),
+                      child: ElevatedButton(
+                        onPressed: instructionsRead
+                            ? () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.navigationView,
+                                  arguments: order,
+                                );
+                              }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.grey.shade200,
+                          disabledForegroundColor: Colors.grey.shade500,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(R.r(28)),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'START DELIVERY',
+                              style: TextStyle(
+                                fontSize: R.sp(16),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(width: R.w(8)),
+                            Icon(RemixIcons.arrow_right_line, size: R.sp(20)),
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: R.h(12)),
-                    SlideToCompleteWidget(
-                      enabled: instructionsRead,
-                      onCompleted: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.navigationView,
-                          arguments: order,
-                        );
-                      },
                     ),
                   ],
                 ),
@@ -144,82 +176,107 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
   }
 
   Widget _customerCard(Order order) {
-    return _card(
+    return Container(
+      padding: EdgeInsets.all(R.w(20)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(R.r(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: R.r(28),
-                backgroundColor: AppColors.primaryGreen.withAlpha(30),
-                child: Text(
-                  order.user?.fullName.substring(0, 1).toUpperCase() ?? 'C',
-                  style: TextStyle(
-                    color: AppColors.primaryGreen,
-                    fontWeight: FontWeight.bold,
-                    fontSize: R.sp(20),
-                  ),
-                ),
-              ),
-              SizedBox(width: R.w(12)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Stack(
                 children: [
-                  Text(
-                    order.user?.fullName ?? 'Customer',
-                    style: TextStyle(
-                      fontSize: R.sp(18),
-                      fontWeight: FontWeight.w700,
+                  CircleAvatar(
+                    radius: R.r(35),
+                    backgroundColor:
+                        AppColors.primaryGreen.withValues(alpha: 0.1),
+                    child: Text(
+                      order.user?.fullName.substring(0, 1).toUpperCase() ?? 'C',
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontWeight: FontWeight.w900,
+                        fontSize: R.sp(24),
+                      ),
                     ),
                   ),
-                  SizedBox(height: R.h(4)),
-                  Text(
-                    'Order ID: ${order.orderNumber}',
-                    style: TextStyle(
-                      color: AppColors.bodyText,
-                      fontSize: R.sp(13),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: EdgeInsets.all(R.w(4)),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        RemixIcons.checkbox_circle_fill,
+                        color: Colors.white,
+                        size: R.sp(16),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-          SizedBox(height: R.h(16)),
-          Row(
-            children: [
+              SizedBox(width: R.w(16)),
               Expanded(
-                child: _actionButton(
-                  icon: RemixIcons.phone_line,
-                  label: 'Call',
-                  bg: AppColors.primaryGreen,
-                  textColor: AppColors.white,
-                  onTap: () async {
-                    final phone = order.user?.mobile;
-                    if (phone != null) {
-                      final url = Uri.parse('tel:$phone');
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url);
-                      }
-                    }
-                  },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      order.user?.fullName ?? 'Customer',
+                      style: TextStyle(
+                        fontSize: R.sp(20),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.headingText,
+                      ),
+                    ),
+                    SizedBox(height: R.h(4)),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: R.w(10), vertical: R.h(4)),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(R.r(8)),
+                      ),
+                      child: Text(
+                        'Primary Customer',
+                        style: TextStyle(
+                          fontSize: R.sp(11),
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF16A34A),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(width: R.w(12)),
-              Expanded(
-                child: _actionButton(
-                  icon: RemixIcons.message_3_line,
-                  label: 'Message',
-                  bg: AppColors.borderLight,
-                  textColor: AppColors.headingText,
-                  onTap: () async {
-                    final phone = order.user?.mobile;
-                    if (phone != null) {
-                      final url = Uri.parse('sms:$phone');
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url);
-                      }
+              InkWell(
+                onTap: () async {
+                  final phone = order.user?.mobile;
+                  if (phone != null) {
+                    final url = Uri.parse('tel:$phone');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
                     }
-                  },
+                  }
+                },
+                child: CircleAvatar(
+                  radius: R.r(24),
+                  backgroundColor: AppColors.primaryGreen,
+                  child: Icon(
+                    RemixIcons.phone_fill,
+                    color: Colors.white,
+                    size: R.sp(22),
+                  ),
                 ),
               ),
             ],
@@ -231,90 +288,51 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
 
   Widget _mapCard(Order order) {
     final address = order.deliveryAddress;
-    return _card(
-      padding: EdgeInsets.zero,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(R.r(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
             children: [
               ClipRRect(
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(R.r(20))),
+                borderRadius: BorderRadius.circular(R.r(32)),
                 child: Image.network(
                   'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=900',
-                  height: R.h(170),
+                  height: R.h(220),
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               ),
-              Positioned(
-                left: R.w(16),
-                bottom: R.h(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ESTIMATED DELIVERY',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: R.sp(12),
-                        fontWeight: FontWeight.bold,
-                        shadows: const [
-                          Shadow(blurRadius: 4, color: AppColors.black)
-                        ],
-                      ),
+              Positioned.fill(
+                child: Center(
+                  child: CircleAvatar(
+                    radius: R.r(24),
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      RemixIcons.map_pin_2_fill,
+                      color: AppColors.primaryGreen,
+                      size: R.sp(24),
                     ),
-                    SizedBox(height: R.h(4)),
-                    Text(
-                      'Today, ASAP',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: R.sp(18),
-                        fontWeight: FontWeight.w700,
-                        shadows: const [
-                          Shadow(blurRadius: 4, color: AppColors.black)
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.all(R.w(16)),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'DROP-OFF LOCATION',
-                        style: TextStyle(
-                          color: AppColors.primaryGreen,
-                          fontWeight: FontWeight.w700,
-                          fontSize: R.sp(12),
-                        ),
-                      ),
-                      SizedBox(height: R.h(6)),
-                      Text(
-                        address?.addressLine1 ?? 'Address not available',
-                        style: TextStyle(
-                          fontSize: R.sp(16),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: R.h(4)),
-                      Text(
-                        '${address?.city ?? ''} ${address?.postcode ?? ''}',
-                        style: TextStyle(color: AppColors.bodyText),
-                      ),
-                    ],
                   ),
                 ),
-                InkWell(
-                  onTap: () async {
+              ),
+              Positioned(
+                bottom: R.h(16),
+                left: R.w(16),
+                right: R.w(16),
+                child: ElevatedButton(
+                  onPressed: () async {
                     if (address != null) {
                       final query = Uri.encodeComponent(
                           "${address.addressLine1}, ${address.city}, ${address.postcode}");
@@ -330,13 +348,63 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                       }
                     }
                   },
-                  child: CircleAvatar(
-                    backgroundColor: AppColors.borderLight,
-                    child: Icon(
-                      Icons.navigation,
-                      color: AppColors.black,
-                      size: R.sp(24),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.8),
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(double.infinity, R.h(50)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(R.r(25)),
                     ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(RemixIcons.direction_fill, size: R.sp(18)),
+                      SizedBox(width: R.w(8)),
+                      Text(
+                        'Navigate to Drop-off',
+                        style: TextStyle(
+                          fontSize: R.sp(14),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: EdgeInsets.all(R.w(20)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DROP-OFF POINT',
+                  style: TextStyle(
+                    color: AppColors.bodyText.withValues(alpha: 0.5),
+                    fontWeight: FontWeight.w700,
+                    fontSize: R.sp(11),
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                SizedBox(height: R.h(8)),
+                Text(
+                  address?.addressLine1 ?? 'Address not available',
+                  style: TextStyle(
+                    fontSize: R.sp(18),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.headingText,
+                  ),
+                ),
+                SizedBox(height: R.h(4)),
+                Text(
+                  '${address?.city ?? ''}, ${address?.postcode ?? ''}',
+                  style: TextStyle(
+                    fontSize: R.sp(14),
+                    color: AppColors.bodyText.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -496,41 +564,6 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
       color: AppColors.borderLight,
       alignment: Alignment.center,
       child: Icon(Icons.image_not_supported, size: R.sp(24)),
-    );
-  }
-
-  Widget _actionButton({
-    required IconData icon,
-    required String label,
-    required Color bg,
-    required Color textColor,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(R.r(14)),
-      child: Container(
-        height: R.h(48),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(R.r(14)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: R.sp(18), color: textColor),
-            SizedBox(width: R.w(8)),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: textColor,
-                fontSize: R.sp(14),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

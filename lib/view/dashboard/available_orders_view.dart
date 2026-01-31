@@ -11,8 +11,6 @@ import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
-import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
-import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
 
 class AvailableOrdersView extends StatefulWidget {
   const AvailableOrdersView({super.key});
@@ -119,16 +117,6 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
         Navigator.pop(context); // Close dialog
 
         // Navigate to details of the accepted order
-        PersistentNavBarNavigator.pushNewScreen(
-          context,
-          screen: OrderDetailsView(
-            orderId: order.id,
-            orderNumber: order.orderNumber,
-            order: order,
-          ),
-          withNavBar: false,
-          pageTransitionAnimation: PageTransitionAnimation.cupertino,
-        );
       }
     });
   }
@@ -188,16 +176,7 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
   Widget _orderCard(Order order, List<Order> orders) {
     return GestureDetector(
       onTap: () {
-        PersistentNavBarNavigator.pushNewScreen(
-          context,
-          screen: OrderDetailsView(
-            orderId: order.id,
-            orderNumber: order.orderNumber,
-            order: order,
-          ),
-          withNavBar: false,
-          pageTransitionAnimation: PageTransitionAnimation.cupertino,
-        );
+        // Tapping card no longer goes to details page
       },
       child: Container(
         margin: EdgeInsets.only(bottom: R.h(16)),

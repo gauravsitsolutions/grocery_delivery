@@ -16,6 +16,6 @@ class AppRoutes {
   static const deliveryHistory = '/delivery-history';
   static const navigationView = '/navigation-view';
   static const verificationView = '/verification-view';
-  static const orderDetails = '/order-details';
+  static const pickupTask = '/pickup-task';
   static const notificationView = '/notification-view';
 }

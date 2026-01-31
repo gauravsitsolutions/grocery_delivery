@@ -9,8 +9,10 @@ import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dar
 import 'package:samrudhi_delivery_agent_app/widget/filter_deliveries_sheet.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
-import 'package:samrudhi_delivery_agent_app/view/order_details/order_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_cancelled_details_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../utils/responsive.dart';
 
@@ -48,6 +50,54 @@ class _DeliveriesViewState extends State<DeliveriesView> {
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _navigateToOrder(Order order) {
+    // 1. If cancelled, show cancelled details
+    if (order.status == 'cancelled') {
+      PersistentNavBarNavigator.pushNewScreen(
+        context,
+        screen: OrderCancelledDetailsView(order: order),
+        withNavBar: true,
+        pageTransitionAnimation: PageTransitionAnimation.cupertino,
+      );
+      return;
+    }
+
+    // 2. If delivered/completed, show summary
+    if (order.status == 'delivered' || order.status == 'completed') {
+      PersistentNavBarNavigator.pushNewScreen(
+        context,
+        screen: DeliveryCompletedView(order: order),
+        withNavBar: true,
+        pageTransitionAnimation: PageTransitionAnimation.cupertino,
+      );
+      return;
+    }
+
+    // 3. If it is already picked up, go to navigation/delivery view
+    if (order.pickupProof != null ||
+        ['picked_up', 'in_progress'].contains(order.status.toLowerCase())) {
+      PersistentNavBarNavigator.pushNewScreen(
+        context,
+        screen: NavigationView(orderId: order.id, order: order),
+        withNavBar: true,
+        pageTransitionAnimation: PageTransitionAnimation.cupertino,
+      );
+      return;
+    }
+
+    // 4. Otherwise (accepted, ready_for_pickup, queued, pending), go to pickup task
+    PersistentNavBarNavigator.pushNewScreen(
+      context,
+      screen: PickupTaskView(
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        order: order,
+      ),
+      withNavBar: true,
+      pageTransitionAnimation: PageTransitionAnimation.cupertino,
+    );
   }
 
   void _onScroll() {
@@ -601,37 +651,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
 
     return GestureDetector(
       onTap: () {
-        if (order.status == 'cancelled') {
-          PersistentNavBarNavigator.pushNewScreen(
-            context,
-            screen: OrderCancelledDetailsView(order: order),
-            withNavBar: false,
-            pageTransitionAnimation: PageTransitionAnimation.cupertino,
-          );
-        } else if (order.pickupProof == null && order.status != 'delivered') {
-          // Navigate to Pickup Task if not picked up yet (and not delivered)
-          PersistentNavBarNavigator.pushNewScreen(
-            context,
-            screen: OrderDetailsView(
-              orderId: order.id,
-              orderNumber: order.orderNumber,
-              order: order,
-            ),
-            withNavBar: false,
-            pageTransitionAnimation: PageTransitionAnimation.cupertino,
-          );
-        } else {
-          PersistentNavBarNavigator.pushNewScreen(
-            context,
-            screen: OrderDetailsView(
-              orderId: order.id,
-              orderNumber: order.orderNumber,
-              order: order,
-            ),
-            withNavBar: false,
-            pageTransitionAnimation: PageTransitionAnimation.cupertino,
-          );
-        }
+        _navigateToOrder(order);
       },
       child: Container(
         margin: EdgeInsets.only(bottom: R.h(16)),
@@ -915,22 +935,8 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                     ),
                   ],
                 ),
-                SizedBox(height: R.h(16)),
                 ElevatedButton(
-                  onPressed: () {
-                    // Navigate directly to details to start/continue delivery
-                    PersistentNavBarNavigator.pushNewScreen(
-                      context,
-                      screen: OrderDetailsView(
-                        orderId: order.id,
-                        orderNumber: order.orderNumber,
-                        order: order,
-                      ),
-                      withNavBar: false,
-                      pageTransitionAnimation:
-                          PageTransitionAnimation.cupertino,
-                    );
-                  },
+                  onPressed: () => _navigateToOrder(order),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     foregroundColor: AppColors.white,
@@ -998,18 +1004,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
               ),
               SizedBox(width: R.w(12)),
               TextButton(
-                onPressed: () {
-                  PersistentNavBarNavigator.pushNewScreen(
-                    context,
-                    screen: OrderDetailsView(
-                      orderId: order.id,
-                      orderNumber: order.orderNumber,
-                      order: order,
-                    ),
-                    withNavBar: false,
-                    pageTransitionAnimation: PageTransitionAnimation.cupertino,
-                  );
-                },
+                onPressed: () => _navigateToOrder(order),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primaryGreen,
                   padding: EdgeInsets.zero,

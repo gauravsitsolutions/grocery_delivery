@@ -29,10 +29,9 @@ class OrderViewModel extends ChangeNotifier {
       _order = initialOrder;
       _isLoading = false;
       final status = _order?.status.toLowerCase();
-      _isPickupMode = status == 'accepted' ||
-          status == 'pending' ||
+      _isPickupMode = status == 'checked_in' ||
           status == 'in_progress' ||
-          status == 'starting';
+          status == 'accepted';
     }
   }
 
@@ -131,10 +130,9 @@ class OrderViewModel extends ChangeNotifier {
       }
 
       final status = _order?.status.toLowerCase();
-      _isPickupMode = status == 'accepted' ||
-          status == 'pending' ||
+      _isPickupMode = status == 'checked_in' ||
           status == 'in_progress' ||
-          status == 'starting';
+          status == 'accepted';
 
       if (!_isPickupMode) {
         _checkedItems.clear();
@@ -432,7 +430,9 @@ class OrderViewModel extends ChangeNotifier {
 
   Future<bool> pickupOrder() async {
     if (_checkedItems.length < _orderItems.length) {
-      return false; // Validation handled in UI snackbar
+      _error = "Please check all items before confirming pickup";
+      notifyListeners();
+      return false;
     }
 
     if (_pickupProofImage == null) {

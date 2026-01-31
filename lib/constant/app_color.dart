@@ -79,12 +79,12 @@ class AppColors {
   static const Color green = Colors.green;
 
   // Grey Variants
-  static Color? grey100 = Colors.grey[100];
-  static Color? grey200 = Colors.grey[200];
-  static Color? grey300 = Colors.grey[300];
-  static Color? grey400 = Colors.grey[400];
-  static Color? grey500 = Colors.grey[500];
-  static Color? grey600 = Colors.grey[600];
+  static const Color grey100 = Color(0xFFF5F5F5);
+  static const Color grey200 = Color(0xFFEEEEEE);
+  static const Color grey300 = Color(0xFFE0E0E0);
+  static const Color grey400 = Color(0xFFBDBDBD);
+  static const Color grey500 = Color(0xFF9E9E9E);
+  static const Color grey600 = Color(0xFF757575);
 
   // Dashboard Redesign
   static const Color badgeGreenBg = Color(0xFFE8FFF3);

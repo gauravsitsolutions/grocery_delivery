@@ -99,7 +99,7 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
                                   horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: AppColors.grey200!,
+                                  color: AppColors.grey200,
                                   width: 1,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
@@ -125,7 +125,7 @@ class _OrderCancellationDialogState extends State<OrderCancellationDialog> {
                                       border: Border.all(
                                         color: isSelected
                                             ? AppColors.error
-                                            : AppColors.grey300!,
+                                            : AppColors.grey300,
                                         width: isSelected ? 6 : 1,
                                       ),
                                     ),

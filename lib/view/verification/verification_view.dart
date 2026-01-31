@@ -18,9 +18,9 @@ class VerificationView extends StatefulWidget {
 
 class _VerificationViewState extends State<VerificationView> {
   final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
+      List.generate(4, (_) => TextEditingController());
 
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
   bool _isOtpComplete = false;
 
@@ -40,6 +40,7 @@ class _VerificationViewState extends State<VerificationView> {
     _timer?.cancel();
     _seconds = 300;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return;
       if (_seconds == 0) {
         t.cancel();
       } else {
@@ -49,7 +50,7 @@ class _VerificationViewState extends State<VerificationView> {
   }
 
   void _onChanged(String value, int index) {
-    if (value.isNotEmpty && index < 5) {
+    if (value.isNotEmpty && index < 3) {
       _focusNodes[index + 1].requestFocus();
     }
     if (value.isEmpty && index > 0) {
@@ -85,26 +86,24 @@ class _VerificationViewState extends State<VerificationView> {
     R.init(context);
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.scaffoldBg,
+        backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
         leading: const CustomBackButton(color: AppColors.headingText),
-        centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
         title: Text(
           'Verification',
           style: TextStyle(
             fontSize: R.sp(18),
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             color: AppColors.headingText,
           ),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: R.w(24)),
           child: Column(
             children: [
               SizedBox(height: R.h(40)),
@@ -117,9 +116,9 @@ class _VerificationViewState extends State<VerificationView> {
               _otpFields(),
               SizedBox(height: R.h(32)),
               _timerWidget(),
-              SizedBox(height: R.h(24)),
+              SizedBox(height: R.h(40)),
               _resend(),
-              SizedBox(height: R.h(32)),
+              SizedBox(height: R.h(50)),
               _verifyButton(),
               SizedBox(height: R.h(40)),
             ],
@@ -131,10 +130,10 @@ class _VerificationViewState extends State<VerificationView> {
 
   Widget _icon() {
     return Container(
-      width: R.r(120),
-      height: R.r(120),
+      width: R.w(100),
+      height: R.w(100),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen.withAlpha(30),
+        color: AppColors.primaryGreen.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -148,11 +147,12 @@ class _VerificationViewState extends State<VerificationView> {
   }
 
   Widget _title() {
-    return Text(
-      'Enter code',
+    return const Text(
+      'Enter Code',
       style: TextStyle(
-        fontSize: R.sp(30),
-        fontWeight: FontWeight.w800,
+        fontSize: 28,
+        fontWeight: FontWeight.w900,
+        color: AppColors.headingText,
       ),
     );
   }
@@ -161,18 +161,27 @@ class _VerificationViewState extends State<VerificationView> {
     return Column(
       children: [
         Text(
-          "We've sent a 6-digit code to",
-          style: TextStyle(
-            fontSize: R.sp(14),
-            color: AppColors.bodyText,
-          ),
-        ),
-        SizedBox(height: R.h(4)),
-        Text(
-          widget.order?.user?.mobile ?? '+1 (555) 000-0000',
+          "We've sent a 4-digit code to",
           style: TextStyle(
             fontSize: R.sp(15),
-            fontWeight: FontWeight.w700,
+            color: AppColors.bodyText.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: R.h(8)),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(6)),
+          decoration: BoxDecoration(
+            color: AppColors.softGreyBg,
+            borderRadius: BorderRadius.circular(R.r(20)),
+          ),
+          child: Text(
+            widget.order?.user?.mobile ?? '+1 (555) 000-0000',
+            style: TextStyle(
+              fontSize: R.sp(14),
+              fontWeight: FontWeight.w700,
+              color: AppColors.headingText,
+            ),
           ),
         ),
       ],
@@ -180,52 +189,54 @@ class _VerificationViewState extends State<VerificationView> {
   }
 
   Widget _otpFields() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: R.w(16)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(6, (index) {
-          return Container(
-            width: R.r(50),
-            height: R.r(60),
-            margin: EdgeInsets.symmetric(horizontal: R.w(4)),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(R.r(12)),
-              border: Border.all(
-                color: _focusNodes[index].hasFocus
-                    ? AppColors.primaryGreen
-                    : AppColors.borderLight,
-                width: R.r(2),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.black.withAlpha(10),
-                  blurRadius: R.r(8),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(4, (index) {
+        final isFocused = _focusNodes[index].hasFocus;
+        final hasValue = _controllers[index].text.isNotEmpty;
+
+        return Container(
+          width: R.w(64),
+          height: R.h(72),
+          margin: EdgeInsets.symmetric(horizontal: R.w(8)),
+          child: TextField(
+            controller: _controllers[index],
+            focusNode: _focusNodes[index],
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            keyboardType: TextInputType.number,
+            style: TextStyle(
+              fontSize: R.sp(28),
+              fontWeight: FontWeight.w900,
+              color: AppColors.headingText,
+            ),
+            cursorColor: AppColors.primaryGreen,
+            decoration: InputDecoration(
+              counterText: '',
+              fillColor: isFocused || hasValue
+                  ? AppColors.primaryGreen.withValues(alpha: 0.05)
+                  : AppColors.softGreyBg,
+              filled: true,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(R.r(16)),
+                borderSide: BorderSide(
+                  color: hasValue ? AppColors.primaryGreen : Colors.transparent,
+                  width: 2.0,
                 ),
-              ],
-            ),
-            child: TextField(
-              controller: _controllers[index],
-              focusNode: _focusNodes[index],
-              textAlign: TextAlign.center,
-              maxLength: 1,
-              keyboardType: TextInputType.number,
-              style: TextStyle(
-                fontSize: R.sp(20),
-                fontWeight: FontWeight.w700,
               ),
-              decoration: const InputDecoration(
-                counterText: '',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(R.r(16)),
+                borderSide: const BorderSide(
+                  color: AppColors.primaryGreen,
+                  width: 2.5,
+                ),
               ),
-              onChanged: (v) => _onChanged(v, index),
+              contentPadding: EdgeInsets.zero,
             ),
-          );
-        }),
-      ),
+            onChanged: (v) => _onChanged(v, index),
+          ),
+        );
+      }),
     );
   }
 
@@ -234,24 +245,18 @@ class _VerificationViewState extends State<VerificationView> {
     final remainingSeconds = _seconds % 60;
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: R.w(20),
-        vertical: R.h(10),
+        horizontal: R.w(16),
+        vertical: R.h(8),
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        border: Border.all(color: AppColors.borderLight),
         borderRadius: BorderRadius.circular(R.r(30)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withAlpha(12),
-            blurRadius: R.r(10),
-          ),
-        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            RemixIcons.hourglass_fill,
+            RemixIcons.time_line,
             color: AppColors.primaryGreen,
             size: R.sp(18),
           ),
@@ -260,7 +265,8 @@ class _VerificationViewState extends State<VerificationView> {
             '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}',
             style: TextStyle(
               fontSize: R.sp(16),
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w900,
+              color: AppColors.primaryGreen,
             ),
           ),
         ],
@@ -273,16 +279,18 @@ class _VerificationViewState extends State<VerificationView> {
       text: TextSpan(
         style: TextStyle(
           fontSize: R.sp(14),
-          color: AppColors.bodyText,
+          color: AppColors.bodyText.withValues(alpha: 0.6),
+          fontWeight: FontWeight.w600,
         ),
-        children: const [
-          TextSpan(text: "Didn't receive code? "),
+        children: [
+          const TextSpan(text: "Didn't receive code? "),
           TextSpan(
             text: 'Resend',
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.primaryGreen,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w900,
             ),
+            recognizer: null, // Add recognizer if needed
           ),
         ],
       ),
@@ -290,27 +298,26 @@ class _VerificationViewState extends State<VerificationView> {
   }
 
   Widget _verifyButton() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: R.w(16)),
-      child: SizedBox(
-        width: double.infinity,
-        height: R.h(56),
-        child: ElevatedButton(
-          onPressed: _isOtpComplete ? _onVerify : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryGreen,
-            disabledBackgroundColor: AppColors.primaryGreen.withAlpha(100),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(R.r(16)),
-            ),
+    return SizedBox(
+      width: double.infinity,
+      height: R.h(60),
+      child: ElevatedButton(
+        onPressed: _isOtpComplete ? _onVerify : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
+          disabledBackgroundColor:
+              AppColors.primaryGreen.withValues(alpha: 0.4),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(R.r(18)),
           ),
-          child: Text(
-            'Verify',
-            style: TextStyle(
-              fontSize: R.sp(18),
-              fontWeight: FontWeight.w700,
-              color: AppColors.white,
-            ),
+        ),
+        child: Text(
+          'Verify Now',
+          style: TextStyle(
+            fontSize: R.sp(18),
+            fontWeight: FontWeight.w900,
+            color: AppColors.white,
           ),
         ),
       ),
