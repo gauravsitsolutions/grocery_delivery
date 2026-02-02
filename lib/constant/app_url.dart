@@ -16,6 +16,7 @@ class AppUrls {
   static const String pauseDuty = '$baseUrl/api/partner/duty/pause';
   static const String resumeDuty = '$baseUrl/api/partner/duty/resume';
   static const String stopDuty = '$baseUrl/api/partner/duty/stop';
+  static const String resetDuty = '$baseUrl/api/partner/duty/reset';
   static const String profile = '$baseUrl/api/delivery_boy/profile';
   static const String updateProfilePhone =
       '$baseUrl/api/delivery_boy/profile/phone';
@@ -71,4 +72,8 @@ class AppUrls {
       '$baseUrl/api/partner/profile/summary';
   static const String partnerPerformanceGraph =
       '$baseUrl/api/partner/performance/graph';
+  static const String partnerPerformanceMonth =
+      '$baseUrl/api/partner/performance/month';
+  static const String partnerPerformanceWeek =
+      '$baseUrl/api/partner/performance/week';
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/weekly_milestone_card.dart';
+import 'package:samrudhi_delivery_agent_app/view/performance/weekly_performance_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/waiting_for_orders.dart';
 
 class DashboardWaitingState extends StatelessWidget {
@@ -24,9 +25,19 @@ class DashboardWaitingState extends StatelessWidget {
     return Column(
       children: [
         // 1. Weekly Milestone
-        WeeklyMilestoneCard(
-          completed: completedToday,
-          goal: dailyGoal,
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const WeeklyPerformanceView(),
+              ),
+            );
+          },
+          child: WeeklyMilestoneCard(
+            completed: completedToday,
+            goal: dailyGoal,
+          ),
         ),
 
         SizedBox(height: R.h(40)),

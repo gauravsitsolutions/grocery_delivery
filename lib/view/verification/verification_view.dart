@@ -8,7 +8,8 @@ import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
-import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_summary_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/order_details/delivery_success_view.dart';
+import 'package:animations/animations.dart';
 
 class VerificationView extends StatefulWidget {
   final int? orderId;
@@ -73,10 +74,20 @@ class _VerificationViewState extends State<VerificationView> {
     if (success && mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => DeliverySummaryView(
-            order: viewModel.order,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              DeliverySuccessView(
+            order: viewModel.order!,
           ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SharedAxisTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              transitionType: SharedAxisTransitionType.horizontal,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 300),
         ),
         (route) => false, // Or clear until dashboard if preferred
       );

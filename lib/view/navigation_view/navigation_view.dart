@@ -34,12 +34,15 @@ class NavigationView extends StatelessWidget {
               children: [
                 const CustomBackButton(color: Colors.black),
                 SizedBox(width: R.w(12)),
-                Text(
-                  'Order #${order?.orderNumber ?? '00000'}',
-                  style: TextStyle(
-                    fontSize: R.sp(20),
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
+                Flexible(
+                  child: Text(
+                    'Order #${order?.orderNumber ?? '00000'}',
+                    style: TextStyle(
+                      fontSize: R.sp(20),
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const Spacer(),
@@ -114,7 +117,7 @@ class NavigationView extends StatelessWidget {
 
           // ================= BOTTOM BUTTON =================
           Container(
-            padding: EdgeInsets.fromLTRB(R.w(20), R.h(16), R.w(20), 0),
+            padding: EdgeInsets.fromLTRB(R.w(20), R.h(10), R.w(20), R.h(10)),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -127,11 +130,10 @@ class NavigationView extends StatelessWidget {
             ),
             child: SafeArea(
               top: false,
-              child: Container(
+              bottom: false,
+              child: SizedBox(
                 width: double.infinity,
-                height: R.h(64),
-                margin: EdgeInsets.only(
-                    bottom: R.h(16)), // Add proper bottom margin
+                height: R.h(55),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pushReplacement(

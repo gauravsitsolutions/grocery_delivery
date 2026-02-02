@@ -1961,8 +1961,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   ),
                 ),
               ),
-              SizedBox(width: R.w(12)),
 
+              SizedBox(width: R.w(12)),
               // Notification Bell
               Consumer<NotificationsViewModel>(
                 builder: (context, vm, _) {

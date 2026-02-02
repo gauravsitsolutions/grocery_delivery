@@ -34,3 +34,20 @@ class DailyPerformance {
     );
   }
 }
+
+class DailyDutyLog {
+  final String date;
+  final num totalDutyTime;
+
+  DailyDutyLog({
+    required this.date,
+    required this.totalDutyTime,
+  });
+
+  factory DailyDutyLog.fromJson(Map<String, dynamic> json) {
+    return DailyDutyLog(
+      date: json['date'] ?? '',
+      totalDutyTime: json['totalDutyTime'] ?? 0,
+    );
+  }
+}

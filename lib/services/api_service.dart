@@ -1033,4 +1033,57 @@ class ApiService {
     return DeliverySummary(
         completedCount: 0, totalDistanceKm: 0, avgDeliveryTimeMin: 0);
   }
+
+  Future<Map<String, dynamic>> resetDuty(String? token) async {
+    final uri = Uri.parse(AppUrls.resetDuty);
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response['status'] == true ||
+        response['status'] == 'success' ||
+        response['message'] == 'Duty reset successfully') {
+      return response;
+    } else {
+      throw ValidationException(response['message'] ?? 'Failed to reset duty');
+    }
+  }
+
+  Future<List<DailyDutyLog>> getMonthlyPerformance(
+      String? token, String month) async {
+    final uri = Uri.parse('${AppUrls.partnerPerformanceMonth}?month=$month');
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response is List) {
+      return response.map((e) => DailyDutyLog.fromJson(e)).toList();
+    } else {
+      throw ValidationException('Unexpected response format');
+    }
+  }
+
+  Future<List<DailyDutyLog>> getWeeklyPerformance(
+      String? token, String weekStart) async {
+    final uri =
+        Uri.parse('${AppUrls.partnerPerformanceWeek}?weekStart=$weekStart');
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(token),
+        ));
+
+    if (response is List) {
+      return response.map((e) => DailyDutyLog.fromJson(e)).toList();
+    } else {
+      throw ValidationException('Invalid response format');
+    }
+  }
 }
