@@ -28,13 +28,13 @@ import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
 import 'package:samrudhi_delivery_agent_app/model/profile_model.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/dashboard_waiting_state.dart';
 import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
-import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedback_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/duty_status_card.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/dashboard_issue_card.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -1586,23 +1586,22 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                 child: _isLoading
                                     ? const OrderShimmer()
                                     : _error != null
-                                        ? Center(
-                                            key: const ValueKey('error'),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(_error!,
-                                                    style: const TextStyle(
-                                                        color:
-                                                            AppColors.error)),
-                                                SizedBox(height: R.h(16)),
-                                                CustomRetryButton(
-                                                  onTap: () => _fetchOrders(
-                                                      refresh: true),
-                                                  isLoading: _isLoading,
-                                                ),
-                                              ],
-                                            ))
+                                        ? Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                vertical: R.h(20)),
+                                            child: DashboardIssueCard(
+                                              key: const ValueKey('error'),
+                                              type: _error!
+                                                      .toLowerCase()
+                                                      .contains('network')
+                                                  ? IssueType.internet
+                                                  : IssueType.server,
+                                              message: _error!,
+                                              onRetry: () =>
+                                                  _fetchOrders(refresh: true),
+                                              isRetrying: _isLoading,
+                                            ),
+                                          )
                                         : Column(
                                             children: _newRequests
                                                 .where((order) =>
