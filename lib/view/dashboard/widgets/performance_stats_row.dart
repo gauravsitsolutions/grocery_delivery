@@ -40,7 +40,7 @@ class PerformanceStatsRow extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.all(R.w(16)),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(R.r(24)), // High radius
                   boxShadow: [
                     BoxShadow(
@@ -112,7 +112,7 @@ class PerformanceStatsRow extends StatelessWidget {
                   padding:
                       EdgeInsets.fromLTRB(R.w(16), R.w(16), R.w(16), R.w(12)),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(R.r(24)),
                     boxShadow: [
                       BoxShadow(

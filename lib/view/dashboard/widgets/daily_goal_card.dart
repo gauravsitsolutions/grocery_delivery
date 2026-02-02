@@ -142,7 +142,7 @@ class DailyGoalCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
         boxShadow: [
           BoxShadow(

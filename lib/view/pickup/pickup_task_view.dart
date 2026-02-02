@@ -370,8 +370,9 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               bottomLeft: Radius.circular(R.r(24)),
               bottomRight: Radius.circular(R.r(24)),
             ),
-            child: Image.asset(
-              'assets/images/map_placeholder.png',
+            child: CustomNetworkImage(
+              imageUrl:
+                  'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80\u0026w=2066\u0026auto=format\u0026fit=crop',
               height: R.h(160),
               width: double.infinity,
               fit: BoxFit.cover,

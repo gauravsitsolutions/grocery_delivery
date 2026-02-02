@@ -139,9 +139,11 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _dutyTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isTimerPaused && mounted) {
         setState(() {
-          // Just tick the local seconds counter
           _localSessionSeconds++;
         });
+        if (_localSessionSeconds % 5 == 0) {
+          SharedPrefsUtil.setSessionSeconds(_localSessionSeconds);
+        }
       }
     });
   }
@@ -1207,77 +1209,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 ),
               ),
               SizedBox(height: R.h(16)),
-
-              // 3. Navigate Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    PersistentNavBarNavigator.pushNewScreen(
-                      context,
-                      screen: PickupTaskView(
-                        orderId: order.id,
-                        orderNumber: order.orderNumber,
-                        order: order,
-                      ),
-                      withNavBar: false,
-                      pageTransitionAnimation:
-                          PageTransitionAnimation.cupertino,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    padding: EdgeInsets.symmetric(vertical: R.h(16)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(R.r(14)),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        order.status == 'in_progress'
-                            ? 'Navigate to Dropoff'
-                            : 'Navigate to Pickup',
-                        style: TextStyle(
-                          fontSize: R.sp(16),
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.white,
-                        ),
-                      ),
-                      SizedBox(width: R.w(8)),
-                      Icon(RemixIcons.navigation_fill,
-                          size: R.sp(18), color: AppColors.white),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _iconButton({required IconData icon, required VoidCallback onTap}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon, size: R.sp(20), color: AppColors.headingText),
-        onPressed: onTap,
-        padding: EdgeInsets.all(R.w(8)),
-        constraints: const BoxConstraints(),
       ),
     );
   }
@@ -1482,360 +1416,303 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     opacity: isOnline ? 1.0 : 0.8,
                     child: Column(
                       children: [
-                        _isWaiting // Use the new getter
-                            ? Padding(
-                                padding: EdgeInsets.only(
-                                    top: R.h(8), bottom: R.h(12)),
-                                child: Column(
-                                  children: [
-                                    DashboardWaitingState(
-                                      isOnline: isOnline,
-                                      completedToday: _completedDeliveries,
-                                      dailyGoal: _dailyGoal,
-                                      onToggle: () =>
-                                          widget.onStatusChanged(!isOnline),
-                                    ),
-                                    if (isOnline)
-                                      Padding(
-                                        padding: EdgeInsets.only(top: R.h(20)),
-                                        child: PerformanceStatsRow(
-                                          pending: _pendingOrders > 0
-                                              ? _pendingOrders
-                                              : _myOrders
-                                                  .length, // Fallback to queue length
-                                          completed: _completedDeliveries,
-                                          cancelled: _cancelledOrders,
-                                          loginHours: _serverLoginHours +
-                                              (_localSessionSeconds / 3600.0),
-                                        ),
+                        if (_isWaiting)
+                          Padding(
+                            padding:
+                                EdgeInsets.only(top: R.h(8), bottom: R.h(12)),
+                            child: DashboardWaitingState(
+                              isOnline: isOnline,
+                              completedToday: _completedDeliveries,
+                              dailyGoal: _dailyGoal,
+                              onToggle: () => widget.onStatusChanged(!isOnline),
+                            ),
+                          )
+                        else ...[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Current Task (Priority)
+                              if (_currentOrder != null) ...[
+                                _sectionHeader(
+                                    title: 'Current Task & Delivery'),
+                                SizedBox(height: R.h(12)),
+                                _currentTaskCard(_currentOrder!),
+                                SizedBox(height: R.h(24)),
+                              ],
+
+                              // Delivery Queue (Priority)
+                              if (_myOrders.length > 1) ...[
+                                _sectionHeader(
+                                  title: 'My Queue',
+                                  count: _myOrders.length - 1,
+                                  icon: RemixIcons.box_3_fill,
+                                  iconColor: AppColors.primaryGreen,
+                                  action: GestureDetector(
+                                    onTap: widget.onViewDeliveries,
+                                    child: Text(
+                                      'View All',
+                                      style: TextStyle(
+                                        fontSize: R.sp(14),
+                                        color: AppColors.primaryGreen,
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                  ],
+                                    ),
+                                  ),
                                 ),
-                              )
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Performance Stats (Busy State)
+                                SizedBox(height: R.h(12)),
+                                Column(
+                                  children:
+                                      _myOrders.skip(1).take(2).map((order) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(bottom: R.h(12)),
+                                      child: AnimatedOrderCard(
+                                        key: ValueKey(order.id),
+                                        child: _myQueueItem(order),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                                if (_hasMoreMyOrders)
                                   Padding(
-                                    padding: EdgeInsets.only(bottom: R.h(24)),
-                                    child: PerformanceStatsRow(
-                                      pending: _pendingOrders > 0
-                                          ? _pendingOrders
-                                          : _myOrders
-                                              .length, // Fallback to queue length
-                                      completed: _completedDeliveries,
-                                      cancelled: _cancelledOrders,
-                                      loginHours: _serverLoginHours +
-                                          (_localSessionSeconds / 3600.0),
+                                    padding: EdgeInsets.only(top: R.h(8)),
+                                    child: Center(
+                                      child: TextButton(
+                                        onPressed: _isMyOrdersLoadingMore
+                                            ? null
+                                            : _loadMoreMyOrders,
+                                        child: _isMyOrdersLoadingMore
+                                            ? SizedBox(
+                                                width: R.w(20),
+                                                height: R.w(20),
+                                                child:
+                                                    const CircularProgressIndicator(
+                                                        strokeWidth: 2),
+                                              )
+                                            : const Text('Load More'),
+                                      ),
                                     ),
                                   ),
-                                  // Current Task (Priority)
-                                  if (_currentOrder != null) ...[
-                                    _sectionHeader(
-                                        title: 'Current Task & Delivery'),
-                                    SizedBox(height: R.h(12)),
-                                    _currentTaskCard(_currentOrder!),
-                                    SizedBox(height: R.h(24)),
-                                  ],
+                                SizedBox(height: R.h(24)),
+                              ],
+                            ],
+                          ),
+                        ],
 
-                                  // Delivery Queue (Priority)
-                                  if (_myOrders.length > 1) ...[
-                                    _sectionHeader(
-                                      title: 'My Queue',
-                                      count: _myOrders.length - 1,
-                                      icon: RemixIcons.box_3_fill,
-                                      iconColor: AppColors.primaryGreen,
-                                      action: GestureDetector(
-                                        onTap: widget.onViewDeliveries,
-                                        child: Text(
-                                          'View All',
-                                          style: TextStyle(
-                                            fontSize: R.sp(14),
-                                            color: AppColors.primaryGreen,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                        // New Order Request (Always visible if Online)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _sectionHeader(
+                              title: 'New Order Request',
+                              count: null,
+                              action: _newRequests.length > 1
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        // Add View All logic for new requests here
+                                      },
+                                      child: Text(
+                                        'View All',
+                                        style: TextStyle(
+                                          fontSize: R.sp(14),
+                                          color: AppColors.primaryGreen,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(height: R.h(12)),
-                                    Column(
-                                      children: _myOrders
-                                          .skip(1)
-                                          .take(2)
-                                          .map((order) {
-                                        return Padding(
-                                          padding:
-                                              EdgeInsets.only(bottom: R.h(12)),
-                                          child: AnimatedOrderCard(
-                                            key: ValueKey(order.id),
-                                            child: _myQueueItem(order),
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                    if (_hasMoreMyOrders)
-                                      Padding(
-                                        padding: EdgeInsets.only(top: R.h(8)),
-                                        child: Center(
-                                          child: TextButton(
-                                            onPressed: _isMyOrdersLoadingMore
-                                                ? null
-                                                : _loadMoreMyOrders,
-                                            child: _isMyOrdersLoadingMore
-                                                ? SizedBox(
-                                                    width: R.w(20),
-                                                    height: R.w(20),
-                                                    child:
-                                                        const CircularProgressIndicator(
-                                                            strokeWidth: 2),
-                                                  )
-                                                : const Text('Load More'),
-                                          ),
-                                        ),
-                                      ),
-                                    SizedBox(height: R.h(24)),
-                                  ],
-
-                                  // New Order Request
-
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _sectionHeader(
-                                        title: 'New Order Request',
-                                        count: null,
-                                        action: _newRequests.length > 1
-                                            ? GestureDetector(
-                                                onTap: () {
-                                                  // Add View All logic for new requests here
-                                                },
-                                                child: Text(
-                                                  'View All',
-                                                  style: TextStyle(
-                                                    fontSize: R.sp(14),
-                                                    color:
-                                                        AppColors.primaryGreen,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                      SizedBox(height: R.h(12)),
-                                      AnimatedSwitcher(
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        transitionBuilder: (child, animation) {
-                                          return FadeTransition(
-                                            opacity: animation,
-                                            child: SlideTransition(
-                                              position: Tween<Offset>(
-                                                begin: const Offset(0.0, 0.05),
-                                                end: Offset.zero,
-                                              ).animate(animation),
-                                              child: child,
-                                            ),
-                                          );
-                                        },
-                                        child: _isLoading
-                                            ? const OrderShimmer()
-                                            : _error != null
-                                                ? Center(
-                                                    key:
-                                                        const ValueKey('error'),
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(_error!,
-                                                            style: const TextStyle(
-                                                                color: AppColors
-                                                                    .error)),
-                                                        SizedBox(
-                                                            height: R.h(16)),
-                                                        CustomRetryButton(
-                                                          onTap: () =>
-                                                              _fetchOrders(
-                                                                  refresh:
-                                                                      true),
-                                                          isLoading: _isLoading,
-                                                        ),
-                                                      ],
-                                                    ))
-                                                : _newRequests.isEmpty
-                                                    ? Container(
-                                                        key: const ValueKey(
-                                                            'empty'),
-                                                        width: double.infinity,
-                                                        padding: EdgeInsets
-                                                            .symmetric(
-                                                                vertical:
-                                                                    R.h(20)),
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: const Text(
-                                                            'No new orders',
-                                                            style: TextStyle(
-                                                                color: AppColors
-                                                                    .bodyText)))
-                                                    : Column(
-                                                        children: _newRequests
-                                                            .where((order) =>
-                                                                !_removingOrderIds
-                                                                    .contains(
-                                                                        order
-                                                                            .id))
-                                                            .map((order) {
-                                                          // Calculate remaining time
-                                                          // Assuming 60 seconds timeout from creation
-                                                          // Adjust '60' to match backend configuration if different
-                                                          final now =
-                                                              DateTime.now();
-                                                          final difference = now
-                                                              .difference(order
-                                                                  .createdAt);
-                                                          final remaining = 60 -
-                                                              difference
-                                                                  .inSeconds;
-
-                                                          // If expired, maybe we shouldn't show it?
-                                                          // But let's show 0 if negative.
-                                                          final countdown =
-                                                              remaining > 0
-                                                                  ? remaining
-                                                                  : 0;
-
-                                                          return NewRequestCard(
-                                                            order: order,
-                                                            countdownSeconds:
-                                                                countdown,
-                                                            onAccept: () =>
-                                                                _acceptOrder(
-                                                                    order.id),
-                                                            onDecline: () =>
-                                                                _rejectOrder(
-                                                                    order.id),
-                                                          );
-                                                        }).toList(),
-                                                      ),
-                                      ),
-                                    ],
+                                    )
+                                  : null,
+                            ),
+                            SizedBox(height: R.h(12)),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              transitionBuilder: (child, animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0.0, 0.05),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
                                   ),
-                                  SizedBox(height: R.h(24)),
-
-                                  // Available Orders
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _sectionHeader(
-                                        title: 'Nearby Available',
-                                        icon: RemixIcons.compass_3_fill,
-                                        iconColor:
-                                            const Color(0xFFFF8A65), // Orange
-                                        count: _availableOrders.length,
-                                        action: _availableOrders.length > 2
-                                            ? GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    _isAvailableExpanded =
-                                                        !_isAvailableExpanded;
-                                                  });
-                                                },
-                                                child: Text(
-                                                  _isAvailableExpanded
-                                                      ? 'View Less'
-                                                      : 'View All',
-                                                  style: TextStyle(
-                                                    fontSize: R.sp(14),
-                                                    color:
-                                                        AppColors.primaryGreen,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                      SizedBox(height: R.h(12)),
-                                      // ... logic for available list or mock
-                                      Builder(builder: (context) {
-                                        if (_availableOrders.isEmpty) {
-                                          return Container(
+                                );
+                              },
+                              child: _isLoading
+                                  ? const OrderShimmer()
+                                  : _error != null
+                                      ? Center(
+                                          key: const ValueKey('error'),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(_error!,
+                                                  style: const TextStyle(
+                                                      color: AppColors.error)),
+                                              SizedBox(height: R.h(16)),
+                                              CustomRetryButton(
+                                                onTap: () =>
+                                                    _fetchOrders(refresh: true),
+                                                isLoading: _isLoading,
+                                              ),
+                                            ],
+                                          ))
+                                      : _newRequests.isEmpty
+                                          ? Container(
+                                              key: const ValueKey('empty'),
                                               width: double.infinity,
                                               padding: EdgeInsets.symmetric(
                                                   vertical: R.h(20)),
                                               alignment: Alignment.center,
-                                              child: const Text(
-                                                  'No other available orders',
+                                              child: const Text('No new orders',
                                                   style: TextStyle(
                                                       color:
-                                                          AppColors.bodyText)));
-                                        }
-                                        final ordersToShow =
-                                            (_isAvailableExpanded
-                                                    ? _availableOrders
-                                                    : _availableOrders.take(2))
-                                                .where((order) =>
-                                                    !_removingOrderIds
-                                                        .contains(order.id))
-                                                .toList();
-                                        return Column(
-                                          children: ordersToShow
-                                              .map((order) =>
-                                                  _availableOrderItem(order))
-                                              .toList(),
-                                        );
-                                      }),
-                                      if (_hasMoreAvailable &&
-                                          _isAvailableExpanded)
-                                        Padding(
-                                          padding: EdgeInsets.only(top: R.h(8)),
-                                          child: Center(
-                                            child: TextButton(
-                                              onPressed: _isAvailableLoadingMore
-                                                  ? null
-                                                  : _loadMoreAvailableOrders,
-                                              child: _isAvailableLoadingMore
-                                                  ? SizedBox(
-                                                      width: R.w(20),
-                                                      height: R.w(20),
-                                                      child:
-                                                          const CircularProgressIndicator(
-                                                              strokeWidth: 2),
-                                                    )
-                                                  : const Text('Load More'),
+                                                          AppColors.bodyText)))
+                                          : Column(
+                                              children: _newRequests
+                                                  .where((order) =>
+                                                      !_removingOrderIds
+                                                          .contains(order.id))
+                                                  .map((order) {
+                                                // Calculate remaining time
+                                                final now = DateTime.now();
+                                                final difference =
+                                                    now.difference(
+                                                        order.createdAt);
+                                                final remaining =
+                                                    60 - difference.inSeconds;
+                                                final countdown = remaining > 0
+                                                    ? remaining
+                                                    : 0;
+
+                                                return NewRequestCard(
+                                                  order: order,
+                                                  countdownSeconds: countdown,
+                                                  onAccept: () =>
+                                                      _acceptOrder(order.id),
+                                                  onDecline: () =>
+                                                      _rejectOrder(order.id),
+                                                );
+                                              }).toList(),
                                             ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  SizedBox(height: R.h(40)),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        width: R.w(8),
-                                        height: R.w(8),
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF00E676),
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      SizedBox(width: R.w(10)),
-                                      Text(
-                                        'Waiting for more orders...',
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: R.h(24)),
+
+                        // Available Orders (Always visible if Online)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _sectionHeader(
+                              title: 'Nearby Available',
+                              icon: RemixIcons.compass_3_fill,
+                              iconColor: const Color(0xFFFF8A65), // Orange
+                              count: _availableOrders.length,
+                              action: _availableOrders.length > 2
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _isAvailableExpanded =
+                                              !_isAvailableExpanded;
+                                        });
+                                      },
+                                      child: Text(
+                                        _isAvailableExpanded
+                                            ? 'View Less'
+                                            : 'View All',
                                         style: TextStyle(
-                                          fontSize: R.sp(15),
+                                          fontSize: R.sp(14),
+                                          color: AppColors.primaryGreen,
                                           fontWeight: FontWeight.w600,
-                                          color: AppColors.bodyText
-                                              .withValues(alpha: 0.4),
                                         ),
                                       ),
-                                    ],
+                                    )
+                                  : null,
+                            ),
+                            SizedBox(height: R.h(12)),
+                            // ... logic for available list or mock
+                            Builder(builder: (context) {
+                              if (_availableOrders.isEmpty) {
+                                return Container(
+                                    width: double.infinity,
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: R.h(20)),
+                                    alignment: Alignment.center,
+                                    child: const Text(
+                                        'No other available orders',
+                                        style: TextStyle(
+                                            color: AppColors.bodyText)));
+                              }
+                              final ordersToShow = (_isAvailableExpanded
+                                      ? _availableOrders
+                                      : _availableOrders.take(2))
+                                  .where((order) =>
+                                      !_removingOrderIds.contains(order.id))
+                                  .toList();
+                              return Column(
+                                children: ordersToShow
+                                    .map((order) => _availableOrderItem(order))
+                                    .toList(),
+                              );
+                            }),
+                            if (_hasMoreAvailable && _isAvailableExpanded)
+                              Padding(
+                                padding: EdgeInsets.only(top: R.h(8)),
+                                child: Center(
+                                  child: TextButton(
+                                    onPressed: _isAvailableLoadingMore
+                                        ? null
+                                        : _loadMoreAvailableOrders,
+                                    child: _isAvailableLoadingMore
+                                        ? SizedBox(
+                                            width: R.w(20),
+                                            height: R.w(20),
+                                            child:
+                                                const CircularProgressIndicator(
+                                                    strokeWidth: 2),
+                                          )
+                                        : const Text('Load More'),
                                   ),
-                                ],
+                                ),
                               ),
+                          ],
+                        ),
+                        SizedBox(height: R.h(40)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: R.w(8),
+                              height: R.w(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF00E676),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            SizedBox(width: R.w(10)),
+                            Text(
+                              'Waiting for more orders...',
+                              style: TextStyle(
+                                fontSize: R.sp(15),
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    AppColors.bodyText.withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        if (isOnline) ...[
+                          SizedBox(height: R.h(24)),
+                          PerformanceStatsRow(
+                            pending: _pendingOrders > 0
+                                ? _pendingOrders
+                                : _myOrders.length, // Fallback to queue length
+                            completed: _completedDeliveries,
+                            cancelled: _cancelledOrders,
+                            loginHours: _serverLoginHours +
+                                (_localSessionSeconds / 3600.0),
+                          ),
+                        ],
                       ],
                     ),
                   ),

@@ -117,7 +117,7 @@ class NavigationView extends StatelessWidget {
 
           // ================= BOTTOM BUTTON =================
           Container(
-            padding: EdgeInsets.fromLTRB(R.w(20), R.h(10), R.w(20), R.h(10)),
+            padding: EdgeInsets.fromLTRB(R.w(20), R.h(10), R.w(20), R.h(16)),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -129,8 +129,6 @@ class NavigationView extends StatelessWidget {
               ],
             ),
             child: SafeArea(
-              top: false,
-              bottom: false,
               child: SizedBox(
                 width: double.infinity,
                 height: R.h(55),

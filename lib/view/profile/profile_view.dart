@@ -434,7 +434,8 @@ class _ProfileViewState extends State<ProfileView> {
           children: [
             _statCard('Orders', '${viewModel.totalOrders}'),
             SizedBox(width: R.w(12)),
-            _statCard('Hours', '${viewModel.loginHours.toStringAsFixed(1)}h'),
+            _statCard(
+                'Login Hours', '${viewModel.loginHours.toStringAsFixed(1)}h'),
           ],
         ),
         SizedBox(height: R.h(24)),
@@ -444,10 +445,11 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Widget _lineChartSection() {
-    // Colors
-    final Color ordersColor = AppColors.primaryGreen;
-    final Color hoursColor = AppColors.info; // Blue for hours
-    final Color cardBg = AppColors.white;
+    // Colors for Dark Theme Graph
+    final Color cardBg = const Color(0xFF1E2329); // Dark Navy
+    final Color ordersColor = const Color(0xFF00F0FF); // Cyan/Neon Blue
+    final Color hoursColor = const Color(0xFFFF00AA); // Magenta/Neon Pink
+    final Color gridColor = Colors.white.withValues(alpha: 0.05);
 
     // Determine Logic based on data availability
     final List<DailyPerformance> displayData =
@@ -479,7 +481,7 @@ class _ProfileViewState extends State<ProfileView> {
         borderRadius: BorderRadius.circular(R.r(24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.08),
+            color: AppColors.shadow.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -500,16 +502,27 @@ class _ProfileViewState extends State<ProfileView> {
                     style: TextStyle(
                       fontSize: R.sp(18),
                       fontWeight: FontWeight.w700,
-                      color: AppColors.headingText,
+                      color: Colors.white, // White text
                     ),
                   ),
+                  GestureDetector(
+                    child: Icon(RemixIcons.refresh_line,
+                        color: Colors.white70, size: R.sp(20)),
+                    onTap: () => _fetchPerformanceGraph(),
+                  )
+                ],
+              ),
+              SizedBox(height: R.h(16)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Row(
                     children: [
                       _chartLegendItem('Orders', ordersColor),
                       SizedBox(width: R.w(12)),
                       _chartLegendItem('Hours', hoursColor),
                     ],
-                  )
+                  ),
                 ],
               ),
               SizedBox(height: R.h(16)),
@@ -534,14 +547,14 @@ class _ProfileViewState extends State<ProfileView> {
                     '${_startDate!.day}/${_startDate!.month} - ${_endDate!.day}/${_endDate!.month}',
                     style: TextStyle(
                       fontSize: R.sp(12),
-                      color: AppColors.primaryGreen,
+                      color: ordersColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
             ],
           ),
-          SizedBox(height: R.h(24)),
+          SizedBox(height: R.h(32)), // More spacing like reference
           if (_isGraphLoading)
             SizedBox(
               height: R.h(200),
@@ -561,23 +574,60 @@ class _ProfileViewState extends State<ProfileView> {
                   SizedBox(height: R.h(8)),
                   Text(
                     _graphError!,
-                    style: TextStyle(
-                        color: AppColors.bodyText, fontSize: R.sp(13)),
+                    style: TextStyle(color: Colors.white70, fontSize: R.sp(13)),
                   ),
                 ],
               )),
             )
           else if (displayData.isEmpty)
             SizedBox(
-              height: R.h(200),
-              child: Center(
-                  child: Text(
-                'No activity data available',
-                style: TextStyle(
-                    color: AppColors.bodyText.withValues(alpha: 0.5),
-                    fontStyle: FontStyle.italic),
-              )),
-            )
+                height: R.h(200),
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: maxY / 4,
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: gridColor,
+                        strokeWidth: 1,
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: (maxY / 4).clamp(1.0, 100.0),
+                          getTitlesWidget: (value, meta) => SideTitleWidget(
+                            meta: meta,
+                            child: Text(
+                              value.toInt().toString(),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontSize: R.sp(10),
+                              ),
+                            ),
+                          ),
+                          reservedSize: 28,
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    minX: 0,
+                    maxX: 6,
+                    minY: 0,
+                    maxY: maxY,
+                    lineBarsData: [],
+                  ),
+                ))
           else
             SizedBox(
               height: R.h(220),
@@ -585,7 +635,7 @@ class _ProfileViewState extends State<ProfileView> {
                 LineChartData(
                   lineTouchData: LineTouchData(
                     touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => AppColors.headingText,
+                      getTooltipColor: (_) => const Color(0xFF2C353F),
                       getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                         return touchedBarSpots.map((barSpot) {
                           final flSpot = barSpot;
@@ -622,7 +672,7 @@ class _ProfileViewState extends State<ProfileView> {
                     drawVerticalLine: false,
                     horizontalInterval: maxY / 4,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: AppColors.grey.withValues(alpha: 0.1),
+                      color: gridColor,
                       strokeWidth: 1,
                     ),
                   ),
@@ -649,8 +699,7 @@ class _ProfileViewState extends State<ProfileView> {
                               child: Text(
                                 label,
                                 style: TextStyle(
-                                  color:
-                                      AppColors.bodyText.withValues(alpha: 0.7),
+                                  color: Colors.white.withValues(alpha: 0.5),
                                   fontWeight: FontWeight.w600,
                                   fontSize: R.sp(10),
                                 ),
@@ -670,7 +719,7 @@ class _ProfileViewState extends State<ProfileView> {
                           child: Text(
                             value.toInt().toString(),
                             style: TextStyle(
-                              color: AppColors.bodyText.withValues(alpha: 0.5),
+                              color: Colors.white.withValues(alpha: 0.5),
                               fontSize: R.sp(10),
                             ),
                           ),
@@ -685,7 +734,7 @@ class _ProfileViewState extends State<ProfileView> {
                   minY: 0,
                   maxY: maxY,
                   lineBarsData: [
-                    // Orders Line
+                    // Orders Line (Cyan)
                     LineChartBarData(
                       spots: displayData.asMap().entries.map((e) {
                         return FlSpot(
@@ -693,42 +742,22 @@ class _ProfileViewState extends State<ProfileView> {
                       }).toList(),
                       isCurved: true,
                       color: ordersColor,
-                      barWidth: 4,
+                      barWidth: 6, // Thicker line
                       isStrokeCapRound: true,
                       dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            ordersColor.withValues(alpha: 0.2),
-                            ordersColor.withValues(alpha: 0.0),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
+                      belowBarData: BarAreaData(show: false),
                     ),
-                    // Hours Line
+                    // Hours Line (Magenta)
                     LineChartBarData(
                       spots: displayData.asMap().entries.map((e) {
                         return FlSpot(e.key.toDouble(), e.value.totalHours);
                       }).toList(),
                       isCurved: true,
-                      color: hoursColor,
-                      barWidth: 4,
+                      color: hoursColor, // Pink
+                      barWidth: 6, // Thicker line
                       isStrokeCapRound: true,
                       dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            hoursColor.withValues(alpha: 0.15),
-                            hoursColor.withValues(alpha: 0.0),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
+                      belowBarData: BarAreaData(show: false),
                     ),
                   ],
                 ),
@@ -743,20 +772,20 @@ class _ProfileViewState extends State<ProfileView> {
     return Row(
       children: [
         Container(
-          width: R.w(8),
-          height: R.w(8),
+          width: R.w(10),
+          height: R.w(10),
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: R.w(4)),
+        SizedBox(width: R.w(6)),
         Text(
           label,
           style: TextStyle(
             fontSize: R.sp(12),
             fontWeight: FontWeight.w600,
-            color: AppColors.bodyText,
+            color: Colors.white70, // White text
           ),
         ),
       ],
@@ -765,6 +794,8 @@ class _ProfileViewState extends State<ProfileView> {
 
   Widget _filterChip(String label, String value) {
     bool isSelected = _selectedFilter == value;
+    // Matching the gradient/neon look slightly
+    final Color activeColor = const Color(0xFF00F0FF); // Cyan
     return GestureDetector(
       onTap: () => _onFilterChanged(value),
       child: AnimatedContainer(
@@ -772,13 +803,12 @@ class _ProfileViewState extends State<ProfileView> {
         padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(8)),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primaryGreen
-              : AppColors.primaryGreen.withValues(alpha: 0.05),
+              ? activeColor.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(R.r(20)),
           border: Border.all(
-            color: isSelected
-                ? AppColors.primaryGreen
-                : AppColors.primaryGreen.withValues(alpha: 0.1),
+            color:
+                isSelected ? activeColor : Colors.white.withValues(alpha: 0.1),
           ),
         ),
         child: Text(
@@ -786,7 +816,7 @@ class _ProfileViewState extends State<ProfileView> {
           style: TextStyle(
             fontSize: R.sp(12),
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-            color: isSelected ? AppColors.white : AppColors.primaryGreen,
+            color: isSelected ? activeColor : Colors.white70,
           ),
         ),
       ),

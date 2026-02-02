@@ -66,8 +66,10 @@ class ProfileViewModel extends ChangeNotifier {
     try {
       final orders = await _apiService.getTotalOrders(token);
       final hours = await _apiService.getLoginHours(token);
+      final localSeconds = await SharedPrefsUtil
+          .getSessionSeconds(); // Get local session seconds
       _totalOrders = orders;
-      _loginHours = hours;
+      _loginHours = hours + (localSeconds / 3600.0);
     } catch (e) {
       debugPrint('Error fetching profile stats: $e');
       // Don't error out the whole profile load just for stats

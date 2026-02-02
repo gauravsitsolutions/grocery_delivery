@@ -34,7 +34,7 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper>
     );
 
     _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0.0, -1.0),
+      begin: const Offset(0.0, 1.0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animationController,
@@ -66,15 +66,20 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper>
     });
 
     if (_isOffline) {
-      // Show Offline Banner immediately (Red)
+      // Show Offline Banner (Red)
       _animationController.forward();
+      // Hide after 3 seconds
       _onlineBannerTimer?.cancel();
+      _onlineBannerTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) {
+          _animationController.reverse();
+        }
+      });
     } else {
-      // Just came back online
-      // Show Online Banner (Green) for a few seconds
+      // Show Online Banner (Green)
       _animationController.forward();
 
-      // Ensure animation stays for a bit, then hide
+      // Hide after 3 seconds
       _onlineBannerTimer?.cancel();
       _onlineBannerTimer = Timer(const Duration(seconds: 3), () {
         if (mounted) {
@@ -97,49 +102,46 @@ class _ConnectionStatusWrapperState extends State<ConnectionStatusWrapper>
     return Stack(
       children: [
         widget.child,
-        SlideTransition(
-          position: _offsetAnimation,
-          child: SafeArea(
-            bottom: false,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _isOffline ? AppColors.error : AppColors.success,
-                  borderRadius: BorderRadius.circular(50),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_isOffline ? AppColors.error : AppColors.success)
-                          .withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _isOffline ? Icons.wifi_off : Icons.wifi,
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: SlideTransition(
+            position: _offsetAnimation,
+            child: Container(
+              margin: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 20,
+                left: 20,
+                right: 20,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: _isOffline ? AppColors.error : AppColors.success,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isOffline ? Icons.wifi_off : Icons.wifi,
+                    color: AppColors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    _isOffline ? 'No Internet Connection' : 'Back Online',
+                    style: const TextStyle(
                       color: AppColors.white,
-                      size: 20,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      _isOffline ? 'No Internet Connection' : 'Back Online',
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
