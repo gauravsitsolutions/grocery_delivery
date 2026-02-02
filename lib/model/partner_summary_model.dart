@@ -48,7 +48,7 @@ class PartnerSummary {
     final data =
         json['data'] != null ? json['data'] as Map<String, dynamic> : json;
 
-    String? status = data['duty_status'];
+    String? status = data['duty_status'] ?? data['dutyStatus'];
     if (status == null) {
       // Infer from isOnline if available
       if (data['isOnline'] == true) {

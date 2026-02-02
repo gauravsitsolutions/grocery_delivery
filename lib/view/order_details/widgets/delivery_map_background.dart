@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-import 'package:samrudhi_delivery_agent_app/view/order_details/painters/delivery_map_painters.dart';
 
 class DeliveryMapBackground extends StatelessWidget {
   const DeliveryMapBackground({super.key});
@@ -8,10 +7,12 @@ class DeliveryMapBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.mapBackground, // Light grey map color
-      child: CustomPaint(
-        painter: MapGridPainter(), // faint dot pattern
-        child: Container(),
+      decoration: const BoxDecoration(
+        color: AppColors.mapBackground,
+        image: DecorationImage(
+          image: AssetImage('assets/images/map_placeholder.png'),
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }

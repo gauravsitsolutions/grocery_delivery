@@ -119,7 +119,7 @@ class _VerificationViewState extends State<VerificationView> {
           initialOrder: widget.order,
         );
         vm.sendDeliveryOtp().then((success) {
-          if (!success && vm.error != null && mounted) {
+          if (!success && vm.error != null && context.mounted) {
             CustomSnackBar.showError(context, vm.error!);
           }
         });

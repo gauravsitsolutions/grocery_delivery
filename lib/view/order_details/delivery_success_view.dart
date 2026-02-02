@@ -149,7 +149,7 @@ class DeliverySuccessView extends StatelessWidget {
                       borderRadius: BorderRadius.vertical(
                           bottom: Radius.circular(R.r(23))),
                       image: const DecorationImage(
-                        image: AssetImage('assets/images/map_pattern.png'),
+                        image: AssetImage('assets/images/map_placeholder.png'),
                         fit: BoxFit.cover,
                         opacity: 0.1,
                       ),

@@ -29,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<Offset> _featuresSlide;
   late Animation<double> _featuresFade;
 
-  bool _showCenterLoader = false;
+  final bool _showCenterLoader = false;
   String _version = '';
 
   @override

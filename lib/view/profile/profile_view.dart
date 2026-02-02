@@ -445,12 +445,6 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Widget _lineChartSection() {
-    // Colors for Dark Theme Graph
-    final Color cardBg = const Color(0xFF1E2329); // Dark Navy
-    final Color ordersColor = const Color(0xFF00F0FF); // Cyan/Neon Blue
-    final Color hoursColor = const Color(0xFFFF00AA); // Magenta/Neon Pink
-    final Color gridColor = Colors.white.withValues(alpha: 0.05);
-
     // Determine Logic based on data availability
     final List<DailyPerformance> displayData =
         _performanceData.isNotEmpty ? _performanceData : [];
@@ -458,30 +452,32 @@ class _ProfileViewState extends State<ProfileView> {
     log('Graph Debug: Data Length: ${displayData.length}');
 
     // Max Y for scale
-    double maxY = 10;
+    double maxY = 5.0; // Default sensible minimum
     if (displayData.isNotEmpty) {
-      final maxOrders = displayData
-          .map((e) => e.totalOrders)
-          .fold(0, (prev, e) => prev > e ? prev : e)
-          .toDouble();
-      final maxHours = displayData
+      final double maxOrders = displayData
+          .map((e) => e.totalOrders.toDouble())
+          .fold(0.0, (prev, e) => prev > e ? prev : e);
+      final double maxHours = displayData
           .map((e) => e.totalHours)
           .fold(0.0, (prev, e) => prev > e ? prev : e);
 
-      // Use the larger of the two maxes for the scale
       final overallMax = maxOrders > maxHours ? maxOrders : maxHours;
-      maxY = (overallMax + 2).ceilToDouble();
+      if (overallMax > 0) {
+        maxY = (overallMax * 1.2).ceilToDouble(); // Add 20% headroom
+        if (maxY < 5) maxY = 5;
+      }
     }
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(R.r(24)),
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -502,12 +498,12 @@ class _ProfileViewState extends State<ProfileView> {
                     style: TextStyle(
                       fontSize: R.sp(18),
                       fontWeight: FontWeight.w700,
-                      color: Colors.white, // White text
+                      color: AppColors.headingText,
                     ),
                   ),
                   GestureDetector(
                     child: Icon(RemixIcons.refresh_line,
-                        color: Colors.white70, size: R.sp(20)),
+                        color: AppColors.primaryGreen, size: R.sp(20)),
                     onTap: () => _fetchPerformanceGraph(),
                   )
                 ],
@@ -518,9 +514,9 @@ class _ProfileViewState extends State<ProfileView> {
                 children: [
                   Row(
                     children: [
-                      _chartLegendItem('Orders', ordersColor),
+                      _chartLegendItem('Orders', AppColors.primaryGreen),
                       SizedBox(width: R.w(12)),
-                      _chartLegendItem('Hours', hoursColor),
+                      _chartLegendItem('Hours', const Color(0xffaa4cfc)),
                     ],
                   ),
                 ],
@@ -547,7 +543,7 @@ class _ProfileViewState extends State<ProfileView> {
                     '${_startDate!.day}/${_startDate!.month} - ${_endDate!.day}/${_endDate!.month}',
                     style: TextStyle(
                       fontSize: R.sp(12),
-                      color: ordersColor,
+                      color: AppColors.primaryGreen,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -574,7 +570,9 @@ class _ProfileViewState extends State<ProfileView> {
                   SizedBox(height: R.h(8)),
                   Text(
                     _graphError!,
-                    style: TextStyle(color: Colors.white70, fontSize: R.sp(13)),
+                    style: TextStyle(
+                        color: AppColors.bodyText.withValues(alpha: 0.7),
+                        fontSize: R.sp(13)),
                   ),
                 ],
               )),
@@ -589,8 +587,9 @@ class _ProfileViewState extends State<ProfileView> {
                       drawVerticalLine: false,
                       horizontalInterval: maxY / 4,
                       getDrawingHorizontalLine: (value) => FlLine(
-                        color: gridColor,
+                        color: AppColors.borderLight,
                         strokeWidth: 1,
+                        dashArray: [5, 5],
                       ),
                     ),
                     titlesData: FlTitlesData(
@@ -611,7 +610,8 @@ class _ProfileViewState extends State<ProfileView> {
                             child: Text(
                               value.toInt().toString(),
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
+                                color:
+                                    AppColors.bodyText.withValues(alpha: 0.6),
                                 fontSize: R.sp(10),
                               ),
                             ),
@@ -635,7 +635,8 @@ class _ProfileViewState extends State<ProfileView> {
                 LineChartData(
                   lineTouchData: LineTouchData(
                     touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => const Color(0xFF2C353F),
+                      getTooltipColor: (_) => Colors.white,
+                      tooltipBorder: BorderSide(color: AppColors.borderLight),
                       getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                         return touchedBarSpots.map((barSpot) {
                           final flSpot = barSpot;
@@ -644,8 +645,8 @@ class _ProfileViewState extends State<ProfileView> {
 
                           return LineTooltipItem(
                             '${item.date}\n',
-                            const TextStyle(
-                              color: Colors.white,
+                            TextStyle(
+                              color: AppColors.headingText,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -655,7 +656,9 @@ class _ProfileViewState extends State<ProfileView> {
                                     ? '${item.totalOrders} Orders'
                                     : '${item.totalHours} Hours',
                                 style: TextStyle(
-                                  color: isOrders ? ordersColor : hoursColor,
+                                  color: isOrders
+                                      ? AppColors.primaryGreen
+                                      : const Color(0xffaa4cfc),
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -672,8 +675,9 @@ class _ProfileViewState extends State<ProfileView> {
                     drawVerticalLine: false,
                     horizontalInterval: maxY / 4,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: gridColor,
+                      color: AppColors.borderLight,
                       strokeWidth: 1,
+                      dashArray: [5, 5],
                     ),
                   ),
                   titlesData: FlTitlesData(
@@ -691,15 +695,15 @@ class _ProfileViewState extends State<ProfileView> {
                           if (index >= 0 && index < displayData.length) {
                             final dateStr = displayData[index].date;
                             final label = dateStr.length > 3
-                                ? dateStr.substring(0, 3)
-                                : dateStr;
+                                ? dateStr.substring(0, 3).toUpperCase()
+                                : dateStr.toUpperCase();
                             return SideTitleWidget(
                               meta: meta,
                               space: 8,
                               child: Text(
                                 label,
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.5),
+                                  color: AppColors.bodyText,
                                   fontWeight: FontWeight.w600,
                                   fontSize: R.sp(10),
                                 ),
@@ -719,7 +723,7 @@ class _ProfileViewState extends State<ProfileView> {
                           child: Text(
                             value.toInt().toString(),
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.5),
+                              color: AppColors.bodyText.withValues(alpha: 0.6),
                               fontSize: R.sp(10),
                             ),
                           ),
@@ -740,24 +744,62 @@ class _ProfileViewState extends State<ProfileView> {
                         return FlSpot(
                             e.key.toDouble(), e.value.totalOrders.toDouble());
                       }).toList(),
-                      isCurved: true,
-                      color: ordersColor,
-                      barWidth: 6, // Thicker line
+                      isCurved: false,
+                      color: AppColors.primaryGreen,
+                      barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(show: false),
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                          radius: 4,
+                          color: Colors.white,
+                          strokeWidth: 2,
+                          strokeColor: AppColors.primaryGreen,
+                        ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primaryGreen.withValues(alpha: 0.2),
+                            AppColors.primaryGreen.withValues(alpha: 0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
                     ),
                     // Hours Line (Magenta)
                     LineChartBarData(
                       spots: displayData.asMap().entries.map((e) {
                         return FlSpot(e.key.toDouble(), e.value.totalHours);
                       }).toList(),
-                      isCurved: true,
-                      color: hoursColor, // Pink
-                      barWidth: 6, // Thicker line
+                      isCurved: false,
+                      color: const Color(0xffaa4cfc),
+                      barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(show: false),
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                          radius: 4,
+                          color: Colors.white,
+                          strokeWidth: 2,
+                          strokeColor: const Color(0xffaa4cfc),
+                        ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xffaa4cfc).withValues(alpha: 0.2),
+                            const Color(0xffaa4cfc).withValues(alpha: 0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -785,7 +827,7 @@ class _ProfileViewState extends State<ProfileView> {
           style: TextStyle(
             fontSize: R.sp(12),
             fontWeight: FontWeight.w600,
-            color: Colors.white70, // White text
+            color: AppColors.bodyText,
           ),
         ),
       ],
@@ -795,7 +837,7 @@ class _ProfileViewState extends State<ProfileView> {
   Widget _filterChip(String label, String value) {
     bool isSelected = _selectedFilter == value;
     // Matching the gradient/neon look slightly
-    final Color activeColor = const Color(0xFF00F0FF); // Cyan
+    final Color activeColor = AppColors.primaryGreen;
     return GestureDetector(
       onTap: () => _onFilterChanged(value),
       child: AnimatedContainer(
@@ -803,12 +845,12 @@ class _ProfileViewState extends State<ProfileView> {
         padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(8)),
         decoration: BoxDecoration(
           color: isSelected
-              ? activeColor.withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.05),
+              ? activeColor.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(R.r(20)),
           border: Border.all(
             color:
-                isSelected ? activeColor : Colors.white.withValues(alpha: 0.1),
+                isSelected ? activeColor : Colors.black.withValues(alpha: 0.1),
           ),
         ),
         child: Text(
@@ -816,7 +858,7 @@ class _ProfileViewState extends State<ProfileView> {
           style: TextStyle(
             fontSize: R.sp(12),
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-            color: isSelected ? activeColor : Colors.white70,
+            color: isSelected ? activeColor : AppColors.bodyText,
           ),
         ),
       ),

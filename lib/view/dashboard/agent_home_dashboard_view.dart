@@ -64,6 +64,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   Timer? _dutyTimer;
 
   bool _isTimerPaused = false;
+  DateTime? _lastToggleTimestamp;
   Timer? _dataRefreshTimer;
 
   // Pagination State
@@ -95,7 +96,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     _initDashboard();
     // Initialize timer state based on initial props
     if (widget.isOnline) {
-      if (widget.dutyStatus == 'paused') {
+      if (widget.dutyStatus?.toLowerCase() == 'paused') {
         _isTimerPaused = true;
         // Don't start timer ticking if paused
       } else {
@@ -110,7 +111,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     super.didUpdateWidget(oldWidget);
     if (widget.isOnline != oldWidget.isOnline) {
       if (widget.isOnline) {
-        if (widget.dutyStatus == 'paused') {
+        if (widget.dutyStatus?.toLowerCase() == 'paused') {
           _isTimerPaused = true;
         } else {
           _isTimerPaused = false;
@@ -185,6 +186,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         if (mounted) {
           setState(() {
             _isTimerPaused = false;
+            _lastToggleTimestamp = DateTime.now();
           });
           CustomSnackBar.showSuccess(context, 'Duty Resumed');
           // Optionally notify parent if needed, but we manage pause locally mostly
@@ -196,6 +198,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         if (mounted) {
           setState(() {
             _isTimerPaused = true;
+            _lastToggleTimestamp = DateTime.now();
           });
           CustomSnackBar.showSuccess(context, 'Duty Paused');
         }
@@ -289,13 +292,19 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             _partnerSummary = summary;
 
             // Sync local pause state with server status
-            if (summary.dutyStatus == 'paused') {
-              _isTimerPaused = true;
-            } else if (summary.dutyStatus == 'online') {
-              // Only auto-resume if we were paused locally but server says online
-              // This handles cases where resume happened elsewhere or we were out of sync
-              if (_isTimerPaused) {
-                _isTimerPaused = false;
+            // Skip sync if we recently toggled (within 10 seconds) to avoid flicker from stale data
+            final bool recentlyToggled = _lastToggleTimestamp != null &&
+                DateTime.now().difference(_lastToggleTimestamp!).inSeconds < 10;
+
+            if (!recentlyToggled) {
+              final status = summary.dutyStatus?.toLowerCase();
+              if (status == 'paused') {
+                _isTimerPaused = true;
+              } else if (status == 'online' || status == 'active') {
+                // Only auto-resume if we were paused locally but server explicitly says online/active
+                if (_isTimerPaused) {
+                  _isTimerPaused = false;
+                }
               }
             }
 
@@ -1405,7 +1414,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                 ),
                               ),
                             ),
-                            if (widget.dutyStatus == 'paused')
+                            if (widget.dutyStatus?.toLowerCase() == 'paused')
                               GestureDetector(
                                   onTap: () async {
                                     try {
@@ -1416,6 +1425,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                       if (!mounted) return;
                                       setState(() {
                                         _isTimerPaused = false;
+                                        _lastToggleTimestamp = DateTime.now();
                                       });
                                       widget.onStatusChanged(true);
                                     } catch (e) {
@@ -1458,15 +1468,22 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   )
                 else
                   AbsorbPointer(
-                    absorbing: !isOnline,
+                    absorbing:
+                        !isOnline && _myOrders.isEmpty && _currentOrder == null,
                     child: ColorFiltered(
-                      colorFilter: isOnline
+                      colorFilter: isOnline ||
+                              _myOrders.isNotEmpty ||
+                              _currentOrder != null
                           ? const ColorFilter.mode(
                               Colors.transparent, BlendMode.dst)
                           : const ColorFilter.mode(
                               AppColors.grey, BlendMode.saturation),
                       child: Opacity(
-                        opacity: isOnline ? 1.0 : 0.8,
+                        opacity: isOnline ||
+                                _myOrders.isNotEmpty ||
+                                _currentOrder != null
+                            ? 1.0
+                            : 0.8,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

@@ -20,8 +20,9 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
   String? _error;
   List<DailyDutyLog> _logs = [];
   List<DailyPerformance> _graphData = []; // Graph Data
-  DateTime _startDate = DateTime.now().subtract(Duration(
-      days: DateTime.now().weekday - 1)); // Start of current week (Monday)
+  DateTime _startDate =
+      DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)
+          .subtract(Duration(days: DateTime.now().weekday - 1)); // Mon 00:00:00
 
   @override
   void initState() {
@@ -97,8 +98,11 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
     for (var item in _graphData) {
       if (item.date.isEmpty) continue;
       try {
-        final itemDate = DateTime.parse(item.date);
+        final parsedDate = DateTime.parse(item.date);
+        final itemDate =
+            DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
         final diff = itemDate.difference(_startDate).inDays;
+
         if (diff >= 0 && diff <= 6) {
           spots.add(FlSpot(diff.toDouble(), item.totalOrders.toDouble()));
           hoursSpots.add(FlSpot(diff.toDouble(), item.totalHours.toDouble()));
@@ -121,11 +125,11 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
       margin: EdgeInsets.all(R.w(16)),
       padding: EdgeInsets.fromLTRB(R.w(16), R.h(24), R.w(16), R.h(10)),
       decoration: BoxDecoration(
-        color: const Color(0xff232d37),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(R.r(16)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -144,16 +148,14 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
                   style: TextStyle(
                     fontSize: R.sp(16),
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.headingText,
                   ),
                 ),
                 Row(
                   children: [
-                    _chartLegend('Orders', const Color(0xff4af699),
-                        isDark: true),
+                    _chartLegend('Orders', AppColors.primaryGreen),
                     SizedBox(width: R.w(12)),
-                    _chartLegend('Hours', const Color(0xffaa4cfc),
-                        isDark: true),
+                    _chartLegend('Hours', const Color(0xffaa4cfc)),
                   ],
                 ),
               ],
@@ -169,8 +171,9 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
                   drawVerticalLine: false,
                   horizontalInterval: maxVal / 4,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: const Color(0xff37434d),
+                    color: AppColors.borderLight,
                     strokeWidth: 1,
+                    dashArray: [5, 5],
                   ),
                 ),
                 titlesData: FlTitlesData(
@@ -193,10 +196,11 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
                         return SideTitleWidget(
                           meta: meta,
                           child: Text(
-                            DateFormat('E').format(dayDate)[0], // M, T, W...
+                            DateFormat('E').format(dayDate).toUpperCase(),
                             style: TextStyle(
-                              color: const Color(0xff68737d),
-                              fontSize: R.sp(12),
+                              color: AppColors.bodyText,
+                              fontSize: R.sp(11),
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         );
@@ -213,7 +217,7 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
                         return Text(
                           value.toInt().toString(),
                           style: TextStyle(
-                            color: const Color(0xff67727d),
+                            color: AppColors.bodyText.withValues(alpha: 0.6),
                             fontSize: R.sp(10),
                           ),
                         );
@@ -225,22 +229,31 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
                 minX: 0,
                 maxX: 6,
                 minY: 0,
-                maxY: maxVal * 1.2, // Add some headroom
+                maxY: maxVal * 1.2,
                 lineBarsData: [
                   // Orders Line
                   LineChartBarData(
                     spots: spots,
-                    isCurved: true,
-                    color: const Color(0xff4af699),
-                    barWidth: 4,
+                    isCurved: false,
+                    color: AppColors.primaryGreen,
+                    barWidth: 3,
                     isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
+                        radius: 4,
+                        color: Colors.white,
+                        strokeWidth: 2,
+                        strokeColor: AppColors.primaryGreen,
+                      ),
+                    ),
                     belowBarData: BarAreaData(
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xff4af699).withValues(alpha: 0.3),
-                          const Color(0xff4af699).withValues(alpha: 0.0),
+                          AppColors.primaryGreen.withValues(alpha: 0.2),
+                          AppColors.primaryGreen.withValues(alpha: 0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -250,16 +263,25 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
                   // Hours Line
                   LineChartBarData(
                     spots: hoursSpots,
-                    isCurved: true,
+                    isCurved: false,
                     color: const Color(0xffaa4cfc),
-                    barWidth: 4,
+                    barWidth: 3,
                     isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
+                        radius: 4,
+                        color: Colors.white,
+                        strokeWidth: 2,
+                        strokeColor: const Color(0xffaa4cfc),
+                      ),
+                    ),
                     belowBarData: BarAreaData(
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xffaa4cfc).withValues(alpha: 0.3),
+                          const Color(0xffaa4cfc).withValues(alpha: 0.2),
                           const Color(0xffaa4cfc).withValues(alpha: 0.0),
                         ],
                         begin: Alignment.topCenter,
@@ -271,14 +293,28 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
                 lineTouchData: LineTouchData(
                   handleBuiltInTouches: true,
                   touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (_) =>
-                        Colors.blueGrey.withValues(alpha: 0.8),
+                    getTooltipColor: (_) => Colors.white,
+                    tooltipBorder: BorderSide(color: AppColors.borderLight),
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
                         return LineTooltipItem(
-                          '${spot.y.toInt()} Orders',
-                          const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
+                          '${spot.y.toInt()}',
+                          TextStyle(
+                            color: spot.barIndex == 0
+                                ? AppColors.primaryGreen
+                                : const Color(0xffaa4cfc),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: spot.barIndex == 0 ? ' Orders' : ' Hours',
+                              style: TextStyle(
+                                color: AppColors.headingText,
+                                fontWeight: FontWeight.normal,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         );
                       }).toList();
                     },
