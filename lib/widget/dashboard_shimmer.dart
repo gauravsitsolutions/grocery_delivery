@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 
 class DashboardShimmer extends StatelessWidget {
   final bool hasOrders;
@@ -116,15 +117,70 @@ class DashboardContentShimmer extends StatelessWidget {
   }
 
   Widget _shimmerMilestoneCard() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: Container(
-        width: double.infinity,
-        height: R.h(160), // Matched to ~156
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(R.r(24)), // Matched
+    return Container(
+      width: double.infinity,
+      height: R.h(160),
+      padding: EdgeInsets.all(R.w(20)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(R.r(24)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Row (Goal Label + Badge)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(width: R.w(80), height: R.h(12), color: Colors.white),
+                Container(
+                    width: R.w(70),
+                    height: R.h(20),
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(R.r(20)))),
+              ],
+            ),
+            SizedBox(height: R.h(12)),
+            // Big Counter Row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(width: R.w(60), height: R.h(32), color: Colors.white),
+                SizedBox(width: R.w(8)),
+                Container(
+                    width: R.w(120), height: R.h(14), color: Colors.white),
+              ],
+            ),
+            SizedBox(height: R.h(16)),
+            // Progress Bar
+            Container(
+                width: double.infinity,
+                height: R.h(10),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(R.r(10)))),
+            SizedBox(height: R.h(12)),
+            // Bottom Row (Remaining + %)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                    width: R.w(150), height: R.h(12), color: Colors.white),
+                Container(width: R.w(30), height: R.h(12), color: Colors.white),
+              ],
+            )
+          ],
         ),
       ),
     );
