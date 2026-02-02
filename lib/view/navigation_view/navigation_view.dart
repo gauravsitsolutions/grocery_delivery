@@ -109,7 +109,7 @@ class NavigationView extends StatelessWidget {
                     totalAmount: order?.totalAmount ?? '0',
                     paymentMethod: order?.paymentMethod ?? 'COD',
                   ),
-                  SizedBox(height: R.h(40)),
+                  SizedBox(height: R.h(20)),
                 ],
               ),
             ),
@@ -117,7 +117,7 @@ class NavigationView extends StatelessWidget {
 
           // ================= BOTTOM BUTTON =================
           Container(
-            padding: EdgeInsets.fromLTRB(R.w(20), R.h(10), R.w(20), R.h(16)),
+            padding: EdgeInsets.fromLTRB(R.w(20), R.h(8), R.w(20), R.h(8)),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -129,9 +129,10 @@ class NavigationView extends StatelessWidget {
               ],
             ),
             child: SafeArea(
+              top: false,
               child: SizedBox(
                 width: double.infinity,
-                height: R.h(55),
+                height: R.h(50),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pushReplacement(

@@ -8,6 +8,7 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class CustomerInfoView extends StatefulWidget {
@@ -311,8 +312,9 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(R.r(32)),
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=900',
+                child: CustomNetworkImage(
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80\u0026w=2066\u0026auto=format\u0026fit=crop',
                   height: R.h(220),
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -328,52 +330,6 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                       color: AppColors.primaryGreen,
                       size: R.sp(24),
                     ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: R.h(16),
-                left: R.w(16),
-                right: R.w(16),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (address != null) {
-                      final query = Uri.encodeComponent(
-                          "${address.addressLine1}, ${address.city}, ${address.postcode}");
-                      final googleMapsUrl =
-                          Uri.parse("google.navigation:q=$query");
-                      final appleMapsUrl =
-                          Uri.parse("https://maps.apple.com/?q=$query");
-
-                      if (await canLaunchUrl(googleMapsUrl)) {
-                        await launchUrl(googleMapsUrl);
-                      } else if (await canLaunchUrl(appleMapsUrl)) {
-                        await launchUrl(appleMapsUrl);
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black.withValues(alpha: 0.8),
-                    foregroundColor: Colors.white,
-                    minimumSize: Size(double.infinity, R.h(50)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(R.r(25)),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(RemixIcons.direction_fill, size: R.sp(18)),
-                      SizedBox(width: R.w(8)),
-                      Text(
-                        'Navigate to Drop-off',
-                        style: TextStyle(
-                          fontSize: R.sp(14),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),

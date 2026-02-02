@@ -1209,6 +1209,52 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 ),
               ),
               SizedBox(height: R.h(16)),
+
+              // 3. Navigate Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    PersistentNavBarNavigator.pushNewScreen(
+                      context,
+                      screen: PickupTaskView(
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        order: order,
+                      ),
+                      withNavBar: false,
+                      pageTransitionAnimation:
+                          PageTransitionAnimation.cupertino,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    padding: EdgeInsets.symmetric(vertical: R.h(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(R.r(14)),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        order.status == 'in_progress'
+                            ? 'Navigate to Dropoff'
+                            : 'Navigate to Pickup',
+                        style: TextStyle(
+                          fontSize: R.sp(16),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.white,
+                        ),
+                      ),
+                      SizedBox(width: R.w(8)),
+                      Icon(RemixIcons.navigation_fill,
+                          size: R.sp(18), color: AppColors.white),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -1498,221 +1544,177 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           ),
                         ],
 
-                        // New Order Request (Always visible if Online)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _sectionHeader(
-                              title: 'New Order Request',
-                              count: null,
-                              action: _newRequests.length > 1
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        // Add View All logic for new requests here
-                                      },
-                                      child: Text(
-                                        'View All',
-                                        style: TextStyle(
-                                          fontSize: R.sp(14),
-                                          color: AppColors.primaryGreen,
-                                          fontWeight: FontWeight.w600,
+                        // New Order Request
+                        if (_newRequests.isNotEmpty) ...[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _sectionHeader(
+                                title: 'New Order Request',
+                                count: null,
+                                action: _newRequests.length > 1
+                                    ? GestureDetector(
+                                        onTap: () {
+                                          // Add View All logic for new requests here
+                                        },
+                                        child: Text(
+                                          'View All',
+                                          style: TextStyle(
+                                            fontSize: R.sp(14),
+                                            color: AppColors.primaryGreen,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            SizedBox(height: R.h(12)),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 300),
-                              transitionBuilder: (child, animation) {
-                                return FadeTransition(
-                                  opacity: animation,
-                                  child: SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(0.0, 0.05),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: child,
-                                  ),
+                                      )
+                                    : null,
+                              ),
+                              SizedBox(height: R.h(12)),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                transitionBuilder: (child, animation) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(0.0, 0.05),
+                                        end: Offset.zero,
+                                      ).animate(animation),
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: _isLoading
+                                    ? const OrderShimmer()
+                                    : _error != null
+                                        ? Center(
+                                            key: const ValueKey('error'),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(_error!,
+                                                    style: const TextStyle(
+                                                        color:
+                                                            AppColors.error)),
+                                                SizedBox(height: R.h(16)),
+                                                CustomRetryButton(
+                                                  onTap: () => _fetchOrders(
+                                                      refresh: true),
+                                                  isLoading: _isLoading,
+                                                ),
+                                              ],
+                                            ))
+                                        : Column(
+                                            children: _newRequests
+                                                .where((order) =>
+                                                    !_removingOrderIds
+                                                        .contains(order.id))
+                                                .map((order) {
+                                              // Calculate remaining time
+                                              final now = DateTime.now();
+                                              final difference = now
+                                                  .difference(order.createdAt);
+                                              final remaining =
+                                                  60 - difference.inSeconds;
+                                              final countdown =
+                                                  remaining > 0 ? remaining : 0;
+
+                                              return NewRequestCard(
+                                                order: order,
+                                                countdownSeconds: countdown,
+                                                onAccept: () =>
+                                                    _acceptOrder(order.id),
+                                                onDecline: () =>
+                                                    _rejectOrder(order.id),
+                                              );
+                                            }).toList(),
+                                          ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: R.h(24)),
+                        ],
+
+                        // Nearby Available
+                        if (_availableOrders.isNotEmpty) ...[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _sectionHeader(
+                                title: 'Nearby Available',
+                                icon: RemixIcons.compass_3_fill,
+                                iconColor: const Color(0xFFFF8A65), // Orange
+                                count: _availableOrders.length,
+                                action: _availableOrders.length > 2
+                                    ? GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _isAvailableExpanded =
+                                                !_isAvailableExpanded;
+                                          });
+                                        },
+                                        child: Text(
+                                          _isAvailableExpanded
+                                              ? 'View Less'
+                                              : 'View All',
+                                          style: TextStyle(
+                                            fontSize: R.sp(14),
+                                            color: AppColors.primaryGreen,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              SizedBox(height: R.h(12)),
+                              Builder(builder: (context) {
+                                final ordersToShow = (_isAvailableExpanded
+                                        ? _availableOrders
+                                        : _availableOrders.take(2))
+                                    .where((order) =>
+                                        !_removingOrderIds.contains(order.id))
+                                    .toList();
+                                return Column(
+                                  children: ordersToShow
+                                      .map(
+                                          (order) => _availableOrderItem(order))
+                                      .toList(),
                                 );
-                              },
-                              child: _isLoading
-                                  ? const OrderShimmer()
-                                  : _error != null
-                                      ? Center(
-                                          key: const ValueKey('error'),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(_error!,
-                                                  style: const TextStyle(
-                                                      color: AppColors.error)),
-                                              SizedBox(height: R.h(16)),
-                                              CustomRetryButton(
-                                                onTap: () =>
-                                                    _fetchOrders(refresh: true),
-                                                isLoading: _isLoading,
-                                              ),
-                                            ],
-                                          ))
-                                      : _newRequests.isEmpty
-                                          ? Container(
-                                              key: const ValueKey('empty'),
-                                              width: double.infinity,
-                                              padding: EdgeInsets.symmetric(
-                                                  vertical: R.h(20)),
-                                              alignment: Alignment.center,
-                                              child: const Text('No new orders',
-                                                  style: TextStyle(
-                                                      color:
-                                                          AppColors.bodyText)))
-                                          : Column(
-                                              children: _newRequests
-                                                  .where((order) =>
-                                                      !_removingOrderIds
-                                                          .contains(order.id))
-                                                  .map((order) {
-                                                // Calculate remaining time
-                                                final now = DateTime.now();
-                                                final difference =
-                                                    now.difference(
-                                                        order.createdAt);
-                                                final remaining =
-                                                    60 - difference.inSeconds;
-                                                final countdown = remaining > 0
-                                                    ? remaining
-                                                    : 0;
-
-                                                return NewRequestCard(
-                                                  order: order,
-                                                  countdownSeconds: countdown,
-                                                  onAccept: () =>
-                                                      _acceptOrder(order.id),
-                                                  onDecline: () =>
-                                                      _rejectOrder(order.id),
-                                                );
-                                              }).toList(),
-                                            ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: R.h(24)),
-
-                        // Available Orders (Always visible if Online)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _sectionHeader(
-                              title: 'Nearby Available',
-                              icon: RemixIcons.compass_3_fill,
-                              iconColor: const Color(0xFFFF8A65), // Orange
-                              count: _availableOrders.length,
-                              action: _availableOrders.length > 2
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _isAvailableExpanded =
-                                              !_isAvailableExpanded;
-                                        });
-                                      },
-                                      child: Text(
-                                        _isAvailableExpanded
-                                            ? 'View Less'
-                                            : 'View All',
-                                        style: TextStyle(
-                                          fontSize: R.sp(14),
-                                          color: AppColors.primaryGreen,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            SizedBox(height: R.h(12)),
-                            // ... logic for available list or mock
-                            Builder(builder: (context) {
-                              if (_availableOrders.isEmpty) {
-                                return Container(
-                                    width: double.infinity,
-                                    padding:
-                                        EdgeInsets.symmetric(vertical: R.h(20)),
-                                    alignment: Alignment.center,
-                                    child: const Text(
-                                        'No other available orders',
-                                        style: TextStyle(
-                                            color: AppColors.bodyText)));
-                              }
-                              final ordersToShow = (_isAvailableExpanded
-                                      ? _availableOrders
-                                      : _availableOrders.take(2))
-                                  .where((order) =>
-                                      !_removingOrderIds.contains(order.id))
-                                  .toList();
-                              return Column(
-                                children: ordersToShow
-                                    .map((order) => _availableOrderItem(order))
-                                    .toList(),
-                              );
-                            }),
-                            if (_hasMoreAvailable && _isAvailableExpanded)
-                              Padding(
-                                padding: EdgeInsets.only(top: R.h(8)),
-                                child: Center(
-                                  child: TextButton(
-                                    onPressed: _isAvailableLoadingMore
-                                        ? null
-                                        : _loadMoreAvailableOrders,
-                                    child: _isAvailableLoadingMore
-                                        ? SizedBox(
-                                            width: R.w(20),
-                                            height: R.w(20),
-                                            child:
-                                                const CircularProgressIndicator(
-                                                    strokeWidth: 2),
-                                          )
-                                        : const Text('Load More'),
+                              }),
+                              if (_hasMoreAvailable && _isAvailableExpanded)
+                                Padding(
+                                  padding: EdgeInsets.only(top: R.h(8)),
+                                  child: Center(
+                                    child: TextButton(
+                                      onPressed: _isAvailableLoadingMore
+                                          ? null
+                                          : _loadMoreAvailableOrders,
+                                      child: _isAvailableLoadingMore
+                                          ? SizedBox(
+                                              width: R.w(20),
+                                              height: R.w(20),
+                                              child:
+                                                  const CircularProgressIndicator(
+                                                      strokeWidth: 2),
+                                            )
+                                          : const Text('Load More'),
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
+                          SizedBox(height: R.h(24)),
+                        ],
+                        SizedBox(height: R.h(32)),
+                        PerformanceStatsRow(
+                          pending: _pendingOrders > 0
+                              ? _pendingOrders
+                              : _myOrders.length,
+                          completed: _completedDeliveries,
+                          cancelled: _cancelledOrders,
+                          loginHours: _serverLoginHours +
+                              (_localSessionSeconds / 3600.0),
                         ),
                         SizedBox(height: R.h(40)),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: R.w(8),
-                              height: R.w(8),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF00E676),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            SizedBox(width: R.w(10)),
-                            Text(
-                              'Waiting for more orders...',
-                              style: TextStyle(
-                                fontSize: R.sp(15),
-                                fontWeight: FontWeight.w600,
-                                color:
-                                    AppColors.bodyText.withValues(alpha: 0.4),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        if (isOnline) ...[
-                          SizedBox(height: R.h(24)),
-                          PerformanceStatsRow(
-                            pending: _pendingOrders > 0
-                                ? _pendingOrders
-                                : _myOrders.length, // Fallback to queue length
-                            completed: _completedDeliveries,
-                            cancelled: _cancelledOrders,
-                            loginHours: _serverLoginHours +
-                                (_localSessionSeconds / 3600.0),
-                          ),
-                        ],
                       ],
                     ),
                   ),
