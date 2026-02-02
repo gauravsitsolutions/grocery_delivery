@@ -16,27 +16,12 @@ class DashboardShimmer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _shimmerDutyStatusCard(),
-        SizedBox(height: R.h(16)),
         DashboardContentShimmer(hasOrders: hasOrders),
       ],
     );
   }
 
-  Widget _shimmerDutyStatusCard() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: R.w(4), vertical: R.h(4)),
-        height: R.h(60),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(R.r(16)),
-        ),
-      ),
-    );
-  }
+  // ... _shimmerDutyStatusCard implementation remains unused or can be deleted ...
 }
 
 class DashboardContentShimmer extends StatelessWidget {
@@ -54,27 +39,56 @@ class DashboardContentShimmer extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Match WeeklyMilestoneCard
-          _shimmerMilestoneCard(),
-          SizedBox(height: R.h(40)),
-          // Match WaitingForOrders pulse/ripple circle
-          Center(
-            child: Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
-              child: Container(
-                width: R.w(180),
-                height: R.w(180),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+          // Match Info Banner which appears in Waiting State
+          _shimmerInfoBanner(),
+          SizedBox(height: R.h(16)), // Margin of banner
+
+          Padding(
+            padding: EdgeInsets.only(top: R.h(8)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Match WeeklyMilestoneCard
+                _shimmerMilestoneCard(),
+                SizedBox(height: R.h(40)),
+                // Match WaitingForOrders pulse/ripple circle
+                // Match WaitingForOrders widget
+                Center(
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: R.w(90),
+                          height: R.w(90),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        SizedBox(height: R.h(30)),
+                        Container(
+                            width: R.w(220),
+                            height: R.h(24),
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(R.r(4)))),
+                        SizedBox(height: R.h(8)),
+                        Container(
+                            width: R.w(180),
+                            height: R.h(14),
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(R.r(4)))),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                SizedBox(height: R.h(40)),
+              ],
             ),
           ),
-          SizedBox(height: R.h(40)),
-          _shimmerStatsRow(),
-          SizedBox(height: R.h(40)),
         ],
       );
     }
@@ -107,10 +121,25 @@ class DashboardContentShimmer extends StatelessWidget {
       highlightColor: Colors.grey[100]!,
       child: Container(
         width: double.infinity,
-        height: R.h(180),
+        height: R.h(160), // Matched to ~156
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(R.r(32)),
+          borderRadius: BorderRadius.circular(R.r(24)), // Matched
+        ),
+      ),
+    );
+  }
+
+  Widget _shimmerInfoBanner() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        width: double.infinity,
+        height: R.h(80),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(R.r(12)),
         ),
       ),
     );
