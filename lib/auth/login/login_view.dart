@@ -68,7 +68,7 @@ class _LoginViewState extends State<LoginView> {
           (currentMethod == LoginMethod.otp &&
               viewModel.isOtpSent &&
               result['message'] != 'OTP sent successfully')) {
-        await Future.delayed(const Duration(seconds: 1));
+        // await Future.delayed(const Duration(seconds: 1)); // REMOVED DELAY
         if (!context.mounted) return;
         Navigator.pushNamedAndRemoveUntil(
             context, AppRoutes.bottomNav, (route) => false);

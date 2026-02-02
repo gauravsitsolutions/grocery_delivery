@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
+      duration: const Duration(seconds: 2), // Reduced from 4s
     );
 
     // Logo hover
@@ -70,6 +70,14 @@ class _SplashScreenState extends State<SplashScreen>
     });
 
     _controller.forward();
+    _checkSession(); // Start checking session immediately
+  }
+
+  String? _savedToken;
+
+  Future<void> _checkSession() async {
+    _savedToken = await SharedPrefsUtil.getToken();
+    debugPrint('Splash: Saved Token found: $_savedToken');
   }
 
   Future<void> _getAppVersion() async {
@@ -100,16 +108,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _onAnimationCompleted() async {
-    // Show centered loader
-    if (mounted) {
-      setState(() {
-        _showCenterLoader = true;
-      });
-    }
-
-    // Keep loader for few seconds
-    await Future.delayed(const Duration(seconds: 2));
-
     if (!mounted) return;
 
     // RESTORE STATUS BAR EXPLICITLY
@@ -123,14 +121,7 @@ class _SplashScreenState extends State<SplashScreen>
       statusBarIconBrightness: Brightness.dark,
     ));
 
-    // Check for saved session
-    final token = await SharedPrefsUtil.getToken();
-
-    debugPrint('Splash: Saved Token found: $token');
-
-    if (!mounted) return;
-
-    if (token != null && token.isNotEmpty) {
+    if (_savedToken != null && _savedToken!.isNotEmpty) {
       debugPrint('Splash: Navigating to Dashboard (Session Valid)');
       Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
     } else {

@@ -114,7 +114,7 @@ class NavigationView extends StatelessWidget {
 
           // ================= BOTTOM BUTTON =================
           Container(
-            padding: EdgeInsets.fromLTRB(R.w(20), R.h(16), R.w(20), R.h(32)),
+            padding: EdgeInsets.fromLTRB(R.w(20), R.h(16), R.w(20), 0),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -125,42 +125,50 @@ class NavigationView extends StatelessWidget {
                 ),
               ],
             ),
-            child: SizedBox(
-              width: double.infinity,
-              height: R.h(64),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => VerificationView(
-                        order: order,
-                        orderId: order?.id,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                width: double.infinity,
+                height: R.h(64),
+                margin: EdgeInsets.only(
+                    bottom: R.h(16)), // Add proper bottom margin
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VerificationView(
+                          order: order,
+                          orderId: order?.id,
+                        ),
                       ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00FF85),
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(R.w(32)),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00FF85),
-                  foregroundColor: Colors.black,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(R.w(32)),
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle, size: R.sp(20)),
-                    SizedBox(width: R.w(12)),
-                    Text(
-                      'Mark as Arrived',
-                      style: TextStyle(
-                        fontSize: R.sp(18),
-                        fontWeight: FontWeight.w800,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle, size: R.sp(20)),
+                      SizedBox(width: R.w(12)),
+                      Flexible(
+                        child: Text(
+                          'Mark as Arrived',
+                          style: TextStyle(
+                            fontSize: R.sp(18),
+                            fontWeight: FontWeight.w800,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

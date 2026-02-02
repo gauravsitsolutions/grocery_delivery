@@ -71,13 +71,16 @@ class PaymentCollectionCard extends StatelessWidget {
             children: [
               Icon(Icons.payments, color: Colors.green[700], size: R.sp(16)),
               SizedBox(width: R.w(8)),
-              Text(
-                isCOD ? 'CASH ON DELIVERY REQUIRED' : 'PAYMENT ALREADY MADE',
-                style: TextStyle(
-                  fontSize: R.sp(12),
-                  fontWeight: FontWeight.w800,
-                  color: Colors.green[700],
-                  letterSpacing: 0.5,
+              Flexible(
+                child: Text(
+                  isCOD ? 'CASH ON DELIVERY REQUIRED' : 'PAYMENT ALREADY MADE',
+                  style: TextStyle(
+                    fontSize: R.sp(12),
+                    fontWeight: FontWeight.w800,
+                    color: Colors.green[700],
+                    letterSpacing: 0.5,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

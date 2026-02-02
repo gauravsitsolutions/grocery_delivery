@@ -853,6 +853,7 @@ class ApiService {
           headers: await _getHeaders(token),
           body: jsonEncode({
             'otp': otp,
+            'type': 'delivery',
           }),
         ));
 

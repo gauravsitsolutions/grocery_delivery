@@ -68,7 +68,7 @@ class PerformanceStatsRow extends StatelessWidget {
                         Text(
                           '$completed',
                           style: TextStyle(
-                            fontSize: R.sp(36),
+                            fontSize: R.sp(28), // Reduced from 36
                             fontWeight: FontWeight.w800,
                             color: AppColors.headingText,
                           ),
@@ -133,12 +133,15 @@ class PerformanceStatsRow extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          '${loginHours.toStringAsFixed(1)}h', // Show login hours
-                          style: TextStyle(
-                            fontSize: R.sp(36),
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.headingText,
+                        Flexible(
+                          child: Text(
+                            '${loginHours.toStringAsFixed(1)}h', // Show login hours
+                            style: TextStyle(
+                              fontSize: R.sp(28), // Reduced from 36
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.headingText,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         // The design has a large green circle button thing.
