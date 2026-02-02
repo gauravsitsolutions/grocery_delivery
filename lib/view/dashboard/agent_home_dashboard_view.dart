@@ -19,7 +19,6 @@ import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
-import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/widget/dashboard_shimmer.dart';
 import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
@@ -34,7 +33,6 @@ import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_s
 import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/duty_status_card.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
-import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/dashboard_issue_card.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -61,8 +59,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   List<Order> _myOrders = []; // Full list of accepted orders
   Order? _currentOrder; // The first one in the queue
   bool _isLoading = true;
-
-  String? _error;
 
   // Timer State
   Timer? _dutyTimer;
@@ -258,7 +254,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       // Handle no token? Login screen?
       if (mounted) {
         setState(() {
-          _error = 'User not authenticated';
+          // Auth check failed
           _isLoading = false;
         });
       }
@@ -324,7 +320,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     if (refresh) {
       setState(() {
         _isLoading = true;
-        _error = null;
+        // Refresh start
       });
     }
 
@@ -334,7 +330,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       if (token == null) {
         if (mounted) {
           setState(() {
-            _error = 'User not authenticated';
+            // Auth check failed
             _isLoading = false;
           });
         }
@@ -445,7 +441,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   _myOrders.isEmpty &&
                   _newRequests.isEmpty)) {
             setState(() {
-              _error = e.toString();
+              // Error occurred
               _isLoading = false;
             });
           } else {
@@ -1293,8 +1289,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       _availableOrders.isEmpty &&
       _myOrders.isEmpty &&
       _currentOrder == null &&
-      !_isLoading &&
-      widget.isOnline;
+      !_isLoading;
 
   Widget _buildInfoBanner() {
     return Container(
@@ -1370,274 +1365,206 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _dashboardHeader(isOnline),
-              // NEW: Info Banner only when waiting
+              // Show Info Banner if waiting OR offline
               if (_isWaiting && !_isLoading) _buildInfoBanner(),
 
               if (_isLoading)
-                const DashboardContentShimmer()
-              else
-              // ... Rest of the method logic for paused timer ...
-              if (widget.isOnline && _isTimerPaused)
-                Padding(
-                  padding: EdgeInsets.only(bottom: R.h(16)),
-                  child: GestureDetector(
-                    onTap: _toggleTimerPause,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: R.w(16), vertical: R.h(12)),
-                      decoration: BoxDecoration(
-                        color: AppColors.warning.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(R.r(12)),
-                        border: Border.all(
-                            color: AppColors.warning.withValues(alpha: 0.5)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(RemixIcons.pause_circle_fill,
-                              color: AppColors.warning, size: R.sp(20)),
-                          SizedBox(width: R.w(12)),
-                          Expanded(
-                            child: Text(
-                              'Timer is paused. Tap to resume.',
-                              style: TextStyle(
-                                fontSize: R.sp(14),
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.warning,
+                DashboardShimmer(
+                  hasOrders: _currentOrder != null ||
+                      _newRequests.isNotEmpty ||
+                      _availableOrders.isNotEmpty ||
+                      _myOrders.isNotEmpty,
+                )
+              else ...[
+                if (isOnline && _isTimerPaused)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: R.h(16)),
+                    child: GestureDetector(
+                      onTap: _toggleTimerPause,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: R.w(16), vertical: R.h(12)),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(R.r(12)),
+                          border: Border.all(
+                              color: AppColors.warning.withValues(alpha: 0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(RemixIcons.pause_circle_fill,
+                                color: AppColors.warning, size: R.sp(20)),
+                            SizedBox(width: R.w(12)),
+                            Expanded(
+                              child: Text(
+                                'Timer is paused. Tap to resume.',
+                                style: TextStyle(
+                                  fontSize: R.sp(14),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.warning,
+                                ),
                               ),
                             ),
-                          ),
-                          if (widget.dutyStatus ==
-                              'paused') // Only show resume button if strictly paused from API
-                            GestureDetector(
-                                onTap: () async {
-                                  // TRIGGER RESUME API
-                                  try {
-                                    CustomSnackBar.showSuccess(
-                                        context, 'Resuming duty...');
-                                    await _apiService
-                                        .resumeAgentDuty(_authToken!);
-                                    if (!mounted) return;
-                                    setState(() {
-                                      _isTimerPaused = false;
-                                    });
-                                    // Propagate online status up just in case
-                                    widget.onStatusChanged(true);
-                                  } catch (e) {
-                                    if (!context.mounted) return;
-                                    CustomSnackBar.showError(
-                                        context, 'Failed to resume: $e');
-                                  }
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: R.w(12), vertical: R.h(6)),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.warning,
-                                    borderRadius:
-                                        BorderRadius.circular(R.r(20)),
-                                  ),
-                                  child: Text('RESUME',
-                                      style: TextStyle(
-                                          color: AppColors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: R.sp(12))),
-                                ))
-                          else
-                            Icon(RemixIcons.arrow_right_s_line,
-                                color: AppColors.warning, size: R.sp(18)),
-                        ],
+                            if (widget.dutyStatus == 'paused')
+                              GestureDetector(
+                                  onTap: () async {
+                                    try {
+                                      CustomSnackBar.showSuccess(
+                                          context, 'Resuming duty...');
+                                      await _apiService
+                                          .resumeAgentDuty(_authToken!);
+                                      if (!mounted) return;
+                                      setState(() {
+                                        _isTimerPaused = false;
+                                      });
+                                      widget.onStatusChanged(true);
+                                    } catch (e) {
+                                      if (!context.mounted) return;
+                                      CustomSnackBar.showError(
+                                          context, 'Failed to resume: $e');
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: R.w(12), vertical: R.h(6)),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.warning,
+                                      borderRadius:
+                                          BorderRadius.circular(R.r(20)),
+                                    ),
+                                    child: Text('RESUME',
+                                        style: TextStyle(
+                                            color: AppColors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: R.sp(12))),
+                                  ))
+                            else
+                              Icon(RemixIcons.arrow_right_s_line,
+                                  color: AppColors.warning, size: R.sp(18)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              AbsorbPointer(
-                absorbing: !isOnline,
-                child: ColorFiltered(
-                  colorFilter: isOnline
-                      ? const ColorFilter.mode(
-                          Colors.transparent, BlendMode.dst)
-                      : const ColorFilter.mode(
-                          AppColors.grey, BlendMode.saturation),
-                  child: Opacity(
-                    opacity: isOnline ? 1.0 : 0.8,
-                    child: Column(
-                      children: [
-                        if (_isWaiting)
-                          Padding(
-                            padding:
-                                EdgeInsets.only(top: R.h(8), bottom: R.h(12)),
-                            child: DashboardWaitingState(
-                              isOnline: isOnline,
-                              completedToday: _completedDeliveries,
-                              dailyGoal: _dailyGoal,
-                              onToggle: () => widget.onStatusChanged(!isOnline),
-                            ),
-                          )
-                        else ...[
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Current Task (Priority)
-                              if (_currentOrder != null) ...[
-                                _sectionHeader(
-                                    title: 'Current Task & Delivery'),
-                                SizedBox(height: R.h(12)),
-                                _currentTaskCard(_currentOrder!),
-                                SizedBox(height: R.h(24)),
-                              ],
-
-                              // Delivery Queue (Priority)
-                              if (_myOrders.length > 1) ...[
-                                _sectionHeader(
-                                  title: 'My Queue',
-                                  count: _myOrders.length - 1,
-                                  icon: RemixIcons.box_3_fill,
-                                  iconColor: AppColors.primaryGreen,
-                                  action: GestureDetector(
-                                    onTap: widget.onViewDeliveries,
-                                    child: Text(
-                                      'View All',
-                                      style: TextStyle(
-                                        fontSize: R.sp(14),
-                                        color: AppColors.primaryGreen,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: R.h(12)),
-                                Column(
-                                  children:
-                                      _myOrders.skip(1).take(2).map((order) {
-                                    return Padding(
-                                      padding: EdgeInsets.only(bottom: R.h(12)),
-                                      child: AnimatedOrderCard(
-                                        key: ValueKey(order.id),
-                                        child: _myQueueItem(order),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                                if (_hasMoreMyOrders)
-                                  Padding(
-                                    padding: EdgeInsets.only(top: R.h(8)),
-                                    child: Center(
-                                      child: TextButton(
-                                        onPressed: _isMyOrdersLoadingMore
-                                            ? null
-                                            : _loadMoreMyOrders,
-                                        child: _isMyOrdersLoadingMore
-                                            ? SizedBox(
-                                                width: R.w(20),
-                                                height: R.w(20),
-                                                child:
-                                                    const CircularProgressIndicator(
-                                                        strokeWidth: 2),
-                                              )
-                                            : const Text('Load More'),
-                                      ),
-                                    ),
-                                  ),
-                                SizedBox(height: R.h(24)),
-                              ],
+                if (_isWaiting)
+                  Padding(
+                    padding: EdgeInsets.only(top: R.h(8), bottom: R.h(12)),
+                    child: DashboardWaitingState(
+                      isOnline: isOnline,
+                      completedToday: _completedDeliveries,
+                      dailyGoal: _dailyGoal,
+                      onToggle: () => widget.onStatusChanged(!isOnline),
+                    ),
+                  )
+                else
+                  AbsorbPointer(
+                    absorbing: !isOnline,
+                    child: ColorFiltered(
+                      colorFilter: isOnline
+                          ? const ColorFilter.mode(
+                              Colors.transparent, BlendMode.dst)
+                          : const ColorFilter.mode(
+                              AppColors.grey, BlendMode.saturation),
+                      child: Opacity(
+                        opacity: isOnline ? 1.0 : 0.8,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Current Task (Priority)
+                            if (_currentOrder != null) ...[
+                              _sectionHeader(title: 'Current Task & Delivery'),
+                              SizedBox(height: R.h(12)),
+                              _currentTaskCard(_currentOrder!),
+                              SizedBox(height: R.h(24)),
                             ],
-                          ),
-                        ],
 
-                        // New Order Request
-                        if (_newRequests.isNotEmpty) ...[
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                            // Delivery Queue (Priority)
+                            if (_myOrders.length > 1) ...[
+                              _sectionHeader(
+                                title: 'My Queue',
+                                count: _myOrders.length - 1,
+                                icon: RemixIcons.box_3_fill,
+                                iconColor: AppColors.primaryGreen,
+                                action: GestureDetector(
+                                  onTap: widget.onViewDeliveries,
+                                  child: Text(
+                                    'View All',
+                                    style: TextStyle(
+                                      fontSize: R.sp(14),
+                                      color: AppColors.primaryGreen,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: R.h(12)),
+                              Column(
+                                children:
+                                    _myOrders.skip(1).take(2).map((order) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: R.h(12)),
+                                    child: AnimatedOrderCard(
+                                      key: ValueKey(order.id),
+                                      child: _myQueueItem(order),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              if (_hasMoreMyOrders)
+                                Padding(
+                                  padding: EdgeInsets.only(top: R.h(8)),
+                                  child: Center(
+                                    child: TextButton(
+                                      onPressed: _isMyOrdersLoadingMore
+                                          ? null
+                                          : _loadMoreMyOrders,
+                                      child: _isMyOrdersLoadingMore
+                                          ? SizedBox(
+                                              width: R.w(20),
+                                              height: R.w(20),
+                                              child:
+                                                  const CircularProgressIndicator(
+                                                      strokeWidth: 2),
+                                            )
+                                          : const Text('Load More'),
+                                    ),
+                                  ),
+                                ),
+                              SizedBox(height: R.h(24)),
+                            ],
+
+                            // New Order Request
+                            if (_newRequests.isNotEmpty) ...[
                               _sectionHeader(
                                 title: 'New Order Request',
                                 count: null,
-                                action: _newRequests.length > 1
-                                    ? GestureDetector(
-                                        onTap: () {
-                                          // Add View All logic for new requests here
-                                        },
-                                        child: Text(
-                                          'View All',
-                                          style: TextStyle(
-                                            fontSize: R.sp(14),
-                                            color: AppColors.primaryGreen,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      )
-                                    : null,
                               ),
                               SizedBox(height: R.h(12)),
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 300),
-                                transitionBuilder: (child, animation) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: SlideTransition(
-                                      position: Tween<Offset>(
-                                        begin: const Offset(0.0, 0.05),
-                                        end: Offset.zero,
-                                      ).animate(animation),
-                                      child: child,
-                                    ),
+                              Column(
+                                children: _newRequests
+                                    .where((order) =>
+                                        !_removingOrderIds.contains(order.id))
+                                    .map((order) {
+                                  final now = DateTime.now();
+                                  final difference =
+                                      now.difference(order.createdAt);
+                                  final remaining = 60 - difference.inSeconds;
+                                  final countdown =
+                                      remaining > 0 ? remaining : 0;
+
+                                  return NewRequestCard(
+                                    order: order,
+                                    countdownSeconds: countdown,
+                                    onAccept: () => _acceptOrder(order.id),
+                                    onDecline: () => _rejectOrder(order.id),
                                   );
-                                },
-                                child: _isLoading
-                                    ? const OrderShimmer()
-                                    : _error != null
-                                        ? Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                vertical: R.h(20)),
-                                            child: DashboardIssueCard(
-                                              key: const ValueKey('error'),
-                                              type: _error!
-                                                      .toLowerCase()
-                                                      .contains('network')
-                                                  ? IssueType.internet
-                                                  : IssueType.server,
-                                              message: _error!,
-                                              onRetry: () =>
-                                                  _fetchOrders(refresh: true),
-                                              isRetrying: _isLoading,
-                                            ),
-                                          )
-                                        : Column(
-                                            children: _newRequests
-                                                .where((order) =>
-                                                    !_removingOrderIds
-                                                        .contains(order.id))
-                                                .map((order) {
-                                              // Calculate remaining time
-                                              final now = DateTime.now();
-                                              final difference = now
-                                                  .difference(order.createdAt);
-                                              final remaining =
-                                                  60 - difference.inSeconds;
-                                              final countdown =
-                                                  remaining > 0 ? remaining : 0;
-
-                                              return NewRequestCard(
-                                                order: order,
-                                                countdownSeconds: countdown,
-                                                onAccept: () =>
-                                                    _acceptOrder(order.id),
-                                                onDecline: () =>
-                                                    _rejectOrder(order.id),
-                                              );
-                                            }).toList(),
-                                          ),
+                                }).toList(),
                               ),
+                              SizedBox(height: R.h(24)),
                             ],
-                          ),
-                          SizedBox(height: R.h(24)),
-                        ],
 
-                        // Nearby Available
-                        if (_availableOrders.isNotEmpty) ...[
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                            // Nearby Available
+                            if (_availableOrders.isNotEmpty) ...[
                               _sectionHeader(
                                 title: 'Nearby Available',
                                 icon: RemixIcons.compass_3_fill,
@@ -1700,26 +1627,21 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   ),
                                 ),
                             ],
-                          ),
-                          SizedBox(height: R.h(24)),
-                        ],
-                        SizedBox(height: R.h(32)),
-                        PerformanceStatsRow(
-                          pending: _pendingOrders > 0
-                              ? _pendingOrders
-                              : _myOrders.length,
-                          completed: _completedDeliveries,
-                          cancelled: _cancelledOrders,
-                          loginHours: _serverLoginHours +
-                              (_localSessionSeconds / 3600.0),
+                          ],
                         ),
-                        SizedBox(height: R.h(40)),
-                      ],
+                      ),
                     ),
                   ),
+                PerformanceStatsRow(
+                  pending:
+                      _pendingOrders > 0 ? _pendingOrders : _myOrders.length,
+                  completed: _completedDeliveries,
+                  cancelled: _cancelledOrders,
+                  loginHours:
+                      _serverLoginHours + (_localSessionSeconds / 3600.0),
                 ),
-              ),
-              SizedBox(height: R.h(8)),
+                SizedBox(height: R.h(40)),
+              ],
             ],
           ),
         ),

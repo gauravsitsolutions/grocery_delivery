@@ -1,83 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/order_shimmer.dart';
 
 class DashboardShimmer extends StatelessWidget {
-  const DashboardShimmer({super.key});
+  final bool hasOrders;
+
+  const DashboardShimmer({
+    super.key,
+    this.hasOrders = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(
-            horizontal: R.w(16),
-            vertical: R.h(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _shimmerHeader(),
-              _shimmerDutyStatusCard(),
-              SizedBox(height: R.h(16)),
-              const DashboardContentShimmer(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _shimmerHeader() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(R.w(4), R.h(6), R.w(4), R.h(20)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Left: Profile + Greeting
-            Row(
-              children: [
-                Container(
-                  width: R.w(44), // Profile radius * 2
-                  height: R.w(44),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                SizedBox(width: R.w(12)),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                        width: R.w(80), height: R.h(12), color: Colors.white),
-                    SizedBox(height: R.h(4)),
-                    Container(
-                        width: R.w(120), height: R.h(18), color: Colors.white),
-                  ],
-                ),
-              ],
-            ),
-            // Right: Notification Bubble
-            Container(
-              width: R.w(42),
-              height: R.w(42),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _shimmerDutyStatusCard(),
+        SizedBox(height: R.h(16)),
+        DashboardContentShimmer(hasOrders: hasOrders),
+      ],
     );
   }
 
@@ -87,7 +29,7 @@ class DashboardShimmer extends StatelessWidget {
       highlightColor: Colors.grey[100]!,
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: R.w(4), vertical: R.h(4)),
-        height: R.h(60), // Approx height of DutyStatusCard
+        height: R.h(60),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(R.r(16)),
@@ -98,24 +40,75 @@ class DashboardShimmer extends StatelessWidget {
 }
 
 class DashboardContentShimmer extends StatelessWidget {
-  const DashboardContentShimmer({super.key});
+  final bool hasOrders;
+
+  const DashboardContentShimmer({
+    super.key,
+    this.hasOrders = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (!hasOrders) {
+      // "No Orders" Shimmer - Match Waiting State
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Match WeeklyMilestoneCard
+          _shimmerMilestoneCard(),
+          SizedBox(height: R.h(40)),
+          // Match WaitingForOrders pulse/ripple circle
+          Center(
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Container(
+                width: R.w(180),
+                height: R.w(180),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: R.h(40)),
+          _shimmerStatsRow(),
+          SizedBox(height: R.h(40)),
+        ],
+      );
+    }
+
+    // "Orders Present" Shimmer - Match Active Dashboard
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _shimmerSectionHeader('Current Task & Delivery'),
+        SizedBox(height: R.h(12)),
+        const CurrentTaskShimmer(),
+        SizedBox(height: R.h(24)),
+        _shimmerSectionHeader('New Order Request'),
+        SizedBox(height: R.h(12)),
+        const OrderShimmer(),
+        SizedBox(height: R.h(24)),
         _shimmerStatsRow(),
-        SizedBox(height: R.h(24)),
-        _shimmerSectionHeader(),
-        SizedBox(height: R.h(12)),
-        _shimmerLargeCard(),
-        SizedBox(height: R.h(24)),
-        _shimmerSectionHeader(),
-        SizedBox(height: R.h(12)),
-        const OrderShimmer(),
-        const OrderShimmer(),
+        SizedBox(height: R.h(40)),
       ],
+    );
+  }
+
+  Widget _shimmerMilestoneCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        width: double.infinity,
+        height: R.h(180),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(R.r(32)),
+        ),
+      ),
     );
   }
 
@@ -127,18 +120,19 @@ class DashboardContentShimmer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-              width: R.w(160), height: R.h(20), color: Colors.white), // Title
-          SizedBox(height: R.h(16)),
+              width: R.w(200), height: R.h(22), color: Colors.white), // Title
+          SizedBox(height: R.h(20)),
           Row(
             children: List.generate(2, (index) {
               return Expanded(
                 child: Container(
                   margin: EdgeInsets.only(
                       right: index == 1 ? 0 : R.w(16)), // Space between cards
-                  height: R.h(120), // Approx height
+                  height: R.h(140),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(R.r(24)),
+                    borderRadius: BorderRadius.circular(
+                        R.r(45)), // Matches performance cards
                   ),
                 ),
               );
@@ -149,34 +143,14 @@ class DashboardContentShimmer extends StatelessWidget {
     );
   }
 
-  Widget _shimmerLargeCard() {
+  Widget _shimmerSectionHeader(String title) {
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: Container(
-        height: R.h(220),
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(R.r(24)),
-        ),
-      ),
-    );
-  }
-
-  Widget _shimmerSectionHeader() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: R.w(4)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(width: R.w(120), height: R.h(18), color: Colors.white),
-            Container(width: R.w(60), height: R.h(14), color: Colors.white),
-          ],
-        ),
+        width: R.w(200),
+        height: R.h(22),
+        color: Colors.white,
       ),
     );
   }
