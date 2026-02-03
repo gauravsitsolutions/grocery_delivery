@@ -1270,12 +1270,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     );
   }
 
-  Widget _sectionHeader(
-      {required String title,
-      Widget? action,
-      int? count,
-      IconData? icon,
-      Color? iconColor}) {
+  Widget _sectionHeader({required String title, Widget? action}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1504,9 +1499,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           if (_myOrders.length > 1) ...[
                             _sectionHeader(
                               title: 'My Queue',
-                              count: _myOrders.length - 1,
-                              icon: RemixIcons.box_3_fill,
-                              iconColor: AppColors.primaryGreen,
                               action: GestureDetector(
                                 onTap: widget.onViewDeliveries,
                                 child: Text(
@@ -1558,7 +1550,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           if (_newRequests.isNotEmpty) ...[
                             _sectionHeader(
                               title: 'New Order Request',
-                              count: null,
                             ),
                             SizedBox(height: R.h(12)),
                             Column(
@@ -1587,9 +1578,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           if (_availableOrders.isNotEmpty) ...[
                             _sectionHeader(
                               title: 'Nearby Available',
-                              icon: RemixIcons.compass_3_fill,
-                              iconColor: const Color(0xFFFF8A65), // Orange
-                              count: _availableOrders.length,
                               action: _availableOrders.length > 2
                                   ? GestureDetector(
                                       onTap: () {

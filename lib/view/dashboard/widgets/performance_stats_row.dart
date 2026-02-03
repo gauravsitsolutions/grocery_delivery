@@ -92,7 +92,7 @@ class PerformanceStatsRow extends StatelessWidget {
                     ),
                     SizedBox(height: R.h(12)),
                     Text(
-                      '+2 from average',
+                      'Great job!',
                       style: TextStyle(
                         fontSize: R.sp(13),
                         fontWeight: FontWeight.w700,

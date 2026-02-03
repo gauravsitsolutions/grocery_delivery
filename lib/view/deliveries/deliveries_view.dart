@@ -13,6 +13,7 @@ import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_compl
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_cancelled_details_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../utils/responsive.dart';
 
@@ -42,6 +43,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OrderListViewModel>().fetchActiveOrders(refresh: true);
+      context.read<OrderListViewModel>().fetchNewOrders(refresh: true);
     });
   }
 
@@ -195,7 +197,10 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                   await viewModel.searchDeliveries(_searchController.text,
                       refresh: true);
                 } else if (_selectedStatus == 'Pending') {
-                  await viewModel.fetchActiveOrders(refresh: true);
+                  await Future.wait([
+                    viewModel.fetchActiveOrders(refresh: true),
+                    viewModel.fetchNewOrders(refresh: true),
+                  ]);
                 } else {
                   await viewModel.fetchHistoryOrders(refresh: true);
                 }
@@ -326,6 +331,24 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                       )
                     else if (_selectedStatus == 'Pending' &&
                         !viewModel.isSearching) ...[
+                      // 1. New Orders Section (Accept/Reject)
+                      if (viewModel.newOrders.isNotEmpty) ...[
+                        _sectionLabel('NEW REQUESTS'),
+                        SizedBox(height: R.h(10)),
+                        Column(
+                          children: viewModel.newOrders.map((order) {
+                            return NewRequestCard(
+                              order: order,
+                              countdownSeconds:
+                                  60, // Default or track timer if needed
+                              onAccept: () => viewModel.acceptOrder(order.id),
+                              onDecline: () => viewModel.rejectOrder(order.id),
+                            );
+                          }).toList(),
+                        ),
+                        SizedBox(height: R.h(24)),
+                      ],
+
                       if (orders.isNotEmpty) ...[
                         _sectionLabel('IN PROGRESS'),
                         SizedBox(height: R.h(10)),
@@ -408,6 +431,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
           });
           if (newStatus == 'Pending') {
             viewModel.fetchActiveOrders(refresh: true);
+            viewModel.fetchNewOrders(refresh: true);
           } else {
             viewModel.fetchHistoryOrders(refresh: true);
           }
@@ -558,6 +582,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
               active: _selectedStatus == 'Pending', onTap: () {
             setState(() => _selectedStatus = 'Pending');
             viewModel.fetchActiveOrders(refresh: true);
+            viewModel.fetchNewOrders(refresh: true);
           }),
           _statusTab('Delivered',
               count: viewModel.deliveryStatus?.deliveredOrders.toString(),
