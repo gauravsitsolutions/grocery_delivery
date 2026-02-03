@@ -28,7 +28,7 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
     _scrollController.addListener(_onScroll);
     // Fetch initial data using global provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OrderListViewModel>().fetchNewOrders(refresh: true);
+      context.read<OrderListViewModel>().fetchAvailableOrders(refresh: true);
     });
   }
 
@@ -43,7 +43,7 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
         _scrollController.position.maxScrollExtent * 0.9) {
       // Access VM via context to load more
       if (mounted) {
-        context.read<OrderListViewModel>().loadMoreNewOrders();
+        context.read<OrderListViewModel>().loadMoreAvailableOrders();
       }
     }
   }
@@ -138,31 +138,34 @@ class _AvailableOrdersViewState extends State<AvailableOrdersView> {
           builder: (context, viewModel, child) {
             return RefreshIndicator(
               onRefresh: () async =>
-                  await viewModel.fetchNewOrders(refresh: true),
+                  await viewModel.fetchAvailableOrders(refresh: true),
               color: AppColors.primaryGreen,
-              child: viewModel.isNewOrdersLoading
+              child: viewModel.isAvailableOrdersLoading
                   ? const ListShimmer(count: 6)
-                  : viewModel.newOrdersError != null
+                  : viewModel.availableOrdersError != null
                       ? Center(
-                          child: Text(viewModel.newOrdersError!,
+                          child: Text(viewModel.availableOrdersError!,
                               style: const TextStyle(color: Colors.red)))
-                      : viewModel.newOrders.isEmpty
+                      : viewModel.availableOrders.isEmpty
                           ? const Center(child: Text('No available orders'))
                           : ListView.builder(
                               controller: _scrollController,
                               padding: EdgeInsets.all(R.w(16)),
-                              itemCount: viewModel.newOrders.length +
-                                  (viewModel.isNewOrdersLoadingMore ? 1 : 0),
+                              itemCount: viewModel.availableOrders.length +
+                                  (viewModel.isAvailableOrdersLoadingMore
+                                      ? 1
+                                      : 0),
                               itemBuilder: (context, index) {
-                                if (index == viewModel.newOrders.length) {
+                                if (index == viewModel.availableOrders.length) {
                                   return const Padding(
                                       padding: EdgeInsets.all(8.0),
                                       child: OrderShimmer());
                                 }
-                                final order = viewModel.newOrders[index];
+                                final order = viewModel.availableOrders[index];
                                 return AnimatedOrderCard(
                                   key: ValueKey(order.id),
-                                  child: _orderCard(order, viewModel.newOrders),
+                                  child: _orderCard(
+                                      order, viewModel.availableOrders),
                                 );
                               },
                             ),

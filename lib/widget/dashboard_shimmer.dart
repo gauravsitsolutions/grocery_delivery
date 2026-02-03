@@ -6,10 +6,18 @@ import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 
 class DashboardShimmer extends StatelessWidget {
   final bool hasOrders;
+  final bool showCurrentTask;
+  final bool showQueue;
+  final bool showNewRequests;
+  final bool showAvailableOrders;
 
   const DashboardShimmer({
     super.key,
     this.hasOrders = true,
+    this.showCurrentTask = true,
+    this.showQueue = true,
+    this.showNewRequests = true,
+    this.showAvailableOrders = true,
   });
 
   @override
@@ -17,20 +25,32 @@ class DashboardShimmer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DashboardContentShimmer(hasOrders: hasOrders),
+        DashboardContentShimmer(
+          hasOrders: hasOrders,
+          showCurrentTask: showCurrentTask,
+          showQueue: showQueue,
+          showNewRequests: showNewRequests,
+          showAvailableOrders: showAvailableOrders,
+        ),
       ],
     );
   }
-
-  // ... _shimmerDutyStatusCard implementation remains unused or can be deleted ...
 }
 
 class DashboardContentShimmer extends StatelessWidget {
   final bool hasOrders;
+  final bool showCurrentTask;
+  final bool showQueue;
+  final bool showNewRequests;
+  final bool showAvailableOrders;
 
   const DashboardContentShimmer({
     super.key,
     this.hasOrders = true,
+    this.showCurrentTask = true,
+    this.showQueue = true,
+    this.showNewRequests = true,
+    this.showAvailableOrders = true,
   });
 
   @override
@@ -98,22 +118,30 @@ class DashboardContentShimmer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _shimmerSectionHeader('Current Task & Delivery'),
-        SizedBox(height: R.h(12)),
-        const CurrentTaskShimmer(),
-        SizedBox(height: R.h(24)),
-        _shimmerSectionHeader('My Queue'),
-        SizedBox(height: R.h(12)),
-        const MyQueueShimmer(),
-        SizedBox(height: R.h(24)),
-        _shimmerSectionHeader('New Order Request'),
-        SizedBox(height: R.h(12)),
-        const OrderShimmer(),
-        SizedBox(height: R.h(24)),
-        _shimmerSectionHeader('Nearby Available'),
-        SizedBox(height: R.h(12)),
-        const AvailableOrderShimmer(),
-        SizedBox(height: R.h(24)),
+        if (showCurrentTask) ...[
+          _shimmerSectionHeader('Current Task & Delivery'),
+          SizedBox(height: R.h(12)),
+          const CurrentTaskShimmer(),
+          SizedBox(height: R.h(24)),
+        ],
+        if (showQueue) ...[
+          _shimmerSectionHeader('My Queue'),
+          SizedBox(height: R.h(12)),
+          const MyQueueShimmer(),
+          SizedBox(height: R.h(24)),
+        ],
+        if (showNewRequests) ...[
+          _shimmerSectionHeader('New Order Request'),
+          SizedBox(height: R.h(12)),
+          const OrderShimmer(),
+          SizedBox(height: R.h(24)),
+        ],
+        if (showAvailableOrders) ...[
+          _shimmerSectionHeader('Nearby Available'),
+          SizedBox(height: R.h(12)),
+          const AvailableOrderShimmer(),
+          SizedBox(height: R.h(24)),
+        ],
         _shimmerStatsRow(),
         SizedBox(height: R.h(40)),
       ],

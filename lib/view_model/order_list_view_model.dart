@@ -24,6 +24,14 @@ class OrderListViewModel extends ChangeNotifier {
   bool _myDeliveriesHasMore = false;
   String? _myDeliveriesError;
 
+  // State for "Available Orders" (Nearby)
+  List<Order> _availableOrders = [];
+  bool _isAvailableOrdersLoading = false;
+  bool _isAvailableOrdersLoadingMore = false;
+  int _availableOrdersPage = 1;
+  bool _availableOrdersHasMore = false;
+  String? _availableOrdersError;
+
   // Track which type of list is currently loaded
   bool _isHistoryList = false;
 
@@ -39,6 +47,12 @@ class OrderListViewModel extends ChangeNotifier {
   bool get isMyDeliveriesLoadingMore => _isMyDeliveriesLoadingMore;
   bool get myDeliveriesHasMore => _myDeliveriesHasMore;
   String? get myDeliveriesError => _myDeliveriesError;
+
+  List<Order> get availableOrders => _availableOrders;
+  bool get isAvailableOrdersLoading => _isAvailableOrdersLoading;
+  bool get isAvailableOrdersLoadingMore => _isAvailableOrdersLoadingMore;
+  bool get availableOrdersHasMore => _availableOrdersHasMore;
+  String? get availableOrdersError => _availableOrdersError;
 
   // Filters from Sheet
   String _activeDateFilter = 'All';
@@ -110,6 +124,61 @@ class OrderListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await fetchNewOrders();
+  }
+
+  // Fetch Available Orders
+  Future<void> fetchAvailableOrders({bool refresh = false}) async {
+    if (refresh) {
+      _availableOrdersPage = 1;
+      _availableOrdersHasMore = false;
+      _availableOrdersError = null;
+      _isAvailableOrdersLoading = true;
+      notifyListeners();
+    }
+
+    try {
+      final token = await _authToken;
+      if (token == null) {
+        _availableOrdersError = 'Not authenticated';
+        _isAvailableOrdersLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final response = await _apiService.getAvailableOrders(token,
+          page: _availableOrdersPage);
+
+      if (refresh) {
+        _availableOrders = response.data;
+      } else {
+        _availableOrders.addAll(response.data);
+      }
+
+      _availableOrdersHasMore = (response.currentPage ?? _availableOrdersPage) <
+          (response.lastPage ?? _availableOrdersPage);
+      _isAvailableOrdersLoading = false;
+      _isAvailableOrdersLoadingMore = false;
+      notifyListeners();
+    } catch (e) {
+      _availableOrdersError = e is AppException ? e.message : e.toString();
+      _isAvailableOrdersLoading = false;
+      _isAvailableOrdersLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMoreAvailableOrders() async {
+    if (_isAvailableOrdersLoadingMore ||
+        _isAvailableOrdersLoading ||
+        !_availableOrdersHasMore) {
+      return;
+    }
+
+    _isAvailableOrdersLoadingMore = true;
+    _availableOrdersPage++;
+    notifyListeners();
+
+    await fetchAvailableOrders();
   }
 
   // Fetch ACTIVE Orders (Queue) - typically "Pending", "Assigned", "Picked Up"
@@ -371,6 +440,8 @@ class OrderListViewModel extends ChangeNotifier {
       if (response['status'] == true || response['status'] == 'success') {
         // Remove from new orders locally for immediate UI update
         _newOrders.removeWhere((o) => o.id == orderId);
+        _availableOrders
+            .removeWhere((o) => o.id == orderId); // Also remove from available
         notifyListeners();
         // Refresh active orders list in background
         fetchActiveOrders(refresh: true);
@@ -393,6 +464,7 @@ class OrderListViewModel extends ChangeNotifier {
       if (response['status'] == true || response['status'] == 'success') {
         // Remove from new orders locally
         _newOrders.removeWhere((o) => o.id == orderId);
+        _availableOrders.removeWhere((o) => o.id == orderId);
         notifyListeners();
         return true;
       }
@@ -403,6 +475,7 @@ class OrderListViewModel extends ChangeNotifier {
       if (e.toString().contains('404') ||
           e.toString().contains('Order not available')) {
         _newOrders.removeWhere((o) => o.id == orderId);
+        _availableOrders.removeWhere((o) => o.id == orderId);
         notifyListeners();
         return true;
       }

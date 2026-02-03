@@ -20,7 +20,7 @@ import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
-import 'package:samrudhi_delivery_agent_app/widget/dashboard_shimmer.dart';
+
 import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
@@ -33,6 +33,7 @@ import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_s
 import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/duty_status_card.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/dashboard_shimmer.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -255,12 +256,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       }
     } else {
       // Handle no token? Login screen?
-      if (mounted) {
-        setState(() {
-          // Auth check failed
-          _isLoading = false;
-        });
-      }
+      if (mounted) {}
     }
   }
 
@@ -307,13 +303,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 }
               }
             }
-
-            // Update stats from the new API
-            if (summary.stats != null) {
-              _completedDeliveries = summary.stats!.deliveredOrders;
-              _pendingOrders = summary.stats!.totalOrdersToday -
-                  summary.stats!.deliveredOrders; // Approx
-            }
           });
         }
       }
@@ -324,13 +313,48 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     }
   }
 
+  Future<void> _fetchDeliveryStats() async {
+    try {
+      final token = _authToken ?? await SharedPrefsUtil.getToken();
+      if (token != null) {
+        final statusResponse = await _apiService.getDeliveryStatus(token);
+        if (mounted && statusResponse.data != null) {
+          setState(() {
+            _completedDeliveries = statusResponse.data!.deliveredOrders;
+            _cancelledOrders = statusResponse.data!.cancelledOrders;
+            // The API returns 'pending_orders' which are 0 in the example,
+            // but we might want to sum total_orders - delivered - cancelled if pending logic differs.
+            // For now, let's trust the API 'pending_orders' or calculate logic if needed.
+            // The prompt example shows "pending_orders": 0.
+            // But visually "Performance Today" usually implies pending tasks for the day.
+            // If the user wants "Approx" pending like before (total - delivered), we can check.
+            // The previous logic was: summary.stats!.totalOrdersToday - summary.stats!.deliveredOrders.
+            // The new API gives "total_orders".
+            // Let's use total - delivered - cancelled to be safe if pending is just "currently active".
+            // Or just use pending_orders if that's what is desired.
+            // Let's stick to the direct value first.
+            _pendingOrders = statusResponse.data!.pendingOrders;
+
+            // Actually, commonly "pending" in performance stats means "assigned but not done".
+            // If the API returns 0, maybe we should use that.
+          });
+        }
+      }
+    } catch (e) {
+      log('Error fetching delivery stats: $e');
+    }
+  }
+
   Future<void> _fetchOrders({bool refresh = true}) async {
     if (!mounted) return;
     if (refresh) {
-      setState(() {
-        _isLoading = true;
-        // Refresh start
-      });
+      if (_newRequests.isEmpty &&
+          _availableOrders.isEmpty &&
+          _currentOrder == null) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
     }
 
     try {
@@ -339,7 +363,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       if (token == null) {
         if (mounted) {
           setState(() {
-            // Auth check failed
+            _serverLoginHours = 0;
+            _serverLoginHours = 0;
+            _localSessionSeconds = 0;
             _isLoading = false;
           });
         }
@@ -451,6 +477,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   _newRequests.isEmpty)) {
             setState(() {
               // Error occurred
+              // Error occurred
               _isLoading = false;
             });
           } else {
@@ -460,29 +487,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             });
           }
         }
-      }
-    }
-  }
-
-  Future<void> _fetchDeliveryStats() async {
-    try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token == null) return;
-
-      final deliveryStatus = await _apiService.getDeliveryStatus(token);
-      if (deliveryStatus.status && deliveryStatus.data != null) {
-        if (mounted) {
-          setState(() {
-            _completedDeliveries = deliveryStatus.data!.deliveredOrders;
-            // Always trust local queue length as the primary pending count if it's been fetched
-            _pendingOrders = _myOrders.length;
-            _cancelledOrders = deliveryStatus.data!.cancelledOrders;
-          });
-        }
-      }
-    } catch (e) {
-      if (e is! NetworkException) {
-        log('Error fetching delivery stats: $e');
       }
     }
   }
@@ -1297,8 +1301,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       _newRequests.isEmpty &&
       _availableOrders.isEmpty &&
       _myOrders.isEmpty &&
-      _currentOrder == null &&
-      !_isLoading;
+      _currentOrder == null;
 
   Widget _buildInfoBanner() {
     return Container(
@@ -1360,6 +1363,16 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     R.init(context);
     final isOnline = widget.isOnline;
 
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.scaffoldBg, // Or white depending on design
+        body: SafeArea(
+          bottom: false,
+          child: DashboardShimmer(),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
@@ -1375,290 +1388,277 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             children: [
               _dashboardHeader(isOnline),
               // Show Info Banner if waiting OR offline
-              if (_isWaiting && !_isLoading) _buildInfoBanner(),
+              if (_isWaiting) _buildInfoBanner(),
 
-              if (_isLoading)
-                DashboardShimmer(
-                  hasOrders: _currentOrder != null ||
-                      _newRequests.isNotEmpty ||
-                      _availableOrders.isNotEmpty ||
-                      _myOrders.isNotEmpty,
+              if (isOnline && _isTimerPaused)
+                Padding(
+                  padding: EdgeInsets.only(bottom: R.h(16)),
+                  child: GestureDetector(
+                    onTap: _toggleTimerPause,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: R.w(16), vertical: R.h(12)),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(R.r(12)),
+                        border: Border.all(
+                            color: AppColors.warning.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(RemixIcons.pause_circle_fill,
+                              color: AppColors.warning, size: R.sp(20)),
+                          SizedBox(width: R.w(12)),
+                          Expanded(
+                            child: Text(
+                              'Timer is paused. Tap to resume.',
+                              style: TextStyle(
+                                fontSize: R.sp(14),
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.warning,
+                              ),
+                            ),
+                          ),
+                          if (widget.dutyStatus?.toLowerCase() == 'paused')
+                            GestureDetector(
+                                onTap: () async {
+                                  try {
+                                    CustomSnackBar.showSuccess(
+                                        context, 'Resuming duty...');
+                                    await _apiService
+                                        .resumeAgentDuty(_authToken!);
+                                    if (!mounted) return;
+                                    setState(() {
+                                      _isTimerPaused = false;
+                                      _lastToggleTimestamp = DateTime.now();
+                                    });
+                                    widget.onStatusChanged(true);
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    CustomSnackBar.showError(
+                                        context, 'Failed to resume: $e');
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: R.w(12), vertical: R.h(6)),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warning,
+                                    borderRadius:
+                                        BorderRadius.circular(R.r(20)),
+                                  ),
+                                  child: Text('RESUME',
+                                      style: TextStyle(
+                                          color: AppColors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: R.sp(12))),
+                                ))
+                          else
+                            Icon(RemixIcons.arrow_right_s_line,
+                                color: AppColors.warning, size: R.sp(18)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              if (_isWaiting)
+                Padding(
+                  padding: EdgeInsets.only(top: R.h(8), bottom: R.h(12)),
+                  child: DashboardWaitingState(
+                    isOnline: isOnline,
+                    completedToday: _completedDeliveries,
+                    dailyGoal: _dailyGoal,
+                    onToggle: () => widget.onStatusChanged(!isOnline),
+                  ),
                 )
-              else ...[
-                if (isOnline && _isTimerPaused)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: R.h(16)),
-                    child: GestureDetector(
-                      onTap: _toggleTimerPause,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: R.w(16), vertical: R.h(12)),
-                        decoration: BoxDecoration(
-                          color: AppColors.warning.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(R.r(12)),
-                          border: Border.all(
-                              color: AppColors.warning.withValues(alpha: 0.5)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(RemixIcons.pause_circle_fill,
-                                color: AppColors.warning, size: R.sp(20)),
-                            SizedBox(width: R.w(12)),
-                            Expanded(
-                              child: Text(
-                                'Timer is paused. Tap to resume.',
-                                style: TextStyle(
-                                  fontSize: R.sp(14),
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.warning,
+              else
+                AbsorbPointer(
+                  absorbing:
+                      !isOnline && _myOrders.isEmpty && _currentOrder == null,
+                  child: ColorFiltered(
+                    colorFilter: isOnline ||
+                            _myOrders.isNotEmpty ||
+                            _currentOrder != null
+                        ? const ColorFilter.mode(
+                            Colors.transparent, BlendMode.dst)
+                        : const ColorFilter.mode(
+                            AppColors.grey, BlendMode.saturation),
+                    child: Opacity(
+                      opacity: isOnline ||
+                              _myOrders.isNotEmpty ||
+                              _currentOrder != null
+                          ? 1.0
+                          : 0.8,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Current Task (Priority)
+                          if (_currentOrder != null) ...[
+                            _sectionHeader(title: 'Current Task & Delivery'),
+                            SizedBox(height: R.h(12)),
+                            _currentTaskCard(_currentOrder!),
+                            SizedBox(height: R.h(24)),
+                          ],
+
+                          // Delivery Queue (Priority)
+
+                          if (_myOrders.length > 1) ...[
+                            _sectionHeader(
+                              title: 'My Queue',
+                              count: _myOrders.length - 1,
+                              icon: RemixIcons.box_3_fill,
+                              iconColor: AppColors.primaryGreen,
+                              action: GestureDetector(
+                                onTap: widget.onViewDeliveries,
+                                child: Text(
+                                  'View All',
+                                  style: TextStyle(
+                                    fontSize: R.sp(14),
+                                    color: AppColors.primaryGreen,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
-                            if (widget.dutyStatus?.toLowerCase() == 'paused')
-                              GestureDetector(
-                                  onTap: () async {
-                                    try {
-                                      CustomSnackBar.showSuccess(
-                                          context, 'Resuming duty...');
-                                      await _apiService
-                                          .resumeAgentDuty(_authToken!);
-                                      if (!mounted) return;
-                                      setState(() {
-                                        _isTimerPaused = false;
-                                        _lastToggleTimestamp = DateTime.now();
-                                      });
-                                      widget.onStatusChanged(true);
-                                    } catch (e) {
-                                      if (!context.mounted) return;
-                                      CustomSnackBar.showError(
-                                          context, 'Failed to resume: $e');
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: R.w(12), vertical: R.h(6)),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.warning,
-                                      borderRadius:
-                                          BorderRadius.circular(R.r(20)),
-                                    ),
-                                    child: Text('RESUME',
-                                        style: TextStyle(
-                                            color: AppColors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: R.sp(12))),
-                                  ))
-                            else
-                              Icon(RemixIcons.arrow_right_s_line,
-                                  color: AppColors.warning, size: R.sp(18)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                if (_isWaiting)
-                  Padding(
-                    padding: EdgeInsets.only(top: R.h(8), bottom: R.h(12)),
-                    child: DashboardWaitingState(
-                      isOnline: isOnline,
-                      completedToday: _completedDeliveries,
-                      dailyGoal: _dailyGoal,
-                      onToggle: () => widget.onStatusChanged(!isOnline),
-                    ),
-                  )
-                else
-                  AbsorbPointer(
-                    absorbing:
-                        !isOnline && _myOrders.isEmpty && _currentOrder == null,
-                    child: ColorFiltered(
-                      colorFilter: isOnline ||
-                              _myOrders.isNotEmpty ||
-                              _currentOrder != null
-                          ? const ColorFilter.mode(
-                              Colors.transparent, BlendMode.dst)
-                          : const ColorFilter.mode(
-                              AppColors.grey, BlendMode.saturation),
-                      child: Opacity(
-                        opacity: isOnline ||
-                                _myOrders.isNotEmpty ||
-                                _currentOrder != null
-                            ? 1.0
-                            : 0.8,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Current Task (Priority)
-                            if (_currentOrder != null) ...[
-                              _sectionHeader(title: 'Current Task & Delivery'),
-                              SizedBox(height: R.h(12)),
-                              _currentTaskCard(_currentOrder!),
-                              SizedBox(height: R.h(24)),
-                            ],
-
-                            // Delivery Queue (Priority)
-                            if (_myOrders.length > 1) ...[
-                              _sectionHeader(
-                                title: 'My Queue',
-                                count: _myOrders.length - 1,
-                                icon: RemixIcons.box_3_fill,
-                                iconColor: AppColors.primaryGreen,
-                                action: GestureDetector(
-                                  onTap: widget.onViewDeliveries,
-                                  child: Text(
-                                    'View All',
-                                    style: TextStyle(
-                                      fontSize: R.sp(14),
-                                      color: AppColors.primaryGreen,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                            SizedBox(height: R.h(12)),
+                            Column(
+                              children: _myOrders.skip(1).take(2).map((order) {
+                                return Padding(
+                                  padding: EdgeInsets.only(bottom: R.h(12)),
+                                  child: AnimatedOrderCard(
+                                    key: ValueKey(order.id),
+                                    child: _myQueueItem(order),
                                   ),
-                                ),
-                              ),
-                              SizedBox(height: R.h(12)),
-                              Column(
-                                children:
-                                    _myOrders.skip(1).take(2).map((order) {
-                                  return Padding(
-                                    padding: EdgeInsets.only(bottom: R.h(12)),
-                                    child: AnimatedOrderCard(
-                                      key: ValueKey(order.id),
-                                      child: _myQueueItem(order),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                              if (_hasMoreMyOrders)
-                                Padding(
-                                  padding: EdgeInsets.only(top: R.h(8)),
-                                  child: Center(
-                                    child: TextButton(
-                                      onPressed: _isMyOrdersLoadingMore
-                                          ? null
-                                          : _loadMoreMyOrders,
-                                      child: _isMyOrdersLoadingMore
-                                          ? SizedBox(
-                                              width: R.w(20),
-                                              height: R.w(20),
-                                              child:
-                                                  const CircularProgressIndicator(
-                                                      strokeWidth: 2),
-                                            )
-                                          : const Text('Load More'),
-                                    ),
-                                  ),
-                                ),
-                              SizedBox(height: R.h(24)),
-                            ],
-
-                            // New Order Request
-                            if (_newRequests.isNotEmpty) ...[
-                              _sectionHeader(
-                                title: 'New Order Request',
-                                count: null,
-                              ),
-                              SizedBox(height: R.h(12)),
-                              Column(
-                                children: _newRequests
-                                    .where((order) =>
-                                        !_removingOrderIds.contains(order.id))
-                                    .map((order) {
-                                  final now = DateTime.now();
-                                  final difference =
-                                      now.difference(order.createdAt);
-                                  final remaining = 60 - difference.inSeconds;
-                                  final countdown =
-                                      remaining > 0 ? remaining : 0;
-
-                                  return NewRequestCard(
-                                    order: order,
-                                    countdownSeconds: countdown,
-                                    onAccept: () => _acceptOrder(order.id),
-                                    onDecline: () => _rejectOrder(order.id),
-                                  );
-                                }).toList(),
-                              ),
-                              SizedBox(height: R.h(24)),
-                            ],
-
-                            // Nearby Available
-                            if (_availableOrders.isNotEmpty) ...[
-                              _sectionHeader(
-                                title: 'Nearby Available',
-                                icon: RemixIcons.compass_3_fill,
-                                iconColor: const Color(0xFFFF8A65), // Orange
-                                count: _availableOrders.length,
-                                action: _availableOrders.length > 2
-                                    ? GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _isAvailableExpanded =
-                                                !_isAvailableExpanded;
-                                          });
-                                        },
-                                        child: Text(
-                                          _isAvailableExpanded
-                                              ? 'View Less'
-                                              : 'View All',
-                                          style: TextStyle(
-                                            fontSize: R.sp(14),
-                                            color: AppColors.primaryGreen,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                              SizedBox(height: R.h(12)),
-                              Builder(builder: (context) {
-                                final ordersToShow = (_isAvailableExpanded
-                                        ? _availableOrders
-                                        : _availableOrders.take(2))
-                                    .where((order) =>
-                                        !_removingOrderIds.contains(order.id))
-                                    .toList();
-                                return Column(
-                                  children: ordersToShow
-                                      .map(
-                                          (order) => _availableOrderItem(order))
-                                      .toList(),
                                 );
-                              }),
-                              if (_hasMoreAvailable && _isAvailableExpanded)
-                                Padding(
-                                  padding: EdgeInsets.only(top: R.h(8)),
-                                  child: Center(
-                                    child: TextButton(
-                                      onPressed: _isAvailableLoadingMore
-                                          ? null
-                                          : _loadMoreAvailableOrders,
-                                      child: _isAvailableLoadingMore
-                                          ? SizedBox(
-                                              width: R.w(20),
-                                              height: R.w(20),
-                                              child:
-                                                  const CircularProgressIndicator(
-                                                      strokeWidth: 2),
-                                            )
-                                          : const Text('Load More'),
-                                    ),
+                              }).toList(),
+                            ),
+                            if (_hasMoreMyOrders)
+                              Padding(
+                                padding: EdgeInsets.only(top: R.h(8)),
+                                child: Center(
+                                  child: TextButton(
+                                    onPressed: _isMyOrdersLoadingMore
+                                        ? null
+                                        : _loadMoreMyOrders,
+                                    child: _isMyOrdersLoadingMore
+                                        ? SizedBox(
+                                            width: R.w(20),
+                                            height: R.w(20),
+                                            child:
+                                                const CircularProgressIndicator(
+                                                    strokeWidth: 2),
+                                          )
+                                        : const Text('Load More'),
                                   ),
                                 ),
-                            ],
+                              ),
+                            SizedBox(height: R.h(24)),
                           ],
-                        ),
+
+                          // New Order Request
+                          if (_newRequests.isNotEmpty) ...[
+                            _sectionHeader(
+                              title: 'New Order Request',
+                              count: null,
+                            ),
+                            SizedBox(height: R.h(12)),
+                            Column(
+                              children: _newRequests
+                                  .where((order) =>
+                                      !_removingOrderIds.contains(order.id))
+                                  .map((order) {
+                                final now = DateTime.now();
+                                final difference =
+                                    now.difference(order.createdAt);
+                                final remaining = 60 - difference.inSeconds;
+                                final countdown = remaining > 0 ? remaining : 0;
+
+                                return NewRequestCard(
+                                  order: order,
+                                  countdownSeconds: countdown,
+                                  onAccept: () => _acceptOrder(order.id),
+                                  onDecline: () => _rejectOrder(order.id),
+                                );
+                              }).toList(),
+                            ),
+                            SizedBox(height: R.h(24)),
+                          ],
+
+                          // Nearby Available
+                          if (_availableOrders.isNotEmpty) ...[
+                            _sectionHeader(
+                              title: 'Nearby Available',
+                              icon: RemixIcons.compass_3_fill,
+                              iconColor: const Color(0xFFFF8A65), // Orange
+                              count: _availableOrders.length,
+                              action: _availableOrders.length > 2
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _isAvailableExpanded =
+                                              !_isAvailableExpanded;
+                                        });
+                                      },
+                                      child: Text(
+                                        _isAvailableExpanded
+                                            ? 'View Less'
+                                            : 'View All',
+                                        style: TextStyle(
+                                          fontSize: R.sp(14),
+                                          color: AppColors.primaryGreen,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            SizedBox(height: R.h(12)),
+                            Builder(builder: (context) {
+                              final ordersToShow = (_isAvailableExpanded
+                                      ? _availableOrders
+                                      : _availableOrders.take(2))
+                                  .where((order) =>
+                                      !_removingOrderIds.contains(order.id))
+                                  .toList();
+                              return Column(
+                                children: ordersToShow
+                                    .map((order) => _availableOrderItem(order))
+                                    .toList(),
+                              );
+                            }),
+                            if (_hasMoreAvailable && _isAvailableExpanded)
+                              Padding(
+                                padding: EdgeInsets.only(top: R.h(8)),
+                                child: Center(
+                                  child: TextButton(
+                                    onPressed: _isAvailableLoadingMore
+                                        ? null
+                                        : _loadMoreAvailableOrders,
+                                    child: _isAvailableLoadingMore
+                                        ? SizedBox(
+                                            width: R.w(20),
+                                            height: R.w(20),
+                                            child:
+                                                const CircularProgressIndicator(
+                                                    strokeWidth: 2),
+                                          )
+                                        : const Text('Load More'),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
-                PerformanceStatsRow(
-                  pending:
-                      _pendingOrders > 0 ? _pendingOrders : _myOrders.length,
-                  completed: _completedDeliveries,
-                  cancelled: _cancelledOrders,
-                  loginHours:
-                      _serverLoginHours + (_localSessionSeconds / 3600.0),
                 ),
-                SizedBox(height: R.h(40)),
-              ],
+              SizedBox(height: R.h(24)),
+              PerformanceStatsRow(
+                pending: _pendingOrders > 0 ? _pendingOrders : _myOrders.length,
+                completed: _completedDeliveries,
+                cancelled: _cancelledOrders,
+                loginHours: _serverLoginHours + (_localSessionSeconds / 3600.0),
+              ),
             ],
           ),
         ),

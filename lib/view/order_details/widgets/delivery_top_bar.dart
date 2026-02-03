@@ -21,10 +21,6 @@ class DeliveryTopBar extends StatelessWidget {
             onTap: () => Navigator.pop(context),
           ),
           _buildEstTimeCard(),
-          _buildCircleButton(
-            icon: Remix.more_2_fill,
-            onTap: () {},
-          ),
         ],
       ),
     );

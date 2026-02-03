@@ -8,7 +8,7 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
+
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
 class CustomerInfoView extends StatefulWidget {
@@ -78,16 +78,6 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                   ),
                 ],
               ),
-              actions: [
-                IconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    RemixIcons.more_2_fill,
-                    color: AppColors.headingText,
-                    size: R.sp(24),
-                  ),
-                ),
-              ],
             ),
             body: RefreshIndicator(
               onRefresh: viewModel.fetchOrderDetails,
@@ -312,9 +302,8 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(R.r(32)),
-                child: CustomNetworkImage(
-                  imageUrl:
-                      'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80\u0026w=2066\u0026auto=format\u0026fit=crop',
+                child: Image.asset(
+                  'assets/images/map_placeholder.png',
                   height: R.h(220),
                   width: double.infinity,
                   fit: BoxFit.cover,

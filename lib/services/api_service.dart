@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/user_model.dart';
@@ -36,6 +38,11 @@ class ApiService {
 
   Future<dynamic> _processRequest(
       Future<http.Response> Function() request) async {
+    bool hasInternet = await InternetConnectionChecker.instance.hasConnection;
+    if (!hasInternet) {
+      throw NetworkException('No internet connection');
+    }
+
     try {
       final response = await request().timeout(const Duration(seconds: 15));
       return _handleResponse(response);
