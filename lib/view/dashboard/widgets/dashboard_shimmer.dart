@@ -9,67 +9,84 @@ class DashboardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     R.init(context);
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Header Shimmer
-          // Row: Avatar + Column(Name, Id) + Spacer + Status Card
-          Row(
-            children: [
-              _buildShimmerCircle(size: R.w(50)),
-              SizedBox(width: R.w(12)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(12)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Header Shimmer
+            Row(
+              children: [
+                _buildShimmerCircle(size: R.w(50)),
+                SizedBox(width: R.w(12)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildShimmerContainer(height: R.h(16), width: R.w(120)),
+                    SizedBox(height: R.h(8)),
+                    _buildShimmerContainer(height: R.h(12), width: R.w(80)),
+                  ],
+                ),
+                const Spacer(),
+                _buildShimmerContainer(
+                    height: R.h(40), width: R.w(100), borderRadius: R.r(20)),
+              ],
+            ),
+
+            // 2. Info Banner Shimmer (Optional, if we assume it might show up)
+            // Removed for cleaner look based on "circle" request, or keep small if needed.
+            // Keeping consistent with "Waiting State" which has milestone + circle.
+
+            SizedBox(height: R.h(24)),
+
+            // 3. Weekly Milestone / Goal Card Shimmer
+            _buildShimmerContainer(
+              height: R.h(200),
+              width: double.infinity,
+              borderRadius: R.r(24),
+            ),
+
+            SizedBox(height: R.h(40)),
+
+            // 4. The "Middle Circle" (WaitingForOrders) - VISIBLE, NO SHIMMER
+            // User asked for "that middel circle should visble in shimer"
+            // We display the actual WaitingForOrders widget here, pseudo-static or animating.
+            // Since it's a loading state, maybe we just show the static ripple or the widget itself.
+            Center(
+              child: Column(
                 children: [
-                  _buildShimmerContainer(height: R.h(16), width: R.w(120)),
+                  _buildShimmerCircle(size: R.w(90)),
+                  SizedBox(height: R.h(30)),
+                  _buildShimmerContainer(height: R.h(24), width: R.w(200)),
                   SizedBox(height: R.h(8)),
-                  _buildShimmerContainer(height: R.h(12), width: R.w(80)),
+                  _buildShimmerContainer(height: R.h(16), width: R.w(150)),
                 ],
               ),
-              const Spacer(),
-              _buildShimmerContainer(
-                  height: R.h(40), width: R.w(100), borderRadius: R.r(20)),
-            ],
-          ),
-          SizedBox(height: R.h(24)),
+            ),
 
-          // 2. Info Banner Shimmer
-          _buildShimmerContainer(
-            height: R.h(70),
-            width: double.infinity,
-            borderRadius: R.r(12),
-          ),
-          SizedBox(height: R.h(24)),
+            SizedBox(height: R.h(40)),
 
-          // 3. Current Task / Daily Goal Shimmer (The big card)
-          _buildShimmerContainer(
-            height: R.h(200),
-            width: double.infinity,
-            borderRadius: R.r(24),
-          ),
-          SizedBox(height: R.h(40)),
-
-          // 4. Performance Stats Shimmer (Bottom)
-          _buildShimmerContainer(height: R.h(24), width: R.w(200)), // Title
-          SizedBox(height: R.h(20)),
-          Row(
-            children: [
-              Expanded(
-                  child: _buildShimmerContainer(
-                      height: R.h(160),
-                      width: double.infinity,
-                      borderRadius: R.r(45))),
-              SizedBox(width: R.w(16)),
-              Expanded(
-                  child: _buildShimmerContainer(
-                      height: R.h(160),
-                      width: double.infinity,
-                      borderRadius: R.r(45))),
-            ],
-          ),
-        ],
+            // 5. Performance Stats Shimmer (Bottom)
+            _buildShimmerContainer(height: R.h(24), width: R.w(200)), // Title
+            SizedBox(height: R.h(20)),
+            Row(
+              children: [
+                Expanded(
+                    child: _buildShimmerContainer(
+                        height: R.h(160),
+                        width: double.infinity,
+                        borderRadius: R.r(45))),
+                SizedBox(width: R.w(16)),
+                Expanded(
+                    child: _buildShimmerContainer(
+                        height: R.h(160),
+                        width: double.infinity,
+                        borderRadius: R.r(45))),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

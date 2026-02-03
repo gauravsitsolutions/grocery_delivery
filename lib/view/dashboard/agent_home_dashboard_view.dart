@@ -1364,7 +1364,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     final isOnline = widget.isOnline;
 
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.scaffoldBg, // Or white depending on design
         body: SafeArea(
           bottom: false,
