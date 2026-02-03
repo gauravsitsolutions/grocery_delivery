@@ -20,7 +20,6 @@ import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
-
 import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
