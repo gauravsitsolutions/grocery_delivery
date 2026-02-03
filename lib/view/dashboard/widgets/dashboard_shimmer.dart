@@ -103,7 +103,7 @@ class DashboardShimmer extends StatelessWidget {
         height: height,
         width: width,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),
@@ -118,7 +118,7 @@ class DashboardShimmer extends StatelessWidget {
         height: size,
         width: size,
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           shape: BoxShape.circle,
         ),
       ),
