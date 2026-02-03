@@ -6,6 +6,7 @@ import 'package:samrudhi_delivery_agent_app/view/dashboard/agent_home_dashboard_
 import 'package:samrudhi_delivery_agent_app/view/deliveries/deliveries_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/delivery_history/delivery_history_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/profile/profile_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/return_orders/returning_to_store_view.dart';
 import '../../constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
@@ -212,6 +213,7 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
               },
             ),
             const DeliveriesView(),
+            const ReturningToStoreView(showBackButton: false),
             const ProfileView(),
           ],
           items: [
@@ -224,6 +226,11 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
               icon: Remix.truck_line,
               activeIcon: Remix.truck_fill,
               label: 'Deliveries',
+            ),
+            _navItem(
+              icon: Remix.arrow_go_back_line,
+              activeIcon: Remix.arrow_go_back_fill,
+              label: 'Returns',
             ),
             _navItem(
               icon: Remix.user_3_line,

@@ -8,10 +8,12 @@ import 'package:samrudhi_delivery_agent_app/view/return_orders/items_handover_vi
 
 class ReturningToStoreView extends StatefulWidget {
   final String returnId;
+  final bool showBackButton;
 
   const ReturningToStoreView({
     super.key,
     this.returnId = '#RTN-9921',
+    this.showBackButton = true,
   });
 
   @override
@@ -27,17 +29,19 @@ class _ReturningToStoreViewState extends State<ReturningToStoreView> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.all(R.w(8)),
-          child: CircleAvatar(
-            backgroundColor: AppColors.white,
-            child: IconButton(
-              icon: Icon(Icons.arrow_back,
-                  color: AppColors.headingText, size: R.sp(20)),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-        ),
+        leading: widget.showBackButton
+            ? Padding(
+                padding: EdgeInsets.all(R.w(8)),
+                child: CircleAvatar(
+                  backgroundColor: AppColors.white,
+                  child: IconButton(
+                    icon: Icon(Icons.arrow_back,
+                        color: AppColors.headingText, size: R.sp(20)),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              )
+            : null,
         centerTitle: true,
         title: Column(
           children: [
