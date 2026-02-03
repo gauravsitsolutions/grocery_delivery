@@ -212,8 +212,8 @@ class _OrderAcceptedSuccessViewState extends State<OrderAcceptedSuccessView> {
                         borderRadius: BorderRadius.circular(R.r(24)),
                         color: Colors.grey[100],
                         image: const DecorationImage(
-                          image: NetworkImage(
-                            'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=800',
+                          image: AssetImage(
+                            'assets/images/map_placeholder.png',
                           ),
                           fit: BoxFit.cover,
                           opacity: 0.6,

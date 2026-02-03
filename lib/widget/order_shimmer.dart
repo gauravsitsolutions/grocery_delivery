@@ -225,6 +225,67 @@ class AvailableOrderShimmer extends StatelessWidget {
   }
 }
 
+// Shimmer for MyQueueItem
+class MyQueueShimmer extends StatelessWidget {
+  const MyQueueShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        margin: EdgeInsets.only(bottom: R.h(12)),
+        padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(16)),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(R.r(24)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow.withValues(alpha: 0.04),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: R.w(46), // Approx 22 + 12*2 padding
+              height: R.w(46),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+            ),
+            SizedBox(width: R.w(16)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                      width: R.w(140), height: R.h(17), color: Colors.white),
+                  SizedBox(height: R.h(8)),
+                  Container(
+                      width: R.w(100), height: R.h(13), color: Colors.white),
+                ],
+              ),
+            ),
+            Container(
+              width: R.w(50),
+              height: R.h(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(R.r(8)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class ListShimmer extends StatelessWidget {
   final int count;
   const ListShimmer({super.key, this.count = 3});
