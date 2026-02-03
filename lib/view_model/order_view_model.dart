@@ -6,7 +6,6 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
-import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class OrderViewModel extends ChangeNotifier {
   final int orderId;
@@ -63,10 +62,6 @@ class OrderViewModel extends ChangeNotifier {
 
   bool isItemVerifying(int itemId) => _verifyingItems.contains(itemId);
 
-  Future<String?> get _getToken async {
-    return await SharedPrefsUtil.getToken();
-  }
-
   Future<void> toggleItem(int itemId) async {
     if (_checkedItems.contains(itemId)) {
       _checkedItems.remove(itemId);
@@ -80,10 +75,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) throw Exception('Not authenticated');
-
-      await _apiService.verifyOrderItem(token, orderId, itemId);
+      await _apiService.verifyOrderItem(orderId, itemId);
 
       _checkedItems.add(itemId);
     } catch (e) {
@@ -102,17 +94,9 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) {
-        _error = 'Not authenticated';
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
       final results = await Future.wait([
-        _apiService.getOrderDetails(token, orderId),
-        _apiService.getOrderItems(token, orderId),
+        _apiService.getOrderDetails(orderId),
+        _apiService.getOrderItems(orderId),
       ]);
 
       final fetchedOrder = results[0] as Order;
@@ -165,14 +149,11 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) throw Exception('Not authenticated');
-
       // 1. Complete Delivery (OTP Verification)
-      await _apiService.completeDelivery(token, orderId, otp);
+      await _apiService.completeDelivery(orderId, otp);
 
       // 2. Fetch Summary to check current status
-      final summaryData = await _apiService.getOrderSummary(token, orderId);
+      final summaryData = await _apiService.getOrderSummary(orderId);
       final currentStatus = summaryData['status']?.toString().toLowerCase();
 
       // Merge summary data into existing order immediately
@@ -192,8 +173,7 @@ class OrderViewModel extends ChangeNotifier {
       // 3. Finalize Order Status (New API) only if NOT cancelled
       if (currentStatus != 'cancelled') {
         try {
-          final completeResponse =
-              await _apiService.completeOrder(token, orderId);
+          final completeResponse = await _apiService.completeOrder(orderId);
           if (completeResponse['status'] == true &&
               completeResponse['data'] != null) {
             _order = Order.fromJson(completeResponse['data']);
@@ -222,10 +202,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) throw Exception('Not authenticated');
-
-      await _apiService.sendDeliveryOtp(token, orderId);
+      await _apiService.sendDeliveryOtp(orderId);
 
       _isLoading = false;
       notifyListeners();
@@ -244,10 +221,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) throw Exception('Not authenticated');
-
-      await _apiService.resendDeliveryOtp(token, orderId);
+      await _apiService.resendDeliveryOtp(orderId);
 
       _isLoading = false;
       notifyListeners();
@@ -292,13 +266,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) {
-        _error = "Authentication failed";
-        return false;
-      }
-
-      final response = await _apiService.startOrder(token, orderId);
+      final response = await _apiService.startOrder(orderId);
 
       if (response['status'] == true || response['status'] == 'success') {
         if (response['data'] != null) {
@@ -329,13 +297,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) {
-        _error = "Authentication failed";
-        return false;
-      }
-
-      final response = await _apiService.acceptOrder(token, orderId);
+      final response = await _apiService.acceptOrder(orderId);
 
       if (response['status'] == true || response['status'] == 'success') {
         if (response['data'] != null) {
@@ -365,13 +327,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) {
-        _error = "Authentication failed";
-        return false;
-      }
-
-      final response = await _apiService.completeOrder(token, orderId);
+      final response = await _apiService.completeOrder(orderId);
 
       if (response['status'] == true || response['status'] == 'success') {
         if (response['data'] != null) {
@@ -401,13 +357,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) {
-        _error = "Authentication failed";
-        return false;
-      }
-
-      final response = await _apiService.markAsPending(token, orderId);
+      final response = await _apiService.markAsPending(orderId);
 
       if (response['status'] == true || response['status'] == 'success') {
         if (response['data'] != null) {
@@ -445,13 +395,10 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) return false;
-
       // 1. Upload Proof
       log('Uploading pickup proof...');
       try {
-        await _apiService.uploadPickupProof(token, orderId, _pickupProofImage!);
+        await _apiService.uploadPickupProof(orderId, _pickupProofImage!);
         log('Pickup proof uploaded successfully');
       } catch (e) {
         log('Error uploading proof: $e');
@@ -463,7 +410,7 @@ class OrderViewModel extends ChangeNotifier {
       }
 
       // 2. Confirm Pickup
-      final response = await _apiService.confirmPickup(token, orderId);
+      final response = await _apiService.confirmPickup(orderId);
 
       // If the API returns the updated order object in 'data', we can update it directly
       if (response['data'] != null) {
@@ -523,11 +470,8 @@ class OrderViewModel extends ChangeNotifier {
   Future<bool> reportItemIssue(
       int itemId, String issueType, String description) async {
     try {
-      final token = await _getToken;
-      if (token == null) throw Exception('Not authenticated');
-
       await _apiService.reportItemIssue(
-          token, orderId, itemId, issueType, description);
+          orderId, itemId, issueType, description);
 
       // Optionally mark item as "issue reported" locally if needed?
       return true;
@@ -540,9 +484,7 @@ class OrderViewModel extends ChangeNotifier {
 
   Future<void> fetchCancellationReasons() async {
     try {
-      final token = await _getToken;
-      if (token == null) return;
-      _cancellationReasons = await _apiService.getCancellationReasons(token);
+      _cancellationReasons = await _apiService.getCancellationReasons();
       notifyListeners();
     } catch (e) {
       log('Error fetching cancellation reasons: $e');
@@ -554,10 +496,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) throw Exception('Not authenticated');
-
-      final response = await _apiService.cancelOrder(token, orderId, reasonId);
+      final response = await _apiService.cancelOrder(orderId, reasonId);
 
       if (response['status'] == true || response['message'] != null) {
         // Assume cancellation successful
@@ -583,10 +522,7 @@ class OrderViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _getToken;
-      if (token == null) throw Exception('Not authenticated');
-
-      await _apiService.rateCustomer(token, orderId, rating, comment);
+      await _apiService.rateCustomer(orderId, rating, comment);
 
       _isLoading = false;
       notifyListeners();

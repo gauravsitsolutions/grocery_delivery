@@ -113,21 +113,11 @@ class ApiService {
     return LoginResponse.fromJson(response);
   }
 
-  Future<void> logout(String? token) async {
+  Future<void> logout() async {
     final uri = Uri.parse(AppUrls.logout);
     log('API Request: POST $uri');
 
-    // Helper handles sanitized token check if we pass it, but _getHeaders logic is safer
-    // We can rely on _getHeaders now. But wait, existing logic removed "Bearer " prefix if present.
-    // _getHeaders handles "Bearer " adding.
-    // If usage sends "Bearer ", _getHeaders might double it?
-    // Current logic: sanitizedToken = token.startsWith... ? substring : token.
-    // New logic: _getHeaders assumes raw token in prefs.
-    // If `token` arg has Bearer, we should sanitize it before passing?
-    // Or just let _getHeaders handle it?
-    // Let's pass token null-coalesced or just token.
-
-    final headers = await _getHeaders(token);
+    final headers = await _getHeaders();
 
     await _processRequest(() => http.post(
           uri,
@@ -150,13 +140,13 @@ class ApiService {
     return response;
   }
 
-  Future<double> getLoginHours(String? token) async {
+  Future<double> getLoginHours() async {
     final uri = Uri.parse(AppUrls.loginHours);
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true && response['totalHours'] != null) {
@@ -165,13 +155,13 @@ class ApiService {
     return 0.0;
   }
 
-  Future<int> getTotalOrders(String? token) async {
+  Future<int> getTotalOrders() async {
     final uri = Uri.parse(AppUrls.totalOrders);
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true && response['totalOrders'] != null) {
@@ -272,8 +262,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateAgentStatus(
-      String? token, bool isOnline) async {
+  Future<Map<String, dynamic>> updateAgentStatus(bool isOnline) async {
     // isOnline = true -> Start Duty
     // isOnline = false -> Stop Duty (Offline)
     final uri = Uri.parse(isOnline ? AppUrls.startDuty : AppUrls.stopDuty);
@@ -281,7 +270,7 @@ class ApiService {
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true) {
@@ -292,13 +281,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> pauseAgentDuty(String? token) async {
+  Future<Map<String, dynamic>> pauseAgentDuty() async {
     final uri = Uri.parse(AppUrls.pauseDuty);
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true) {
@@ -308,13 +297,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> resumeAgentDuty(String? token) async {
+  Future<Map<String, dynamic>> resumeAgentDuty() async {
     final uri = Uri.parse(AppUrls.resumeDuty);
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true) {
@@ -324,13 +313,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> stopAgentDuty(String? token) async {
+  Future<Map<String, dynamic>> stopAgentDuty() async {
     final uri = Uri.parse(AppUrls.stopDuty);
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true) {
@@ -340,29 +329,29 @@ class ApiService {
     }
   }
 
-  Future<ProfileResponse> getProfile(String? token) async {
+  Future<ProfileResponse> getProfile() async {
     final uri = Uri.parse(AppUrls.profile);
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
     return ProfileResponse.fromJson(response);
   }
 
-  Future<PartnerSummary> getPartnerProfileSummary(String? token) async {
+  Future<PartnerSummary> getPartnerProfileSummary() async {
     final uri = Uri.parse(AppUrls.partnerProfileSummary);
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
     return PartnerSummary.fromJson(response);
   }
 
-  Future<List<DailyPerformance>> getPartnerPerformanceGraph(String token,
+  Future<List<DailyPerformance>> getPartnerPerformanceGraph(
       {String? filter, String? startDate, String? endDate}) async {
     var url = AppUrls.partnerPerformanceGraph;
 
@@ -382,46 +371,44 @@ class ApiService {
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     return PartnerPerformanceModel.fromJson(response).data;
   }
 
-  Future<Map<String, dynamic>> updateProfilePhone(
-      String? token, String phone) async {
+  Future<Map<String, dynamic>> updateProfilePhone(String phone) async {
     final uri = Uri.parse(AppUrls.updateProfilePhone);
     log('API Request: PUT $uri');
 
     final response = await _processRequest(() async => http.put(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: jsonEncode({'phone': phone}),
         ));
     return response;
   }
 
-  Future<Map<String, dynamic>> updateProfileEmail(
-      String? token, String email) async {
+  Future<Map<String, dynamic>> updateProfileEmail(String email) async {
     final uri = Uri.parse(AppUrls.updateProfileEmail);
     log('API Request: PUT $uri');
 
     final response = await _processRequest(() async => http.put(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: jsonEncode({'email': email}),
         ));
     return response;
   }
 
   Future<Map<String, dynamic>> updateProfileVehicle(
-      String? token, String vehicleType, String vehicleNumber) async {
+      String vehicleType, String vehicleNumber) async {
     final uri = Uri.parse(AppUrls.updateProfileVehicle);
     log('API Request: PUT $uri');
 
     final response = await _processRequest(() async => http.put(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: jsonEncode({
             'vehicle_type': vehicleType,
             'vehicle_number': vehicleNumber,
@@ -430,15 +417,13 @@ class ApiService {
     return response;
   }
 
-  Future<String?> uploadProfileImage(String token, File imageFile) async {
+  Future<String?> uploadProfileImage(File imageFile) async {
     final uri = Uri.parse(AppUrls.uploadProfileImage);
     log('API Request: POST Multipart $uri');
 
     final request = http.MultipartRequest('POST', uri);
-    request.headers.addAll({
-      'Authorization': 'Bearer $token',
-      'Accept': 'application/json',
-    });
+    final headers = await _getHeaders();
+    request.headers.addAll(headers);
 
     try {
       final multipartFile = await http.MultipartFile.fromPath(
@@ -469,13 +454,13 @@ class ApiService {
     }
   }
 
-  Future<OrderResponse> getNewOrders(String? token, {int page = 1}) async {
+  Future<OrderResponse> getNewOrders({int page = 1}) async {
     final uri = Uri.parse('${AppUrls.pendingList}?page=$page');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response is List) {
@@ -484,14 +469,13 @@ class ApiService {
     return OrderResponse.fromJson(response);
   }
 
-  Future<OrderResponse> getAvailableOrders(String? token,
-      {int page = 1}) async {
+  Future<OrderResponse> getAvailableOrders({int page = 1}) async {
     final uri = Uri.parse('${AppUrls.availableOrders}?page=$page');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response is List) {
@@ -500,13 +484,13 @@ class ApiService {
     return OrderResponse.fromJson(response);
   }
 
-  Future<Map<String, dynamic>> confirmPickup(String? token, int orderId) async {
+  Future<Map<String, dynamic>> confirmPickup(int orderId) async {
     final uri = Uri.parse(AppUrls.pickupOrder(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true || response['status'] == 'success') {
@@ -517,13 +501,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> startOrder(String? token, int orderId) async {
+  Future<Map<String, dynamic>> startOrder(int orderId) async {
     final uri = Uri.parse(AppUrls.startOrder(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true || response['status'] == 'success') {
@@ -533,13 +517,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> completeOrder(String? token, int orderId) async {
+  Future<Map<String, dynamic>> completeOrder(int orderId) async {
     final uri = Uri.parse(AppUrls.completeOrder(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true || response['status'] == 'success') {
@@ -550,13 +534,13 @@ class ApiService {
     }
   }
 
-  Future<OrderResponse> getMyOrders(String? token, {int page = 1}) async {
+  Future<OrderResponse> getMyOrders({int page = 1}) async {
     final uri = Uri.parse('${AppUrls.myOrders}?page=$page');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response is List) {
@@ -565,14 +549,13 @@ class ApiService {
     return OrderResponse.fromJson(response);
   }
 
-  Future<DeliveryHistoryResponse> getDeliveries(String? token,
-      {int page = 1}) async {
+  Future<DeliveryHistoryResponse> getDeliveries({int page = 1}) async {
     final uri = Uri.parse('${AppUrls.deliveries}?page=$page');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response is List) {
@@ -587,15 +570,14 @@ class ApiService {
     return DeliveryHistoryResponse.fromJson(response);
   }
 
-  Future<OrderResponse> searchDeliveries(String? token, String query,
-      {int page = 1}) async {
+  Future<OrderResponse> searchDeliveries(String query, {int page = 1}) async {
     final uri =
         Uri.parse('${AppUrls.searchDeliveries}?query=$query&page=$page');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response is List) {
@@ -604,25 +586,25 @@ class ApiService {
     return OrderResponse.fromJson(response);
   }
 
-  Future<DeliveryStatusResponse> getDeliveryStatus(String? token) async {
+  Future<DeliveryStatusResponse> getDeliveryStatus() async {
     final uri = Uri.parse(AppUrls.deliveryStatus);
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     return DeliveryStatusResponse.fromJson(response);
   }
 
-  Future<Map<String, dynamic>> acceptOrder(String? token, int orderId) async {
+  Future<Map<String, dynamic>> acceptOrder(int orderId) async {
     final uri = Uri.parse(AppUrls.acceptOrder(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true || response['status'] == 'success') {
@@ -633,8 +615,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> rejectOrder(String? token, int orderId,
-      [int? reasonId]) async {
+  Future<Map<String, dynamic>> rejectOrder(int orderId, [int? reasonId]) async {
     final uri = Uri.parse(AppUrls.rejectOrder(orderId));
     log('API Request: POST $uri');
 
@@ -647,7 +628,7 @@ class ApiService {
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: body,
         ));
 
@@ -659,13 +640,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> markAsPending(String? token, int orderId) async {
+  Future<Map<String, dynamic>> markAsPending(int orderId) async {
     final uri = Uri.parse(AppUrls.markPending(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true || response['status'] == 'success') {
@@ -676,13 +657,13 @@ class ApiService {
     }
   }
 
-  Future<Order> getOrderDetails(String? token, int orderId) async {
+  Future<Order> getOrderDetails(int orderId) async {
     final uri = Uri.parse(AppUrls.orderDetails(orderId));
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true && response['data'] != null) {
@@ -692,13 +673,13 @@ class ApiService {
     }
   }
 
-  Future<List<OrderItem>> getOrderItems(String? token, int orderId) async {
+  Future<List<OrderItem>> getOrderItems(int orderId) async {
     final uri = Uri.parse(AppUrls.orderItems(orderId));
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     dynamic itemsData = response['data'];
@@ -719,16 +700,13 @@ class ApiService {
     }
   }
 
-  Future<bool> uploadPickupProof(
-      String token, int orderId, File imageFile) async {
+  Future<bool> uploadPickupProof(int orderId, File imageFile) async {
     final uri = Uri.parse(AppUrls.pickupProof(orderId));
     log('API Request: POST Multipart $uri');
 
     final request = http.MultipartRequest('POST', uri);
-    request.headers.addAll({
-      'Authorization': 'Bearer $token',
-      'Accept': 'application/json',
-    });
+    final headers = await _getHeaders();
+    request.headers.addAll(headers);
 
     try {
       final multipartFile = await http.MultipartFile.fromPath(
@@ -755,14 +733,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> verifyOrderItem(
-      String? token, int orderId, int itemId) async {
+  Future<Map<String, dynamic>> verifyOrderItem(int orderId, int itemId) async {
     final uri = Uri.parse(AppUrls.verifyOrderItem(orderId, itemId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true) {
@@ -772,14 +749,14 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> reportItemIssue(String? token, int orderId,
-      int itemId, String issueType, String? description) async {
+  Future<Map<String, dynamic>> reportItemIssue(
+      int orderId, int itemId, String issueType, String? description) async {
     final uri = Uri.parse(AppUrls.reportItemIssue(orderId, itemId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: jsonEncode({
             'issue_type': issueType,
             'description': description,
@@ -794,14 +771,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> cancelOrder(
-      String? token, int orderId, int reasonId) async {
+  Future<Map<String, dynamic>> cancelOrder(int orderId, int reasonId) async {
     final uri = Uri.parse(AppUrls.cancelOrder(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: jsonEncode({
             'reasonId': reasonId,
             'reason_id': reasonId,
@@ -816,48 +792,38 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>?> getCurrentOrder(String token) async {
+  Future<Map<String, dynamic>?> getCurrentOrder() async {
     final uri = Uri.parse(AppUrls.currentOrder);
     // log('API Request: GET $uri');
 
     try {
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await _processRequest(() async => http.get(
+            uri,
+            headers: await _getHeaders(),
+          ));
 
-      log('Check Current Order Status: ${response.statusCode}');
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
-          return jsonResponse['data'];
-        }
-      } else if (response.statusCode == 404) {
-        // Expected case: No active order. Return null to indicate no order.
-        return null;
+      if (response != null && response is Map && response['status'] == true) {
+        return response['data'];
       }
       return null;
     } catch (e) {
-      if (e is! SocketException && !e.toString().contains('No internet')) {
-        log('Check Current Order Error (SILENT): $e');
+      if (e is ValidationException &&
+          (e.message.contains('404') ||
+              e.message.toLowerCase().contains('not found'))) {
+        return null;
       }
+      log('Check Current Order Error (SILENT): $e');
       return null;
     }
   }
 
-  Future<Map<String, dynamic>> completeDelivery(
-      String? token, int orderId, String otp) async {
+  Future<Map<String, dynamic>> completeDelivery(int orderId, String otp) async {
     final uri = Uri.parse(AppUrls.completeDelivery(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: jsonEncode({
             'otp': otp,
             'type': 'delivery',
@@ -872,13 +838,13 @@ class ApiService {
     }
   }
 
-  Future<void> sendDeliveryOtp(String? token, int orderId) async {
+  Future<void> sendDeliveryOtp(int orderId) async {
     final uri = Uri.parse(AppUrls.sendDeliveryOtp(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] != true) {
@@ -887,13 +853,13 @@ class ApiService {
     }
   }
 
-  Future<void> resendDeliveryOtp(String? token, int orderId) async {
+  Future<void> resendDeliveryOtp(int orderId) async {
     final uri = Uri.parse(AppUrls.resendDeliveryOtp(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] != true) {
@@ -902,14 +868,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getOrderSummary(
-      String? token, int orderId) async {
+  Future<Map<String, dynamic>> getOrderSummary(int orderId) async {
     final uri = Uri.parse(AppUrls.getSummary(orderId));
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true && response['data'] != null) {
@@ -921,13 +886,13 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> rateCustomer(
-      String? token, int orderId, double rating, String? comment) async {
+      int orderId, double rating, String? comment) async {
     final uri = Uri.parse(AppUrls.rateCustomer(orderId));
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: jsonEncode({
             'rating': rating,
             'comment': comment,
@@ -944,64 +909,62 @@ class ApiService {
 
   // ================= NOTIFICATIONS =================
 
-  Future<NotificationResponse> getNotifications(String? token,
-      {int page = 1}) async {
+  Future<NotificationResponse> getNotifications({int page = 1}) async {
     final uri = Uri.parse('${AppUrls.notifications}?page=$page');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     return NotificationResponse.fromJson(response);
   }
 
   /// Mark notification as read
-  Future<bool> markNotificationAsRead(
-      String? token, String notificationId) async {
+  Future<bool> markNotificationAsRead(String notificationId) async {
     final uri = Uri.parse('${AppUrls.notifications}/$notificationId/read');
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     return response['status'] == true || response['status'] == 'success';
   }
 
   /// Get notification settings
-  Future<Map<String, dynamic>> getNotificationSettings(String? token) async {
+  Future<Map<String, dynamic>> getNotificationSettings() async {
     final uri = Uri.parse('${AppUrls.notifications}/settings');
     log('API Request: GET $uri');
 
     return await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
   }
 
   /// Update notification settings
   Future<Map<String, dynamic>> updateNotificationSettings(
-      String? token, Map<String, bool> settings) async {
+      Map<String, bool> settings) async {
     final uri = Uri.parse('${AppUrls.notifications}/settings');
     log('API Request: PUT $uri');
 
     return await _processRequest(() async => http.put(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
           body: jsonEncode(settings),
         ));
   }
 
-  Future<List<CancellationReason>> getCancellationReasons(String? token) async {
+  Future<List<CancellationReason>> getCancellationReasons() async {
     final uri = Uri.parse(AppUrls.cancellationReasons);
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response is List) {
@@ -1015,7 +978,7 @@ class ApiService {
     return [];
   }
 
-  Future<DeliverySummary> getDeliverySummary(String? token,
+  Future<DeliverySummary> getDeliverySummary(
       {required String dateRange, String? fromDate, String? toDate}) async {
     String url = '${AppUrls.deliverySummary}?dateRange=$dateRange';
     if (dateRange == 'custom' && fromDate != null && toDate != null) {
@@ -1026,7 +989,7 @@ class ApiService {
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true) {
@@ -1041,13 +1004,13 @@ class ApiService {
         completedCount: 0, totalDistanceKm: 0, avgDeliveryTimeMin: 0);
   }
 
-  Future<Map<String, dynamic>> resetDuty(String? token) async {
+  Future<Map<String, dynamic>> resetDuty() async {
     final uri = Uri.parse(AppUrls.resetDuty);
     log('API Request: POST $uri');
 
     final response = await _processRequest(() async => http.post(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response['status'] == true ||
@@ -1059,14 +1022,13 @@ class ApiService {
     }
   }
 
-  Future<List<DailyDutyLog>> getMonthlyPerformance(
-      String? token, String month) async {
+  Future<List<DailyDutyLog>> getMonthlyPerformance(String month) async {
     final uri = Uri.parse('${AppUrls.partnerPerformanceMonth}?month=$month');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response is List) {
@@ -1076,15 +1038,14 @@ class ApiService {
     }
   }
 
-  Future<List<DailyDutyLog>> getWeeklyPerformance(
-      String? token, String weekStart) async {
+  Future<List<DailyDutyLog>> getWeeklyPerformance(String weekStart) async {
     final uri =
         Uri.parse('${AppUrls.partnerPerformanceWeek}?weekStart=$weekStart');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
           uri,
-          headers: await _getHeaders(token),
+          headers: await _getHeaders(),
         ));
 
     if (response is List) {

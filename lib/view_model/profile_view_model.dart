@@ -26,16 +26,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await SharedPrefsUtil.getToken();
-
-      if (token == null) {
-        _error = 'Session expired. Please login again.';
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      final response = await _apiService.getProfile(token);
+      final response = await _apiService.getProfile();
       if (response.status && response.data != null) {
         _profile = response.data;
 
@@ -50,7 +41,7 @@ class ProfileViewModel extends ChangeNotifier {
           await SharedPrefsUtil.setUserName(_profile!.name!);
         }
 
-        await _fetchStats(token); // Fetch stats after profile
+        await _fetchStats(); // Fetch stats after profile
       } else {
         _error = 'Failed to load profile data';
       }
@@ -62,10 +53,10 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchStats(String token) async {
+  Future<void> _fetchStats() async {
     try {
-      final orders = await _apiService.getTotalOrders(token);
-      final hours = await _apiService.getLoginHours(token);
+      final orders = await _apiService.getTotalOrders();
+      final hours = await _apiService.getLoginHours();
       final localSeconds = await SharedPrefsUtil
           .getSessionSeconds(); // Get local session seconds
       _totalOrders = orders;
@@ -82,14 +73,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await SharedPrefsUtil.getToken();
-
-      if (token == null) {
-        _error = 'Session expired. Please login again.';
-        return false;
-      }
-
-      final response = await _apiService.updateProfilePhone(token, phone);
+      final response = await _apiService.updateProfilePhone(phone);
       if (response['status'] == true) {
         await fetchProfile(); // Refresh profile after update
         return true;
@@ -112,14 +96,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await SharedPrefsUtil.getToken();
-
-      if (token == null) {
-        _error = 'Session expired. Please login again.';
-        return false;
-      }
-
-      final response = await _apiService.updateProfileEmail(token, email);
+      final response = await _apiService.updateProfileEmail(email);
       if (response['status'] == true) {
         await fetchProfile(); // Refresh profile after update
         return true;
@@ -142,15 +119,8 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await SharedPrefsUtil.getToken();
-
-      if (token == null) {
-        _error = 'Session expired. Please login again.';
-        return false;
-      }
-
-      final response = await _apiService.updateProfileVehicle(
-          token, vehicleType, vehicleNumber);
+      final response =
+          await _apiService.updateProfileVehicle(vehicleType, vehicleNumber);
       if (response['status'] == true) {
         await fetchProfile(); // Refresh profile after update
         return true;
@@ -185,15 +155,7 @@ class ProfileViewModel extends ChangeNotifier {
         return false; // User canceled
       }
 
-      final token = await SharedPrefsUtil.getToken();
-
-      if (token == null) {
-        _error = 'Session expired. Please login again.';
-        return false;
-      }
-
-      final imageUrl =
-          await _apiService.uploadProfileImage(token, File(image.path));
+      final imageUrl = await _apiService.uploadProfileImage(File(image.path));
 
       if (imageUrl != null) {
         await fetchProfile();

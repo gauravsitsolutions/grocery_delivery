@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:samrudhi_delivery_agent_app/model/notification_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
-import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class NotificationsViewModel extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -30,10 +29,6 @@ class NotificationsViewModel extends ChangeNotifier {
   Map<String, bool> get settings => _settings;
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
-  Future<String?> get _authToken async {
-    return await SharedPrefsUtil.getToken();
-  }
-
   Future<void> fetchNotifications({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
@@ -44,16 +39,7 @@ class NotificationsViewModel extends ChangeNotifier {
     }
 
     try {
-      final token = await _authToken;
-      if (token == null) {
-        _error = 'Not authenticated';
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      final response =
-          await _apiService.getNotifications(token, page: _currentPage);
+      final response = await _apiService.getNotifications(page: _currentPage);
 
       if (refresh) {
         _notifications = response.data;
@@ -96,9 +82,6 @@ class NotificationsViewModel extends ChangeNotifier {
 
   Future<void> markAsRead(String notificationId) async {
     try {
-      final token = await _authToken;
-      if (token == null) return;
-
       // Find locally and update status immediately for better UX
       final index =
           _notifications.indexWhere((n) => n.id.toString() == notificationId);
@@ -114,7 +97,7 @@ class NotificationsViewModel extends ChangeNotifier {
         notifyListeners();
       }
 
-      await _apiService.markNotificationAsRead(token, notificationId);
+      await _apiService.markNotificationAsRead(notificationId);
     } catch (e) {
       debugPrint('Error marking as read: $e');
     }
@@ -122,10 +105,7 @@ class NotificationsViewModel extends ChangeNotifier {
 
   Future<void> fetchSettings() async {
     try {
-      final token = await _authToken;
-      if (token == null) return;
-
-      final response = await _apiService.getNotificationSettings(token);
+      final response = await _apiService.getNotificationSettings();
       if (response['status'] == true && response['data'] != null) {
         final data = response['data'] as Map<String, dynamic>;
         _settings = {
@@ -159,10 +139,7 @@ class NotificationsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _authToken;
-      if (token != null) {
-        // await _apiService.markAllNotificationsAsRead(token);
-      }
+      // await _apiService.markAllNotificationsAsRead();
     } catch (e) {
       // Revert or show error
       debugPrint("Error marking all read: $e");
@@ -175,10 +152,7 @@ class NotificationsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _authToken;
-      if (token != null) {
-        // await _apiService.clearAllNotifications(token);
-      }
+      // await _apiService.clearAllNotifications();
     } catch (e) {
       _notifications = backup;
       notifyListeners();
@@ -192,10 +166,7 @@ class NotificationsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _authToken;
-      if (token == null) return;
-
-      await _apiService.updateNotificationSettings(token, {key: value});
+      await _apiService.updateNotificationSettings({key: value});
     } catch (e) {
       _settings[key] = originalValue ?? true;
       notifyListeners();

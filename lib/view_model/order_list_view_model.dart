@@ -3,7 +3,6 @@ import 'package:samrudhi_delivery_agent_app/model/delivery_status_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
-import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class OrderListViewModel extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -84,16 +83,7 @@ class OrderListViewModel extends ChangeNotifier {
     }
 
     try {
-      final token = await _authToken;
-      if (token == null) {
-        _newOrdersError = 'Not authenticated';
-        _isNewOrdersLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      final response =
-          await _apiService.getNewOrders(token, page: _newOrdersPage);
+      final response = await _apiService.getNewOrders(page: _newOrdersPage);
 
       if (refresh) {
         _newOrders = response.data;
@@ -137,16 +127,8 @@ class OrderListViewModel extends ChangeNotifier {
     }
 
     try {
-      final token = await _authToken;
-      if (token == null) {
-        _availableOrdersError = 'Not authenticated';
-        _isAvailableOrdersLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      final response = await _apiService.getAvailableOrders(token,
-          page: _availableOrdersPage);
+      final response =
+          await _apiService.getAvailableOrders(page: _availableOrdersPage);
 
       if (refresh) {
         _availableOrders = response.data;
@@ -196,17 +178,8 @@ class OrderListViewModel extends ChangeNotifier {
     }
 
     try {
-      final token = await _authToken;
-      if (token == null) {
-        _myDeliveriesError = 'Not authenticated';
-        _isMyDeliveriesLoading = false;
-        notifyListeners();
-        return;
-      }
-
       // Use getMyOrders for Active queue
-      final response =
-          await _apiService.getMyOrders(token, page: _myDeliveriesPage);
+      final response = await _apiService.getMyOrders(page: _myDeliveriesPage);
 
       // Guard: If we switched to history while fetching, discard this result
       if (_isHistoryList) return;
@@ -261,17 +234,8 @@ class OrderListViewModel extends ChangeNotifier {
     }
 
     try {
-      final token = await _authToken;
-      if (token == null) {
-        _myDeliveriesError = 'Not authenticated';
-        _isMyDeliveriesLoading = false;
-        notifyListeners();
-        return;
-      }
-
       // Use getDeliveries for History
-      final response =
-          await _apiService.getDeliveries(token, page: _myDeliveriesPage);
+      final response = await _apiService.getDeliveries(page: _myDeliveriesPage);
 
       // Guard: If we switched to active while fetching, discard this result
       if (!_isHistoryList) return;
@@ -356,16 +320,8 @@ class OrderListViewModel extends ChangeNotifier {
     }
 
     try {
-      final token = await _authToken;
-      if (token == null) {
-        _searchError = 'Not authenticated';
-        _isSearchLoading = false;
-        notifyListeners();
-        return;
-      }
-
       final response =
-          await _apiService.searchDeliveries(token, query, page: _searchPage);
+          await _apiService.searchDeliveries(query, page: _searchPage);
 
       if (refresh) {
         _searchResults = response.data;
@@ -410,14 +366,7 @@ class OrderListViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _authToken;
-      if (token == null) {
-        _isStatusLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      final response = await _apiService.getDeliveryStatus(token);
+      final response = await _apiService.getDeliveryStatus();
       if (response.status && response.data != null) {
         _deliveryStatus = response.data;
       }
@@ -432,10 +381,7 @@ class OrderListViewModel extends ChangeNotifier {
   // Order Actions
   Future<bool> acceptOrder(int orderId) async {
     try {
-      final token = await _authToken;
-      if (token == null) return false;
-
-      final response = await _apiService.acceptOrder(token, orderId);
+      final response = await _apiService.acceptOrder(orderId);
 
       if (response['status'] == true || response['status'] == 'success') {
         // Remove from new orders locally for immediate UI update
@@ -456,10 +402,7 @@ class OrderListViewModel extends ChangeNotifier {
 
   Future<bool> rejectOrder(int orderId) async {
     try {
-      final token = await _authToken;
-      if (token == null) return false;
-
-      final response = await _apiService.rejectOrder(token, orderId);
+      final response = await _apiService.rejectOrder(orderId);
 
       if (response['status'] == true || response['status'] == 'success') {
         // Remove from new orders locally
@@ -481,9 +424,5 @@ class OrderListViewModel extends ChangeNotifier {
       }
       return false;
     }
-  }
-
-  Future<String?> get _authToken async {
-    return await SharedPrefsUtil.getToken();
   }
 }

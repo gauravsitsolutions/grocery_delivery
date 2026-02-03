@@ -5,7 +5,6 @@ import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart
 import 'package:fl_chart/fl_chart.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class WeeklyPerformanceView extends StatefulWidget {
   const WeeklyPerformanceView({super.key});
@@ -37,15 +36,11 @@ class _WeeklyPerformanceViewState extends State<WeeklyPerformanceView> {
     });
 
     try {
-      final token = await SharedPrefsUtil.getToken();
-      if (token == null) throw Exception('No token found');
-
       final dateStr = DateFormat('yyyy-MM-dd').format(_startDate);
-      final logs = await _apiService.getWeeklyPerformance(token, dateStr);
+      final logs = await _apiService.getWeeklyPerformance(dateStr);
 
       // Fetch Graph Data
       final graphData = await _apiService.getPartnerPerformanceGraph(
-        token,
         filter: 'custom',
         startDate: dateStr,
         endDate: DateFormat('yyyy-MM-dd')

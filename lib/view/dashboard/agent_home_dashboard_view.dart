@@ -76,7 +76,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   bool _isMyOrdersLoadingMore = false;
   bool _isAvailableExpanded = false; // Added to manage expansion state
 
-  String? _authToken;
   final Set<int> _removingOrderIds = {};
   ProfileModel? _userProfile;
   PartnerSummary? _partnerSummary;
@@ -176,25 +175,20 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   }
 
   Future<void> _toggleTimerPause() async {
-    final token = _authToken ?? await SharedPrefsUtil.getToken();
-    if (token == null) return;
-
     try {
       if (_isTimerPaused) {
         // RESUME
-        await _apiService.resumeAgentDuty(token);
+        await _apiService.resumeAgentDuty();
         if (mounted) {
           setState(() {
             _isTimerPaused = false;
             _lastToggleTimestamp = DateTime.now();
           });
           CustomSnackBar.showSuccess(context, 'Duty Resumed');
-          // Optionally notify parent if needed, but we manage pause locally mostly
-          // widget.onStatusChanged(true);
         }
       } else {
         // PAUSE
-        await _apiService.pauseAgentDuty(token);
+        await _apiService.pauseAgentDuty();
         if (mounted) {
           setState(() {
             _isTimerPaused = true;
@@ -231,44 +225,30 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   }
 
   Future<void> _initDashboard() async {
-    final token = await SharedPrefsUtil.getToken();
-    if (token != null) {
-      if (mounted) {
-        setState(() {
-          _authToken = token;
-        });
-      }
-      // If parent passed dutyStatus, use it to set timer state logic if needed
-      // Note: _secondsOnDuty is primarily updated by _fetchPartnerSummary below
+    // If parent passed dutyStatus, use it to set timer state logic if needed
+    // Note: _secondsOnDuty is primarily updated by _fetchPartnerSummary below
 
-      // Re-fetch everything with the token
-      _fetchOrders(refresh: true);
-      _fetchProfile();
-      _fetchPartnerSummary();
-      _fetchDeliveryStats();
-      _fetchLoginHours();
+    // Re-fetch everything
+    _fetchOrders(refresh: true);
+    _fetchProfile();
+    _fetchPartnerSummary();
+    _fetchDeliveryStats();
+    _fetchLoginHours();
 
-      // Fetch notifications for badge
-      if (mounted) {
-        Provider.of<NotificationsViewModel>(context, listen: false)
-            .fetchNotifications(refresh: true);
-      }
-    } else {
-      // Handle no token? Login screen?
-      if (mounted) {}
+    // Fetch notifications for badge
+    if (mounted) {
+      Provider.of<NotificationsViewModel>(context, listen: false)
+          .fetchNotifications(refresh: true);
     }
   }
 
   Future<void> _fetchProfile() async {
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token != null) {
-        final profileResponse = await _apiService.getProfile(token);
-        if (mounted && profileResponse.data != null) {
-          setState(() {
-            _userProfile = profileResponse.data;
-          });
-        }
+      final profileResponse = await _apiService.getProfile();
+      if (mounted && profileResponse.data != null) {
+        setState(() {
+          _userProfile = profileResponse.data;
+        });
       }
     } catch (e) {
       if (e is! NetworkException) {
@@ -279,31 +259,28 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Future<void> _fetchPartnerSummary() async {
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token != null) {
-        final summary = await _apiService.getPartnerProfileSummary(token);
-        if (mounted) {
-          setState(() {
-            _partnerSummary = summary;
+      final summary = await _apiService.getPartnerProfileSummary();
+      if (mounted) {
+        setState(() {
+          _partnerSummary = summary;
 
-            // Sync local pause state with server status
-            // Skip sync if we recently toggled (within 10 seconds) to avoid flicker from stale data
-            final bool recentlyToggled = _lastToggleTimestamp != null &&
-                DateTime.now().difference(_lastToggleTimestamp!).inSeconds < 10;
+          // Sync local pause state with server status
+          // Skip sync if we recently toggled (within 10 seconds) to avoid flicker from stale data
+          final bool recentlyToggled = _lastToggleTimestamp != null &&
+              DateTime.now().difference(_lastToggleTimestamp!).inSeconds < 10;
 
-            if (!recentlyToggled) {
-              final status = summary.dutyStatus?.toLowerCase();
-              if (status == 'paused') {
-                _isTimerPaused = true;
-              } else if (status == 'online' || status == 'active') {
-                // Only auto-resume if we were paused locally but server explicitly says online/active
-                if (_isTimerPaused) {
-                  _isTimerPaused = false;
-                }
+          if (!recentlyToggled) {
+            final status = summary.dutyStatus?.toLowerCase();
+            if (status == 'paused') {
+              _isTimerPaused = true;
+            } else if (status == 'online' || status == 'active') {
+              // Only auto-resume if we were paused locally but server explicitly says online/active
+              if (_isTimerPaused) {
+                _isTimerPaused = false;
               }
             }
-          });
-        }
+          }
+        });
       }
     } catch (e) {
       if (e is! NetworkException) {
@@ -314,30 +291,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Future<void> _fetchDeliveryStats() async {
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token != null) {
-        final statusResponse = await _apiService.getDeliveryStatus(token);
-        if (mounted && statusResponse.data != null) {
-          setState(() {
-            _completedDeliveries = statusResponse.data!.deliveredOrders;
-            _cancelledOrders = statusResponse.data!.cancelledOrders;
-            // The API returns 'pending_orders' which are 0 in the example,
-            // but we might want to sum total_orders - delivered - cancelled if pending logic differs.
-            // For now, let's trust the API 'pending_orders' or calculate logic if needed.
-            // The prompt example shows "pending_orders": 0.
-            // But visually "Performance Today" usually implies pending tasks for the day.
-            // If the user wants "Approx" pending like before (total - delivered), we can check.
-            // The previous logic was: summary.stats!.totalOrdersToday - summary.stats!.deliveredOrders.
-            // The new API gives "total_orders".
-            // Let's use total - delivered - cancelled to be safe if pending is just "currently active".
-            // Or just use pending_orders if that's what is desired.
-            // Let's stick to the direct value first.
-            _pendingOrders = statusResponse.data!.pendingOrders;
-
-            // Actually, commonly "pending" in performance stats means "assigned but not done".
-            // If the API returns 0, maybe we should use that.
-          });
-        }
+      final statusResponse = await _apiService.getDeliveryStatus();
+      if (mounted && statusResponse.data != null) {
+        setState(() {
+          _completedDeliveries = statusResponse.data!.deliveredOrders;
+          _cancelledOrders = statusResponse.data!.cancelledOrders;
+          _pendingOrders = statusResponse.data!.pendingOrders;
+        });
       }
     } catch (e) {
       log('Error fetching delivery stats: $e');
@@ -357,22 +317,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     }
 
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-
-      if (token == null) {
-        if (mounted) {
-          setState(() {
-            _serverLoginHours = 0;
-            _serverLoginHours = 0;
-            _localSessionSeconds = 0;
-            _isLoading = false;
-          });
-        }
-        return;
-      }
-
       // 1. Check for active order first
-      final activeOrderData = await _apiService.getCurrentOrder(token);
+      final activeOrderData = await _apiService.getCurrentOrder();
 
       // We will use this active order as the primary dashboard card if it exists
       Order? activeOrder;
@@ -384,8 +330,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           final minimalOrder = Order.fromJson(activeOrderData);
           log('Found active order ID: ${minimalOrder.id}. Fetching full details...');
 
-          activeOrder =
-              await _apiService.getOrderDetails(token, minimalOrder.id);
+          activeOrder = await _apiService.getOrderDetails(minimalOrder.id);
           log('Successfully fetched full details for order: ${activeOrder.id}');
         } catch (e) {
           log('Failed to fetch full details for current order: $e');
@@ -397,20 +342,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       }
 
       // Fetch new orders (New Requests)
-      final newRequestsResponse =
-          await _apiService.getNewOrders(token, page: 1);
+      final newRequestsResponse = await _apiService.getNewOrders(page: 1);
 
       // Fetch available orders (Nearby Available)
-      final availableResponse =
-          await _apiService.getAvailableOrders(token, page: 1);
+      final availableResponse = await _apiService.getAvailableOrders(page: 1);
 
       // Fetch my orders (queue)
-      final myOrdersResponse = await _apiService.getMyOrders(token, page: 1);
+      final myOrdersResponse = await _apiService.getMyOrders(page: 1);
 
       if (mounted) {
         setState(() {
-          _authToken = token;
-          log('Auth Token Set: ${_authToken?.substring(0, 10)}...'); // Debug log
+          log('Auth Token Set: Dashboard Refresh'); // Debug log
 
           // Filter out orders that are currently being removed (or have been processed locally)
           // We only filter new/available lists to hide them. We do NOT filter _myOrders,
@@ -492,10 +434,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Future<void> _fetchLoginHours() async {
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token == null) return;
-
-      final hours = await _apiService.getLoginHours(token);
+      final hours = await _apiService.getLoginHours();
       if (mounted) {
         setState(() {
           // Only update server hours if they have increased or it's the first sync
@@ -550,12 +489,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token == null) return;
-
       final nextPage = _availablePage + 1;
-      final response =
-          await _apiService.getAvailableOrders(token, page: nextPage);
+      final response = await _apiService.getAvailableOrders(page: nextPage);
 
       if (mounted) {
         setState(() {
@@ -586,11 +521,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token == null) return;
-
       final nextPage = _myOrdersPage + 1;
-      final response = await _apiService.getMyOrders(token, page: nextPage);
+      final response = await _apiService.getMyOrders(page: nextPage);
 
       if (mounted) {
         setState(() {
@@ -621,16 +553,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     });
 
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-
-      if (token == null) return;
-
-      if (!mounted) return;
-
       // Show loading
       CustomSnackBar.showSuccess(context, 'Accepting order...');
 
-      final response = await _apiService.acceptOrder(token, orderId);
+      final response = await _apiService.acceptOrder(orderId);
 
       if (!mounted) return;
 
@@ -721,12 +647,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     if (!mounted) return;
 
     try {
-      final token = _authToken ?? await SharedPrefsUtil.getToken();
-      if (token == null) return;
-
       // 1. Fetch Reasons
       log('Fetching cancellation reasons for rejection...');
-      final reasons = await _apiService.getCancellationReasons(token);
+      final reasons = await _apiService.getCancellationReasons();
 
       if (!mounted) return;
 
@@ -756,8 +679,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       log('Rejecting order $orderId with reason ${selectedReason.reason}');
 
       // Use rejectOrder for new/available orders
-      final response =
-          await _apiService.rejectOrder(token, orderId, selectedReasonId);
+      final response = await _apiService.rejectOrder(orderId, selectedReasonId);
 
       if (!mounted) return;
 
@@ -1419,8 +1341,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   try {
                                     CustomSnackBar.showSuccess(
                                         context, 'Resuming duty...');
-                                    await _apiService
-                                        .resumeAgentDuty(_authToken!);
+                                    await _apiService.resumeAgentDuty();
                                     if (!mounted) return;
                                     setState(() {
                                       _isTimerPaused = false;

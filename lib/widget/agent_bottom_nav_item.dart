@@ -68,23 +68,18 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
         });
       }
 
-      final token = await SharedPrefsUtil.getToken();
-      if (token != null) {
-        final apiService = ApiService();
-        final summary = await apiService.getPartnerProfileSummary(token);
-        if (mounted) {
-          setState(() {
-            // 'online' or 'paused' means the agent session is active (isOnline = true for UI lock purposes)
-            dutyStatus = summary.dutyStatus;
-            isOnline = summary.dutyStatus == 'online' ||
-                summary.dutyStatus == 'paused';
-            isLoading = false;
-          });
-          // Update cache with fresh status
-          await SharedPrefsUtil.setDutyStatus(summary.dutyStatus ?? 'offline');
-        }
-      } else {
-        setState(() => isLoading = false);
+      final apiService = ApiService();
+      final summary = await apiService.getPartnerProfileSummary();
+      if (mounted) {
+        setState(() {
+          // 'online' or 'paused' means the agent session is active (isOnline = true for UI lock purposes)
+          dutyStatus = summary.dutyStatus;
+          isOnline =
+              summary.dutyStatus == 'online' || summary.dutyStatus == 'paused';
+          isLoading = false;
+        });
+        // Update cache with fresh status
+        await SharedPrefsUtil.setDutyStatus(summary.dutyStatus ?? 'offline');
       }
     } catch (e) {
       // Fallback or just stop loading
@@ -140,26 +135,8 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                 await SharedPrefsUtil.setDutyStatus(newStatus);
 
                 try {
-                  final token = await SharedPrefsUtil.getToken();
-
-                  if (token == null) {
-                    if (!context.mounted) return;
-                    // Revert
-                    final revertedStatus = !val ? 'online' : 'offline';
-                    setState(() {
-                      isOnline = !val;
-                      dutyStatus = revertedStatus;
-                    });
-                    await SharedPrefsUtil.setDutyStatus(revertedStatus);
-
-                    if (!context.mounted) return;
-                    CustomSnackBar.showError(
-                        context, 'Error: Authentication token not found');
-                    return;
-                  }
-
                   final apiService = ApiService();
-                  await apiService.updateAgentStatus(token, val);
+                  await apiService.updateAgentStatus(val);
 
                   if (!context.mounted) return;
 

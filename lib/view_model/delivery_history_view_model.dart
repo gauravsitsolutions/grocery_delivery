@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:samrudhi_delivery_agent_app/model/delivery_history_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
-import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class DeliveryHistoryViewModel extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -30,17 +29,8 @@ class DeliveryHistoryViewModel extends ChangeNotifier {
     }
 
     try {
-      final token = await SharedPrefsUtil.getToken();
-      if (token == null) {
-        _error = 'Not authenticated';
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
       final pageToFetch = refresh ? 1 : _currentPage + 1;
-      final response =
-          await _apiService.getDeliveries(token, page: pageToFetch);
+      final response = await _apiService.getDeliveries(page: pageToFetch);
 
       if (refresh) {
         _historyData = response;

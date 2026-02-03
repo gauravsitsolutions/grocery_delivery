@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:samrudhi_delivery_agent_app/model/delivery_summary_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
-import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 
 class DeliverySummaryViewModel extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -24,14 +23,6 @@ class DeliverySummaryViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await SharedPrefsUtil.getToken();
-      if (token == null) {
-        _error = 'Not authenticated';
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
       String? fromDateStr;
       String? toDateStr;
 
@@ -41,7 +32,6 @@ class DeliverySummaryViewModel extends ChangeNotifier {
       }
 
       _summary = await _apiService.getDeliverySummary(
-        token,
         dateRange: dateRange,
         fromDate: fromDateStr,
         toDate: toDateStr,

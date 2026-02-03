@@ -51,20 +51,17 @@ class _ProfileViewState extends State<ProfileView> {
         _graphError = null;
         _isGraphLoading = true;
       });
-      final token = await SharedPrefsUtil.getToken();
-      if (token != null) {
-        final data = await ApiService().getPartnerPerformanceGraph(
-          token,
-          filter: _selectedFilter == 'custom' ? null : _selectedFilter,
-          startDate: _startDate?.toIso8601String().split('T')[0],
-          endDate: _endDate?.toIso8601String().split('T')[0],
-        );
-        if (mounted) {
-          setState(() {
-            _performanceData = data;
-            _isGraphLoading = false;
-          });
-        }
+
+      final data = await ApiService().getPartnerPerformanceGraph(
+        filter: _selectedFilter == 'custom' ? null : _selectedFilter,
+        startDate: _startDate?.toIso8601String().split('T')[0],
+        endDate: _endDate?.toIso8601String().split('T')[0],
+      );
+      if (mounted) {
+        setState(() {
+          _performanceData = data;
+          _isGraphLoading = false;
+        });
       }
     } catch (e) {
       log('Error fetching performance graph: $e');
@@ -1132,19 +1129,15 @@ class _ProfileViewState extends State<ProfileView> {
     setState(() => _isLoggingOut = true);
 
     try {
-      final token = await SharedPrefsUtil.getToken();
+      log('Logout initiated.');
 
-      log('Logout initiated. Token present: ${token != null}');
-
-      if (token != null) {
-        try {
-          // Attempt API logout with a short timeout
-          log('Calling Logout API...');
-          await ApiService().logout(token).timeout(const Duration(seconds: 3));
-          log('Logout API call successful');
-        } catch (e) {
-          log('Logout API failed or timed out: $e');
-        }
+      try {
+        // Attempt API logout with a short timeout
+        log('Calling Logout API...');
+        await ApiService().logout().timeout(const Duration(seconds: 3));
+        log('Logout API call successful');
+      } catch (e) {
+        log('Logout API failed or timed out: $e');
       }
 
       log('Clearing session...');
