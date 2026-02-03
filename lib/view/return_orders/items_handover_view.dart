@@ -311,7 +311,7 @@ class _ItemsHandoverViewState extends State<ItemsHandoverView> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
 
             SizedBox(height: R.h(24)),
 

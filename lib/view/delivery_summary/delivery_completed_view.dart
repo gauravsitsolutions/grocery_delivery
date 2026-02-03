@@ -67,6 +67,8 @@ class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
             SizedBox(height: R.h(24)),
             _earningsCard(),
             SizedBox(height: R.h(16)),
+            _mapSection(),
+            SizedBox(height: R.h(16)),
             _customerCard(),
             SizedBox(height: R.h(16)),
             _orderSummary(),
@@ -224,6 +226,80 @@ class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ================= MAP SECTION =================
+
+  Widget _mapSection() {
+    return _card(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(R.r(20)),
+              topRight: Radius.circular(R.r(20)),
+            ),
+            child: Image.asset(
+              'assets/images/map_placeholder.png',
+              width: double.infinity,
+              height: R.h(150),
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(R.w(16)),
+            child: Row(
+              children: [
+                Icon(RemixIcons.map_pin_2_fill,
+                    color: AppColors.primaryGreen, size: R.sp(20)),
+                SizedBox(width: R.w(12)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Delivery Route',
+                        style: TextStyle(
+                          fontSize: R.sp(14),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.headingText,
+                        ),
+                      ),
+                      Text(
+                        'Route tracked successfully',
+                        style: TextStyle(
+                          fontSize: R.sp(12),
+                          color: AppColors.bodyText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: R.w(10),
+                    vertical: R.h(4),
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withAlpha(20),
+                    borderRadius: BorderRadius.circular(R.r(12)),
+                  ),
+                  child: Text(
+                    '2.4 KM',
+                    style: TextStyle(
+                      fontSize: R.sp(12),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -479,9 +555,9 @@ class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
 
   // ================= CARD =================
 
-  Widget _card({required Widget child}) {
+  Widget _card({required Widget child, EdgeInsetsGeometry? padding}) {
     return Container(
-      padding: EdgeInsets.all(R.w(16)),
+      padding: padding ?? EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(20)),
