@@ -30,6 +30,7 @@ import 'package:samrudhi_delivery_agent_app/view/feedback/order_rejected_feedbac
 import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_success_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
+import 'package:samrudhi_delivery_agent_app/view/return_orders/returning_to_store_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/duty_status_card.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/dashboard_shimmer.dart';
@@ -1389,6 +1390,76 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
               // Show Info Banner if waiting OR offline
               if (_isWaiting) _buildInfoBanner(),
 
+              // Return Flow Card
+              Padding(
+                padding: EdgeInsets.only(bottom: R.h(16)),
+                child: GestureDetector(
+                  onTap: () {
+                    PersistentNavBarNavigator.pushNewScreen(
+                      context,
+                      screen: const ReturningToStoreView(),
+                      withNavBar: false,
+                      pageTransitionAnimation:
+                          PageTransitionAnimation.cupertino,
+                    );
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(R.w(16)),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(R.r(16)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadow.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(R.w(10)),
+                          decoration: BoxDecoration(
+                            color:
+                                AppColors.primaryGreen.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(RemixIcons.arrow_go_back_fill,
+                              color: AppColors.primaryGreen, size: R.sp(22)),
+                        ),
+                        SizedBox(width: R.w(16)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Return Management',
+                                style: TextStyle(
+                                  fontSize: R.sp(16),
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.headingText,
+                                ),
+                              ),
+                              SizedBox(height: R.h(2)),
+                              Text(
+                                'Head to store to return items',
+                                style: TextStyle(
+                                  fontSize: R.sp(13),
+                                  color: AppColors.bodyText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(RemixIcons.arrow_right_s_line,
+                            color: AppColors.grey, size: R.sp(20)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
               if (isOnline && _isTimerPaused)
                 Padding(
                   padding: EdgeInsets.only(bottom: R.h(16)),
@@ -1727,11 +1798,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             children: [
               // Timer Display
               // Timer Display (Tap to Pause/Resume)
+              // Return Flow button removed from here
               GestureDetector(
                 onTap: _toggleTimerPause,
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                      horizontal: R.w(12), vertical: R.h(8)),
+                      horizontal: R.w(8), vertical: R.h(8)),
                   decoration: BoxDecoration(
                     color: _isTimerPaused
                         ? AppColors.warning.withValues(alpha: 0.1)
@@ -1778,7 +1850,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 ),
               ),
 
-              SizedBox(width: R.w(12)),
+              SizedBox(width: R.w(6)),
               // Notification Bell
               Consumer<NotificationsViewModel>(
                 builder: (context, vm, _) {

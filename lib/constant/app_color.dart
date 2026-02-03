@@ -99,4 +99,6 @@ class AppColors {
   static const Color lightRedBg = Color(0xFFFFEAEA);
   static const Color red = Colors.red;
   static const Color lightGreenBg = Color(0xFFEAF7F0);
+
+  static const Color accentYellow = Color(0xFFFFB74D);
 }
