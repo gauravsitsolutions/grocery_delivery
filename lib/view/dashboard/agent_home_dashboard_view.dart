@@ -11,14 +11,13 @@ import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.
 import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
+
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 import 'package:samrudhi_delivery_agent_app/routes/app_routes.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
-import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/widget/animated_order_card.dart';
 import 'package:samrudhi_delivery_agent_app/view/delivery_summary/delivery_completed_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
@@ -90,7 +89,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
   @override
   void initState() {
     super.initState();
-    _initDashboard();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initDashboard();
+    });
     // Initialize timer state based on initial props
     if (widget.isOnline) {
       if (widget.dutyStatus?.toLowerCase() == 'paused') {
@@ -117,6 +118,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       } else {
         _stopTimer();
         // Reset timer when explicitly stopping duty (User Request)
+        setState(() {
+          _localSessionSeconds = 0;
+        });
+        SharedPrefsUtil.setSessionSeconds(0);
       }
     }
   }
@@ -321,7 +326,10 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
       // We will use this active order as the primary dashboard card if it exists
       Order? activeOrder;
 
-      if (activeOrderData != null && mounted) {
+      if (activeOrderData != null &&
+          activeOrderData.isNotEmpty &&
+          activeOrderData['id'] != null &&
+          mounted) {
         try {
           // The current order API returns a partial object. We need to fetch the full details
           // to get vendor, items, etc. correctly.
@@ -335,7 +343,12 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           // Fallback to minimal order if full fetch fails, or just ignore it?
           // For now, let's use minimal if we can, but it might lack data.
           // Better to show nothing than broken data, but let's try-catch safe.
-          activeOrder = Order.fromJson(activeOrderData);
+          try {
+            activeOrder = Order.fromJson(activeOrderData);
+          } catch (parseError) {
+            log('Failed to parse current order data: $parseError');
+            activeOrder = null;
+          }
         }
       }
 
@@ -357,12 +370,29 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           // so that if we just Accepted one, it can appear (if server has it), or if we are optimistic, we keep it.
           // Note: If server is stale and misses the Accepted order, it will disappear from _myOrders momentarily
           // until server syncs. This is an accepted tradeoff for now to ensure it CLEARS from Available.
-          _newRequests = newRequestsResponse.data
+          // Filter raw lists
+          final pendingRaw = newRequestsResponse.data
               .where((o) => !_removingOrderIds.contains(o.id))
               .toList();
-          _availableOrders = availableResponse.data
+
+          final availableRaw = availableResponse.data
               .where((o) => !_removingOrderIds.contains(o.id))
               .toList();
+
+          // Combine all incoming work
+          final allIncoming = [...pendingRaw, ...availableRaw];
+
+          // PER USER REQUEST:
+          // 1. Show only top 2 orders in "New Order Request" section
+          // 2. Show "all other" in "Available Orders" section
+          if (allIncoming.isNotEmpty) {
+            _newRequests = allIncoming.take(2).toList();
+            _availableOrders = allIncoming.skip(2).toList();
+          } else {
+            _newRequests = [];
+            _availableOrders = [];
+          }
+
           _myOrders = myOrdersResponse.data
               // .where((o) => !_removingOrderIds.contains(o.id)) // <--- REMOVED FILTER for MyOrders
               .toList();
@@ -585,7 +615,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 couponDiscount: '0',
                 totalAmount: '0',
                 orderItems: [],
-                status: 'queued', // Default to queued as per API
+                status: 'accepted', // Default to accepted
                 createdAt: DateTime.now(),
                 updatedAt: DateTime.now(),
               );
@@ -757,8 +787,13 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Widget _myQueueItem(Order order) {
     // Determine if it's pickup or dropoff based on status
-    final bool isPickup =
-        order.status == 'ready_for_pickup' || order.status == 'pending';
+    final bool isPickup = [
+      'pending',
+      'queued',
+      'accepted',
+      'ready_for_pickup',
+      'assigned'
+    ].contains(order.status.toLowerCase());
 
     return GestureDetector(
       onTap: () => _navigateToOrder(order),
@@ -805,7 +840,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         : (order.deliveryAddress?.addressLine1 ??
                             "Apt 402, Green Heights"),
                     style: TextStyle(
-                      fontSize: R.sp(17),
+                      fontSize: R.sp(15),
                       fontWeight: FontWeight.w800,
                       color: AppColors.headingText,
                     ),
@@ -818,7 +853,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                         ? '${order.orderItems.length} Items • Ready in 2 mins'
                         : '1.4 km from Store',
                     style: TextStyle(
-                      fontSize: R.sp(13),
+                      fontSize: R.sp(12),
                       fontWeight: FontWeight.w600,
                       color: AppColors.bodyText.withValues(alpha: 0.5),
                     ),
@@ -895,302 +930,172 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Widget _availableOrderItem(Order order) {
     return Container(
-      margin: EdgeInsets.only(bottom: R.h(12)),
-      padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(16)),
+      margin: EdgeInsets.only(bottom: R.h(16)),
+      padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(24)),
+        borderRadius: BorderRadius.circular(R.r(24)), // More rounded
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
+            color: AppColors.shadow.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  order.vendor?.storeName ?? "Gourmet Grocery",
-                  style: TextStyle(
-                    fontSize: R.sp(17),
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.headingText,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: R.h(4)),
-                Text(
-                  '${order.distance ?? '0.8'} km away • ₹${(double.tryParse(order.totalAmount) ?? 65.0).toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: R.sp(14),
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.bodyText.withValues(alpha: 0.5),
-                  ),
-                ),
-                SizedBox(height: R.h(12)),
-                Row(
-                  children: [
-                    _orderTag('Medium Task'),
-                    SizedBox(width: R.w(8)),
-                    _orderTag('No Cold Storage'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: R.w(16)),
-          GestureDetector(
-            onTap: () => _acceptOrder(order.id),
-            child: Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: R.w(20), vertical: R.h(10)),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(R.r(12)),
-                border: Border.all(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.5)),
-              ),
-              child: Text(
-                'Add',
-                style: TextStyle(
-                  color: AppColors.primaryGreen,
-                  fontWeight: FontWeight.w800,
-                  fontSize: R.sp(14),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _orderTag(String label) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(4)),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F4F9),
-        borderRadius: BorderRadius.circular(R.r(100)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: R.sp(10),
-          fontWeight: FontWeight.w700,
-          color: AppColors.ghostButtonText,
-          fontStyle: FontStyle.italic,
-        ),
-      ),
-    );
-  }
-
-  Widget _currentTaskCard(Order order) {
-    // Determine image URL
-    String? imageUrl;
-    if (order.orderItems.isNotEmpty && order.orderItems.first.product != null) {
-      final product = order.orderItems.first.product!;
-      if (product.productImageUrls.isNotEmpty) {
-        imageUrl = product.productImageUrls.first;
-      } else if (product.productImages.isNotEmpty) {
-        imageUrl = AppUrls.productImages + product.productImages.first;
-      }
-    }
-
-    return AnimatedOrderCard(
-      key: ValueKey(order.id),
-      visible: !_removingOrderIds.contains(order.id),
-      child: GestureDetector(
-        onTap: () => _navigateToOrder(order),
-        child: Container(
-          padding: EdgeInsets.all(R.w(16)),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(R.r(16)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow.withValues(alpha: 0.08),
-                blurRadius: 15,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
+          // Row 1: ID - Badge - Price
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Merchant / Order Info Row
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Text(
+                '#${order.id}',
+                style: TextStyle(
+                  fontSize: R.sp(16),
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.headingText,
+                ),
+              ),
+              SizedBox(width: R.w(12)),
+              Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(R.r(6)),
+                ),
+                child: Text(
+                  'NEARBY',
+                  style: TextStyle(
+                    fontSize: R.sp(10),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryGreen,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // Merchant Logo / Image
-                  Container(
-                    width: R.w(50),
-                    height: R.w(50),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(R.r(8)),
-                      border: Border.all(color: AppColors.borderLight),
-                      color: AppColors.white,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(R.r(8)),
-                      child: imageUrl != null
-                          ? CustomNetworkImage(
-                              imageUrl: imageUrl,
-                              fit: BoxFit.cover,
-                              errorWidget: Icon(RemixIcons.store_2_line,
-                                  color: AppColors.grey),
-                            )
-                          : Icon(RemixIcons.store_2_line,
-                              size: R.sp(24), color: AppColors.black),
-                    ),
-                  ),
-                  SizedBox(width: R.w(12)),
-                  // Title & Subtitle
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          order.orderNumber, // e.g. "Whole Foods Market"
-                          style: TextStyle(
-                            fontSize: R.sp(18),
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.headingText,
-                          ),
-                        ),
-                        SizedBox(height: R.h(4)),
-                        Row(
-                          children: [
-                            Icon(RemixIcons.shopping_bag_3_fill,
-                                size: R.sp(14), color: AppColors.grey),
-                            SizedBox(width: R.w(4)),
-                            Text(
-                              '${order.orderItems.length} items • Grocery', // Mock category if needed
-                              style: TextStyle(
-                                fontSize: R.sp(13),
-                                color: AppColors.bodyText,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Price
                   Text(
-                    '₹ ${order.totalAmount}',
+                    '₹${(double.tryParse(order.totalAmount) ?? 65.0).toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: R.sp(18),
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w900,
                       color: AppColors.headingText,
+                    ),
+                  ),
+                  SizedBox(height: R.h(2)),
+                  Text(
+                    'EST. PAYOUT',
+                    style: TextStyle(
+                      fontSize: R.sp(10),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.bodyText.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: R.h(16)),
+            ],
+          ),
+          SizedBox(height: R.h(16)),
 
-              // 2. Green Dropoff Box
-              Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: R.w(16), vertical: R.h(12)),
-                decoration: BoxDecoration(
-                  color: AppColors.paleGreen, // Light green bg
-                  borderRadius: BorderRadius.circular(R.r(12)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Dropoff by 4:45 PM', // Mock time or calculate
-                            style: TextStyle(
-                              color: AppColors.primaryGreen,
-                              fontWeight: FontWeight.w700,
-                              fontSize: R.sp(13),
-                            ),
-                          ),
-                          SizedBox(height: R.h(4)),
-                          Text(
-                            order.deliveryAddress?.addressLine1 ??
-                                'Delivery Address',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AppColors.headingText,
-                              fontWeight: FontWeight.w800,
-                              fontSize: R.sp(14),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Buttons removed as per request
-                  ],
+          // Row 2: Details
+          Row(
+            children: [
+              Icon(RemixIcons.shopping_basket_2_fill,
+                  size: R.sp(18),
+                  color: AppColors.bodyText.withValues(alpha: 0.6)),
+              SizedBox(width: R.w(6)),
+              Text(
+                '${order.orderItems.length} items',
+                style: TextStyle(
+                  fontSize: R.sp(14),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.bodyText.withValues(alpha: 0.6),
                 ),
               ),
-              SizedBox(height: R.h(16)),
+              SizedBox(width: R.w(24)),
+              Icon(RemixIcons.map_pin_fill,
+                  size: R.sp(18), color: AppColors.primaryGreen),
+              SizedBox(width: R.w(4)),
+              Text(
+                '${order.distance ?? '2.5'} km',
+                style: TextStyle(
+                  fontSize: R.sp(14),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: R.h(24)),
 
-              // 3. Navigate Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    PersistentNavBarNavigator.pushNewScreen(
-                      context,
-                      screen: PickupTaskView(
-                        orderId: order.id,
-                        orderNumber: order.orderNumber,
-                        order: order,
-                      ),
-                      withNavBar: false,
-                      pageTransitionAnimation:
-                          PageTransitionAnimation.cupertino,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    padding: EdgeInsets.symmetric(vertical: R.h(16)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(R.r(14)),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        order.status == 'in_progress'
-                            ? 'Navigate to Dropoff'
-                            : 'Navigate to Pickup',
-                        style: TextStyle(
-                          fontSize: R.sp(16),
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.white,
+          // Row 3: Buttons
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _acceptOrder(order.id),
+                  child: Container(
+                    height: R.h(50),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen, // Bright Green
+                      borderRadius:
+                          BorderRadius.circular(R.r(50)), // Pill shape
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
+                      ],
+                    ),
+                    child: Text(
+                      'Accept',
+                      style: TextStyle(
+                        fontSize: R.sp(16),
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
-                      SizedBox(width: R.w(8)),
-                      Icon(RemixIcons.navigation_fill,
-                          size: R.sp(18), color: AppColors.white),
-                    ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: R.w(16)),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _rejectOrder(order.id),
+                  child: Container(
+                    height: R.h(50),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.ghostButtonBg, // Grey
+                      borderRadius:
+                          BorderRadius.circular(R.r(50)), // Pill shape
+                    ),
+                    child: Text(
+                      'Reject',
+                      style: TextStyle(
+                        fontSize: R.sp(16),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ghostButtonText,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _sectionHeader({required String title, Widget? action}) {
+  Widget _sectionHeader({required String title, Widget? action, int? count}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1199,11 +1104,32 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             Text(
               title,
               style: TextStyle(
-                fontSize: R.sp(22),
+                fontSize: R.sp(18),
                 fontWeight: FontWeight.w900,
                 color: AppColors.headingText,
               ),
             ),
+            if (count != null && count > 0) ...[
+              SizedBox(width: R.w(8)),
+              Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(R.r(12)),
+                  border: Border.all(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: R.sp(11),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
         if (action != null) action,
@@ -1252,7 +1178,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 Text(
                   'No new orders found.',
                   style: TextStyle(
-                    fontSize: R.sp(14),
+                    fontSize: R.sp(13),
                     fontWeight: FontWeight.w700,
                     color: AppColors.headingText,
                   ),
@@ -1260,7 +1186,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 Text(
                   'We will notify you as soon as a task is assigned.',
                   style: TextStyle(
-                    fontSize: R.sp(12),
+                    fontSize: R.sp(11),
                     color: AppColors.bodyText,
                   ),
                 ),
@@ -1290,7 +1216,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _dashboardHeader(isOnline),
+                const DashboardHeaderShimmer(),
                 Expanded(
                   child: DashboardShimmer(
                     hasOrders: _currentOrder != null ||
@@ -1409,12 +1335,17 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 )
               else
                 AbsorbPointer(
-                  absorbing:
-                      !isOnline && _myOrders.isEmpty && _currentOrder == null,
+                  absorbing: !isOnline &&
+                      _myOrders.isEmpty &&
+                      _currentOrder == null &&
+                      _newRequests.isEmpty &&
+                      _availableOrders.isEmpty,
                   child: ColorFiltered(
                     colorFilter: isOnline ||
                             _myOrders.isNotEmpty ||
-                            _currentOrder != null
+                            _currentOrder != null ||
+                            _newRequests.isNotEmpty ||
+                            _availableOrders.isNotEmpty
                         ? const ColorFilter.mode(
                             Colors.transparent, BlendMode.dst)
                         : const ColorFilter.mode(
@@ -1422,29 +1353,55 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                     child: Opacity(
                       opacity: isOnline ||
                               _myOrders.isNotEmpty ||
-                              _currentOrder != null
+                              _currentOrder != null ||
+                              _newRequests.isNotEmpty ||
+                              _availableOrders.isNotEmpty
                           ? 1.0
                           : 0.8,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Current Task (Priority)
-                          if (_currentOrder != null) ...[
-                            _sectionHeader(title: 'Current Task & Delivery'),
+                          // 1. New Order Request (Top Priority)
+                          if (_newRequests.isNotEmpty) ...[
+                            _sectionHeader(
+                              title: 'New Order Request',
+                              count: _newRequests.length,
+                            ),
                             SizedBox(height: R.h(12)),
-                            _currentTaskCard(_currentOrder!),
+                            // Header is now inside KeyRequestCard
+                            Column(
+                              children: _newRequests
+                                  .where((order) =>
+                                      !_removingOrderIds.contains(order.id))
+                                  .map((order) {
+                                final now = DateTime.now();
+                                final difference =
+                                    now.difference(order.createdAt);
+                                final remaining = 60 - difference.inSeconds;
+                                final countdown = remaining > 0 ? remaining : 0;
+
+                                return NewRequestCard(
+                                  order: order,
+                                  countdownSeconds: countdown,
+                                  onAccept: () => _acceptOrder(order.id),
+                                  onDecline: () => _rejectOrder(order.id),
+                                );
+                              }).toList(),
+                            ),
                             SizedBox(height: R.h(24)),
                           ],
 
-                          // Delivery Queue (Priority)
-
-                          if (_myOrders.length > 1) ...[
+                          // 2. My Queue (Pending Orders including Active)
+                          if (_myOrders.isNotEmpty) ...[
                             _sectionHeader(
                               title: 'My Queue',
+                              count: _myOrders.length,
                             ),
                             SizedBox(height: R.h(12)),
                             Column(
-                              children: _myOrders.skip(1).take(2).map((order) {
+                              children: _myOrders
+                                  .take(3) // Show up to 3 items
+                                  .map((order) {
                                 return Padding(
                                   padding: EdgeInsets.only(bottom: R.h(12)),
                                   child: AnimatedOrderCard(
@@ -1477,60 +1434,55 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                             SizedBox(height: R.h(24)),
                           ],
 
-                          // New Order Request
-                          if (_newRequests.isNotEmpty) ...[
-                            _sectionHeader(
-                              title: 'New Order Request',
-                            ),
-                            SizedBox(height: R.h(12)),
-                            Column(
-                              children: _newRequests
-                                  .where((order) =>
-                                      !_removingOrderIds.contains(order.id))
-                                  .map((order) {
-                                final now = DateTime.now();
-                                final difference =
-                                    now.difference(order.createdAt);
-                                final remaining = 60 - difference.inSeconds;
-                                final countdown = remaining > 0 ? remaining : 0;
-
-                                return NewRequestCard(
-                                  order: order,
-                                  countdownSeconds: countdown,
-                                  onAccept: () => _acceptOrder(order.id),
-                                  onDecline: () => _rejectOrder(order.id),
-                                );
-                              }).toList(),
-                            ),
-                            SizedBox(height: R.h(24)),
-                          ],
-
-                          // Nearby Available
+                          // 3. Nearby Available (Pool)
                           if (_availableOrders.isNotEmpty) ...[
-                            _sectionHeader(
-                              title: 'Nearby Available',
-                              action: _availableOrders.length > 2
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _isAvailableExpanded =
-                                              !_isAvailableExpanded;
-                                        });
-                                      },
-                                      child: Text(
-                                        _isAvailableExpanded
-                                            ? 'View Less'
-                                            : 'View All',
-                                        style: TextStyle(
-                                          fontSize: R.sp(14),
-                                          color: AppColors.primaryGreen,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(R.w(6)),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFFF9800), // Orange
+                                        shape: BoxShape.circle,
                                       ),
-                                    )
-                                  : null,
+                                      child: Icon(RemixIcons.compass_3_fill,
+                                          color: Colors.white, size: R.sp(14)),
+                                    ),
+                                    SizedBox(width: R.w(8)),
+                                    Text(
+                                      'Available Orders',
+                                      style: TextStyle(
+                                        fontSize: R.sp(18),
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.headingText,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (_availableOrders.length > 2)
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _isAvailableExpanded =
+                                            !_isAvailableExpanded;
+                                      });
+                                    },
+                                    child: Text(
+                                      _isAvailableExpanded
+                                          ? 'View Less'
+                                          : 'View All',
+                                      style: TextStyle(
+                                        fontSize: R.sp(14),
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primaryGreen,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                            SizedBox(height: R.h(12)),
+                            SizedBox(height: R.h(16)),
                             Builder(builder: (context) {
                               final ordersToShow = (_isAvailableExpanded
                                       ? _availableOrders
@@ -1564,6 +1516,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   ),
                                 ),
                               ),
+                            SizedBox(height: R.h(24)),
                           ],
                         ],
                       ),
@@ -1680,7 +1633,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                             : _formatLoginTime((_serverLoginHours * 3600) +
                                 _localSessionSeconds),
                         style: TextStyle(
-                          fontSize: R.sp(14),
+                          fontSize: R.sp(13),
                           fontWeight: FontWeight.w800,
                           color: _isTimerPaused
                               ? AppColors.warning

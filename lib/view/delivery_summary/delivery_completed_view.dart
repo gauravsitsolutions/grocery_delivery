@@ -18,7 +18,6 @@ class DeliveryCompletedView extends StatefulWidget {
 
 class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
   final InAppReview _inAppReview = InAppReview.instance;
-  int rating = 5;
 
   Future<void> _requestReview() async {
     try {
@@ -75,7 +74,7 @@ class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
             SizedBox(height: R.h(24)),
             _primaryButton(),
             SizedBox(height: R.h(32)),
-            _ratingSection(),
+// Rating section removed
             SizedBox(height: R.h(40)),
           ],
         ),
@@ -472,82 +471,6 @@ class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
             fontWeight: FontWeight.w700,
             color: AppColors.white,
           ),
-        ),
-      ),
-    );
-  }
-
-  // ================= RATING =================
-
-  Widget _ratingSection() {
-    return Column(
-      children: [
-        Text(
-          'Rate Customer',
-          style: TextStyle(
-            fontSize: R.sp(20),
-            fontWeight: FontWeight.w700,
-            color: AppColors.headingText,
-          ),
-        ),
-        SizedBox(height: R.h(8)),
-        Text(
-          'How was your experience with ${widget.order?.user?.fullName ?? 'the customer'}?',
-          style: TextStyle(
-            fontSize: R.sp(14),
-            color: AppColors.bodyText,
-          ),
-        ),
-        SizedBox(height: R.h(16)),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (i) {
-            return IconButton(
-              onPressed: () {
-                setState(() => rating = i + 1);
-              },
-              icon: Icon(
-                RemixIcons.star_fill,
-                size: R.sp(32),
-                color:
-                    i < rating ? AppColors.primaryGreen : AppColors.borderLight,
-              ),
-            );
-          }),
-        ),
-        SizedBox(height: R.h(12)),
-        Wrap(
-          spacing: R.w(10),
-          children: [
-            _chip('Friendly', selected: true),
-            _chip('Quick Handover'),
-            _chip('Easy to Find'),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _chip(String text, {bool selected = false}) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: R.w(16),
-        vertical: R.h(12),
-      ),
-      decoration: BoxDecoration(
-        color:
-            selected ? AppColors.primaryGreen.withAlpha(20) : AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(20)),
-        border: Border.all(
-          color: selected ? AppColors.primaryGreen : AppColors.borderLight,
-        ),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: R.sp(14),
-          color: selected ? AppColors.primaryGreen : AppColors.headingText,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

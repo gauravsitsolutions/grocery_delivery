@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
@@ -23,210 +22,203 @@ class NewRequestCard extends StatefulWidget {
   State<NewRequestCard> createState() => _NewRequestCardState();
 }
 
-class _NewRequestCardState extends State<NewRequestCard>
-    with SingleTickerProviderStateMixin {
-  late int _remainingTime;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _remainingTime = widget.countdownSeconds;
-    _startTimer();
-  }
-
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          if (_remainingTime > 0) {
-            _remainingTime--;
-          } else {
-            _timer?.cancel();
-            // Automatically decline? Or just show 0?
-            // For now, let's just stop at 0 to avoid unintended side effects without user confirmation
-          }
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
+class _NewRequestCardState extends State<NewRequestCard> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: R.w(4), vertical: R.h(8)),
-      padding: EdgeInsets.all(R.w(20)),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(R.r(32)),
-        border: Border.all(
-            color: AppColors.primaryGreen.withValues(alpha: 0.15), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryGreen.withValues(alpha: 0.08),
-            blurRadius: 30,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'ID: #ORD-${widget.order.id}',
-                    style: TextStyle(
-                      fontSize: R.sp(14),
-                      color: AppColors.bodyText.withValues(alpha: 0.4),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Icon(RemixIcons.timer_fill,
-                      size: R.sp(16), color: Colors.orange),
-                  SizedBox(width: R.w(4)),
-                  Text(
-                    '${_remainingTime}s',
-                    style: TextStyle(
-                      fontSize: R.sp(14),
-                      fontWeight: FontWeight.w800,
-                      color: Colors.orange,
-                    ),
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Header Row (Title + Timer) - Outside the card
+
+        // 2. The Card
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: R.w(4)),
+          padding: EdgeInsets.all(R.w(16)),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(R.r(24)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF000000).withValues(alpha: 0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
               ),
             ],
+            border: Border.all(
+                color: AppColors.borderLight.withValues(alpha: 0.5), width: 1),
           ),
-          SizedBox(height: R.h(20)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Column(
             children: [
-              Column(
+              // Top Section: Vendor Info & Price
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '₹${(double.tryParse(widget.order.totalAmount) ?? 0.0).toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: R.sp(32),
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.headingText,
-                      letterSpacing: -0.5,
+                  // Vendor Logo
+                  Container(
+                    width: R.w(56),
+                    height: R.w(56),
+                    decoration: BoxDecoration(
+                      color: AppColors.softGreyBg,
+                      borderRadius: BorderRadius.circular(R.r(12)),
+                      image: widget.order.vendor?.id != null
+                          // We don't have a logo field in Vendor, so we use a placeholder or icon
+                          // Wait, the error said 'logo' isn't defined for type 'Vendor'.
+                          // Checking OrderModel, Vendor class has id, storeName, address, mobile. NO LOGO.
+                          // I will use a placeholder icon.
+                          ? null
+                          : null,
+                    ),
+                    child: Icon(RemixIcons.store_2_fill,
+                        color: AppColors.bodyText.withValues(alpha: 0.3),
+                        size: R.sp(24)),
+                  ),
+                  SizedBox(width: R.w(16)),
+
+                  // Vendor Name & Distance
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.order.vendor?.storeName ?? 'Fresh Mart',
+                          style: TextStyle(
+                            fontSize: R.sp(16),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.headingText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: R.h(4)),
+                        Row(
+                          children: [
+                            Icon(RemixIcons.map_pin_fill,
+                                size: R.sp(14),
+                                color:
+                                    AppColors.bodyText.withValues(alpha: 0.5)),
+                            SizedBox(width: R.w(4)),
+                            Text(
+                              '${widget.order.distance ?? "2.5"} km away',
+                              style: TextStyle(
+                                fontSize: R.sp(12),
+                                color:
+                                    AppColors.bodyText.withValues(alpha: 0.6),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: R.h(2)),
-                  Text(
-                    'Estimated Earnings',
-                    style: TextStyle(
-                      fontSize: R.sp(13),
-                      color: AppColors.bodyText.withValues(alpha: 0.5),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
+
+                  // Price & Items
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Icon(RemixIcons.navigation_fill,
-                          size: R.sp(16),
-                          color: AppColors.bodyText.withValues(alpha: 0.3)),
-                      SizedBox(width: R.w(4)),
                       Text(
-                        '3.2 km', // Mock distance
+                        '₹${(double.tryParse(widget.order.totalAmount) ?? 0.0).toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: R.sp(18),
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w900,
                           color: AppColors.headingText,
+                        ),
+                      ),
+                      SizedBox(height: R.h(4)),
+                      Text(
+                        '${widget.order.orderItems.length} items',
+                        style: TextStyle(
+                          fontSize: R.sp(12),
+                          color: AppColors.bodyText.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: R.h(2)),
-                  Text(
-                    'Total Distance',
-                    style: TextStyle(
-                      fontSize: R.sp(13),
-                      color: AppColors.bodyText.withValues(alpha: 0.5),
-                      fontWeight: FontWeight.w600,
+                ],
+              ),
+
+              SizedBox(height: R.h(24)),
+
+              // Bottom Section: Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: widget.onDecline,
+                      child: Container(
+                        height: R.h(50),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.ghostButtonBg,
+                          borderRadius: BorderRadius.circular(R.r(16)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(RemixIcons.close_line,
+                                size: R.sp(18),
+                                color: AppColors.headingText
+                                    .withValues(alpha: 0.8)),
+                            SizedBox(width: R.w(8)),
+                            Text(
+                              'Reject',
+                              style: TextStyle(
+                                fontSize: R.sp(14),
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.headingText
+                                    .withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: R.w(16)),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: widget.onAccept,
+                      child: Container(
+                        height: R.h(50),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen,
+                          borderRadius: BorderRadius.circular(R.r(16)),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  AppColors.primaryGreen.withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(RemixIcons.check_line,
+                                size: R.sp(18), color: Colors.white),
+                            SizedBox(width: R.w(8)),
+                            Text(
+                              'Accept',
+                              style: TextStyle(
+                                fontSize: R.sp(14),
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          SizedBox(height: R.h(24)),
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: widget.onDecline,
-                  child: Container(
-                    height: R.h(56),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.ghostButtonBg,
-                      borderRadius: BorderRadius.circular(R.r(16)),
-                    ),
-                    child: Text(
-                      'Decline',
-                      style: TextStyle(
-                        fontSize: R.sp(16),
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ghostButtonText,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: R.w(12)),
-              Expanded(
-                child: GestureDetector(
-                  onTap: widget.onAccept,
-                  child: Container(
-                    height: R.h(56),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen,
-                      borderRadius: BorderRadius.circular(R.r(16)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      'Accept Order',
-                      style: TextStyle(
-                        fontSize: R.sp(16),
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

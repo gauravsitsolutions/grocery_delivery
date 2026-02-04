@@ -105,6 +105,12 @@ class DashboardContentShimmer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (showNewRequests) ...[
+          // Header removed
+          SizedBox(height: R.h(12)),
+          const OrderShimmer(),
+          SizedBox(height: R.h(24)),
+        ],
         if (showCurrentTask) ...[
           _shimmerSectionHeader('Current Task & Delivery'),
           SizedBox(height: R.h(12)),
@@ -116,12 +122,6 @@ class DashboardContentShimmer extends StatelessWidget {
           SizedBox(height: R.h(12)),
           const MyQueueShimmer(),
           const MyQueueShimmer(),
-          SizedBox(height: R.h(24)),
-        ],
-        if (showNewRequests) ...[
-          _shimmerSectionHeader('New Order Request'),
-          SizedBox(height: R.h(12)),
-          const OrderShimmer(),
           SizedBox(height: R.h(24)),
         ],
         if (showAvailableOrders) ...[
@@ -246,6 +246,60 @@ class DashboardContentShimmer extends StatelessWidget {
         width: R.w(200),
         height: R.h(22),
         color: Colors.white,
+      ),
+    );
+  }
+}
+
+class DashboardHeaderShimmer extends StatelessWidget {
+  const DashboardHeaderShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: R.h(24)),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Duty Status Card Shimmer (Left)
+            Container(
+              width: R.w(140),
+              height: R.h(46), // Approx height of duty card
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(R.r(100)),
+              ),
+            ),
+
+            // Right Side (Timer + Notification)
+            Row(
+              children: [
+                // Timer Shimmer
+                Container(
+                  width: R.w(100),
+                  height: R.h(36),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(R.r(100)),
+                  ),
+                ),
+                SizedBox(width: R.w(8)),
+                // Notification Icon Shimmer
+                Container(
+                  width: R.w(42),
+                  height: R.w(42),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -24,34 +24,13 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   final List<TextEditingController> _controllers =
       List.generate(4, (index) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
-  Timer? _timer;
-  int _secondsRemaining = 300;
-  bool _canResend = false;
 
   @override
   void initState() {
     super.initState();
-    _startTimer();
     // Send OTP automatically when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OrderViewModel>().sendDeliveryOtp();
-    });
-  }
-
-  void _startTimer() {
-    _secondsRemaining = 300;
-    _canResend = false;
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      setState(() {
-        if (_secondsRemaining > 0) {
-          _secondsRemaining--;
-        } else {
-          _canResend = true;
-          timer.cancel();
-        }
-      });
     });
   }
 
@@ -60,7 +39,6 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
     for (var controller in _controllers) {
       controller.dispose();
     }
-    _timer?.cancel();
     for (var node in _focusNodes) {
       node.dispose();
     }
@@ -68,12 +46,61 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   }
 
   void _onOtpChanged(String value, int index) {
-    if (value.length == 1 && index < 3) {
-      _focusNodes[index + 1].requestFocus();
+    if (value.length == 1) {
+      if (index < 3) {
+        _focusNodes[index + 1].requestFocus();
+      } else {
+        // Last digit entered, dismiss keyboard and check for auto-submit
+        _focusNodes[index].unfocus();
+
+        // Wait a brief moment to ensure text is updated in controller then verify
+        if (_otpCode.length == 4) {
+          _verifyOtp();
+        }
+      }
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
     }
     setState(() {}); // Rebuild to update border colors
+  }
+
+  Future<void> _verifyOtp() async {
+    final viewModel = context.read<OrderViewModel>();
+    if (viewModel.isLoading) return;
+
+    final otp = _otpCode;
+    if (otp.length != 4) return;
+
+    final success = await viewModel.verifyDeliveryOtp(otp);
+
+    if (!mounted) return;
+
+    if (success) {
+      CustomSnackBar.showSuccess(context, "Delivery Verified Successfully!");
+
+      // Navigate to Delivered Details View
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              DeliverySuccessView(
+            order: viewModel.order!,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SharedAxisTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              transitionType: SharedAxisTransitionType.horizontal,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
+    } else {
+      CustomSnackBar.showError(
+          context, viewModel.error ?? "Invalid OTP, please try again");
+    }
   }
 
   String get _otpCode => _controllers.map((c) => c.text).join();
@@ -230,70 +257,31 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
               ),
               SizedBox(height: R.h(40)),
 
-              // Resend Timer
-              if (_canResend)
-                TextButton.icon(
-                  onPressed: () async {
-                    setState(() {
-                      _canResend = false;
-                      _secondsRemaining = 300;
-                    });
+              // Resend Button
+              TextButton.icon(
+                onPressed: () async {
+                  final success =
+                      await context.read<OrderViewModel>().resendDeliveryOtp();
 
-                    final success = await context
-                        .read<OrderViewModel>()
-                        .resendDeliveryOtp();
+                  if (!context.mounted) return;
 
-                    if (!context.mounted) return;
-
-                    if (success) {
-                      _startTimer();
-                      CustomSnackBar.showSuccess(
-                          context, "OTP Sent Successfully");
-                    } else {
-                      setState(() => _canResend = true);
-                    }
-                  },
-                  icon: Icon(Remix.refresh_line, size: R.sp(18)),
-                  label: Text(
-                    "Resend Code",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: R.sp(16),
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primaryGreen,
-                  ),
-                )
-              else
-                Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: R.w(16), vertical: R.h(8)),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.borderLight),
-                    borderRadius: BorderRadius.circular(R.r(30)),
-                  ),
-                  child: RichText(
-                    text: TextSpan(
-                      text: "Resend code in ",
-                      style: TextStyle(
-                        color: AppColors.bodyText.withValues(alpha: 0.6),
-                        fontSize: R.sp(14),
-                        fontWeight: FontWeight.w600,
-                      ),
-                      children: [
-                        TextSpan(
-                          text:
-                              "${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}",
-                          style: const TextStyle(
-                            color: AppColors.primaryGreen,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
+                  if (success) {
+                    CustomSnackBar.showSuccess(
+                        context, "OTP Sent Successfully");
+                  }
+                },
+                icon: Icon(Remix.refresh_line, size: R.sp(18)),
+                label: Text(
+                  "Resend Code",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: R.sp(16),
                   ),
                 ),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primaryGreen,
+                ),
+              ),
 
               SizedBox(height: R.h(60)),
 
@@ -311,45 +299,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                                 "Please enter the complete 4-digit code");
                             return;
                           }
-
-                          final success =
-                              await viewModel.verifyDeliveryOtp(otp);
-
-                          if (!context.mounted) return;
-
-                          if (success) {
-                            CustomSnackBar.showSuccess(
-                                context, "Delivery Verified Successfully!");
-
-                            // Navigate to Delivered Details View
-                            Navigator.pushReplacement(
-                              context,
-                              PageRouteBuilder(
-                                pageBuilder:
-                                    (context, animation, secondaryAnimation) =>
-                                        DeliverySuccessView(
-                                  order: viewModel.order!,
-                                ),
-                                transitionsBuilder: (context, animation,
-                                    secondaryAnimation, child) {
-                                  return SharedAxisTransition(
-                                    animation: animation,
-                                    secondaryAnimation: secondaryAnimation,
-                                    transitionType:
-                                        SharedAxisTransitionType.horizontal,
-                                    child: child,
-                                  );
-                                },
-                                transitionDuration:
-                                    const Duration(milliseconds: 300),
-                              ),
-                            );
-                          } else {
-                            CustomSnackBar.showError(
-                                context,
-                                viewModel.error ??
-                                    "Invalid OTP, please try again");
-                          }
+                          await _verifyOtp();
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
