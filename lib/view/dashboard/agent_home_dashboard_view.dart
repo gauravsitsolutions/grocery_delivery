@@ -1281,10 +1281,33 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.scaffoldBg, // Or white depending on design
+        backgroundColor: AppColors.scaffoldBg,
         body: SafeArea(
           bottom: false,
-          child: DashboardShimmer(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: R.w(16),
+              vertical: R.h(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _dashboardHeader(isOnline),
+                Expanded(
+                  child: DashboardShimmer(
+                    hasOrders: _currentOrder != null ||
+                        _newRequests.isNotEmpty ||
+                        _availableOrders.isNotEmpty ||
+                        _myOrders.isNotEmpty,
+                    showCurrentTask: _currentOrder != null,
+                    showQueue: _myOrders.length > 1,
+                    showNewRequests: _newRequests.isNotEmpty,
+                    showAvailableOrders: _availableOrders.isNotEmpty,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
