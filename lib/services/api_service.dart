@@ -1054,4 +1054,38 @@ class ApiService {
       throw ValidationException('Invalid response format');
     }
   }
+
+  Future<Map<String, dynamic>> startReturnOrder(int orderId) async {
+    final uri = Uri.parse(AppUrls.startReturn(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(),
+        ));
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to start return process');
+    }
+  }
+
+  Future<Map<String, dynamic>> arriveReturnOrder(int orderId) async {
+    final uri = Uri.parse(AppUrls.arriveReturn(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(),
+        ));
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to mark arrival at return location');
+    }
+  }
 }

@@ -76,4 +76,12 @@ class AppUrls {
       '$baseUrl/api/partner/performance/month';
   static const String partnerPerformanceWeek =
       '$baseUrl/api/partner/performance/week';
+  static String startReturn(int id) => '$baseUrl/api/partner/returns/$id/start';
+  static String arriveReturn(int id) =>
+      '$baseUrl/api/v1/partner/returns/$id/arrive';
+  static String returnReceipt(int id) =>
+      '$baseUrl/api/v1/partner/returns/$id/receipt';
+  static String returnHandover(int id) =>
+      '$baseUrl/api/v1/partner/returns/$id/handover';
+  static String returnDetails(int id) => '$baseUrl/api/v1/partner/returns/$id';
 }

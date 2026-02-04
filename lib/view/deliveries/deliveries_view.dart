@@ -147,6 +147,11 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                     if (_selectedStatus == 'Pending') {
                       // Trust the API queue response for active orders
                       matchStatus = true;
+                    } else if (statusFilter == 'cancelled') {
+                      matchStatus = orderStatus == 'cancelled' ||
+                          orderStatus == 'canceled' ||
+                          orderStatus == 'rejected' ||
+                          orderStatus == 'declined';
                     } else {
                       matchStatus = orderStatus == statusFilter;
                     }

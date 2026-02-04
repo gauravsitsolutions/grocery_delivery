@@ -105,32 +105,47 @@ class DashboardContentShimmer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // New Requests Section
         if (showNewRequests) ...[
-          // Header removed
+          _shimmerSectionHeader('New Order Request'),
           SizedBox(height: R.h(12)),
-          const OrderShimmer(),
+          const OrderShimmer(), // 1st Card
+          SizedBox(height: R.h(12)),
+          const OrderShimmer(), // 2nd Card (User requested "two")
           SizedBox(height: R.h(24)),
         ],
-        if (showCurrentTask) ...[
-          _shimmerSectionHeader('Current Task & Delivery'),
-          SizedBox(height: R.h(12)),
-          const CurrentTaskShimmer(),
-          SizedBox(height: R.h(24)),
-        ],
-        if (showQueue) ...[
+
+        // My Queue Section (Includes Current Task)
+        if (showCurrentTask || showQueue) ...[
           _shimmerSectionHeader('My Queue'),
           SizedBox(height: R.h(12)),
           const MyQueueShimmer(),
+          SizedBox(height: R.h(12)),
+          // Always show at least two shimmer items if queue is present
           const MyQueueShimmer(),
           SizedBox(height: R.h(24)),
         ],
+
+        // Available Orders Section
         if (showAvailableOrders) ...[
-          _shimmerSectionHeader('Nearby Available'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _shimmerSectionHeader('Available Orders'),
+              Container(
+                  width: R.w(60),
+                  height: R.h(16),
+                  color: Colors.white), // View All
+            ],
+          ),
           SizedBox(height: R.h(12)),
           const AvailableOrderShimmer(),
+          SizedBox(height: R.h(12)),
           const AvailableOrderShimmer(),
           SizedBox(height: R.h(24)),
         ],
+
+        // Performance Stats
         _shimmerStatsRow(),
         SizedBox(height: R.h(40)),
       ],

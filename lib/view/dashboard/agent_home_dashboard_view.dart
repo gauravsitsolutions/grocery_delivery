@@ -1216,7 +1216,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const DashboardHeaderShimmer(),
+                _dashboardHeader(isOnline),
                 Expanded(
                   child: DashboardShimmer(
                     hasOrders: _currentOrder != null ||
