@@ -11,7 +11,6 @@ import 'package:samrudhi_delivery_agent_app/view_model/notifications_view_model.
 import 'package:samrudhi_delivery_agent_app/view_model/order_list_view_model.dart';
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
-
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
@@ -30,8 +29,8 @@ import 'package:samrudhi_delivery_agent_app/view/order_details/order_accepted_su
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/performance_stats_row.dart';
 import 'package:samrudhi_delivery_agent_app/view/order_details/widgets/order_cancellation_dialog.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/duty_status_card.dart';
-import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/dashboard_shimmer.dart';
+import 'package:samrudhi_delivery_agent_app/view/dashboard/widgets/new_request_card.dart';
 
 class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
@@ -1216,17 +1215,14 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _dashboardHeader(isOnline),
+                const DashboardHeaderShimmer(),
                 Expanded(
                   child: DashboardShimmer(
-                    hasOrders: _currentOrder != null ||
-                        _newRequests.isNotEmpty ||
-                        _availableOrders.isNotEmpty ||
-                        _myOrders.isNotEmpty,
-                    showCurrentTask: _currentOrder != null,
-                    showQueue: _myOrders.length > 1,
-                    showNewRequests: _newRequests.isNotEmpty,
-                    showAvailableOrders: _availableOrders.isNotEmpty,
+                    hasOrders: true,
+                    showCurrentTask: true,
+                    showQueue: true,
+                    showNewRequests: true,
+                    showAvailableOrders: true,
                   ),
                 ),
               ],

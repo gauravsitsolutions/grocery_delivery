@@ -1088,4 +1088,55 @@ class ApiService {
           response['message'] ?? 'Failed to mark arrival at return location');
     }
   }
+
+  Future<bool> uploadReturnReceipt(int orderId, File imageFile) async {
+    final uri = Uri.parse(AppUrls.returnReceipt(orderId));
+    log('API Request: POST Multipart $uri');
+
+    final request = http.MultipartRequest('POST', uri);
+    final headers = await _getHeaders();
+    request.headers.addAll(headers);
+
+    try {
+      final multipartFile = await http.MultipartFile.fromPath(
+        'receipt_image', // Assuming 'receipt_image' key, adjust if needed
+        imageFile.path,
+      );
+      request.files.add(multipartFile);
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      log('Response Status: ${response.statusCode}');
+      log('Response Body: ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return true;
+      } else {
+        final body = jsonDecode(response.body);
+        throw ValidationException(
+            body['message'] ?? 'Failed to upload receipt');
+      }
+    } catch (e) {
+      log('Error uploading receipt: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> completeReturnHandover(int orderId) async {
+    final uri = Uri.parse(AppUrls.returnHandover(orderId));
+    log('API Request: POST $uri');
+
+    final response = await _processRequest(() async => http.post(
+          uri,
+          headers: await _getHeaders(),
+        ));
+
+    if (response['status'] == true || response['status'] == 'success') {
+      return response;
+    } else {
+      throw ValidationException(
+          response['message'] ?? 'Failed to complete return handover');
+    }
+  }
 }
