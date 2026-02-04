@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
@@ -123,21 +125,27 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               ),
               SizedBox(height: R.h(24)),
               Text(
-                order.vendor?.storeName ?? "Warehouse",
+                (order.vendor?.storeName != null &&
+                        order.vendor!.storeName.isNotEmpty)
+                    ? order.vendor!.storeName
+                    : "WAREHOUSE BAY 4B",
                 style: TextStyle(
-                  fontSize: R.sp(18),
-                  fontWeight: FontWeight.w700,
+                  fontSize: R.sp(20),
+                  fontWeight: FontWeight.w800,
                   color: AppColors.headingText,
                 ),
               ),
               SizedBox(height: R.h(8)),
               Text(
-                order.vendor?.address ?? "Address details not available",
+                (order.vendor?.address != null &&
+                        order.vendor!.address!.isNotEmpty)
+                    ? order.vendor!.address!
+                    : "Avenue 5, Logistics Park, Sector 12, Palam Vihar, Gurugram",
                 style: TextStyle(
                   fontSize: R.sp(16),
                   color: AppColors.bodyText,
                   fontWeight: FontWeight.w500,
-                  height: 1.5,
+                  height: 1.4,
                 ),
               ),
               SizedBox(height: R.h(32)),
@@ -197,6 +205,41 @@ class _PickupTaskViewState extends State<PickupTaskView> {
                         ),
                       )
                     : _buildContent(context, viewModel),
+            bottomNavigationBar: viewModel.isLoading
+                ? Shimmer.fromColors(
+                    baseColor: Colors.grey[200]!,
+                    highlightColor: Colors.grey[50]!,
+                    child: Container(
+                      padding: EdgeInsets.fromLTRB(R.w(20), R.h(8), R.w(20),
+                          MediaQuery.of(context).padding.bottom + R.h(12)),
+                      decoration: const BoxDecoration(color: Colors.white),
+                      child: Container(
+                        width: double.infinity,
+                        height: R.h(48),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(R.r(27)),
+                        ),
+                      ),
+                    ),
+                  )
+                : viewModel.order == null
+                    ? null
+                    : Container(
+                        padding: EdgeInsets.fromLTRB(R.w(20), R.h(8), R.w(20),
+                            MediaQuery.of(context).padding.bottom + R.h(12)),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, -4),
+                            ),
+                          ],
+                        ),
+                        child: _confirmButton(context, viewModel),
+                      ),
           );
         },
       ),
@@ -242,7 +285,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     final order = viewModel.order!;
     return SingleChildScrollView(
       child: Padding(
-        padding: EdgeInsets.all(R.w(16)),
+        padding: EdgeInsets.fromLTRB(R.w(16), R.h(16), R.w(16), R.h(24)),
         child: Column(
           children: [
             _locationCard(order),
@@ -265,9 +308,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
             ),
             SizedBox(height: R.h(24)),
             _pickupProof(viewModel),
-            SizedBox(height: R.h(24)),
-            _confirmButton(context, viewModel),
-            SizedBox(height: R.h(40)),
+            SizedBox(height: R.h(16)),
           ],
         ),
       ),
@@ -567,7 +608,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
 
     return SizedBox(
       width: double.infinity,
-      height: R.h(54),
+      height: R.h(48),
       child: ElevatedButton(
         onPressed: isReady && !viewModel.isPickupLoading
             ? () => _handleConfirmPickup(context, viewModel)
@@ -603,14 +644,14 @@ class _PickupTaskViewState extends State<PickupTaskView> {
     if (success && context.mounted) {
       CustomSnackBar.showSuccess(context, "Pickup Confirmed");
       // Navigate to customer info or whatever is next
-      Navigator.pushReplacement(
+      PersistentNavBarNavigator.pushNewScreen(
         context,
-        MaterialPageRoute(
-          builder: (context) => CustomerInfoView(
-            order: viewModel.order,
-            orderId: viewModel.order?.id,
-          ),
+        screen: CustomerInfoView(
+          orderId: viewModel.order?.id,
+          order: viewModel.order,
         ),
+        withNavBar: false,
+        pageTransitionAnimation: PageTransitionAnimation.cupertino,
       );
     } else if (context.mounted) {
       CustomSnackBar.showError(context,

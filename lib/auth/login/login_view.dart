@@ -398,7 +398,7 @@ class _LoginViewState extends State<LoginView> {
   Widget _buildActionButton(BuildContext context, AuthViewModel viewModel) {
     return SizedBox(
       width: double.infinity,
-      height: R.h(54),
+      height: R.h(48),
       child: ElevatedButton(
         onPressed:
             viewModel.isLoading ? null : () => _handleLogin(context, viewModel),

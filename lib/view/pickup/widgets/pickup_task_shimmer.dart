@@ -88,16 +88,6 @@ class PickupTaskShimmer extends StatelessWidget {
               ),
             ),
             SizedBox(height: R.h(24)),
-
-            // Confirm Button Shimmer
-            Container(
-              width: double.infinity,
-              height: R.h(54),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(R.r(20)),
-              ),
-            ),
           ],
         ),
       ),

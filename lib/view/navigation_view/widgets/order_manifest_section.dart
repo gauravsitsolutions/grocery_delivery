@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 
 class OrderManifestSection extends StatelessWidget {
@@ -111,6 +112,15 @@ class OrderManifestSection extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        SizedBox(height: R.h(4)),
+                        Text(
+                          _getItemPrice(item),
+                          style: TextStyle(
+                            fontSize: R.sp(14),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryGreen,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -137,5 +147,37 @@ class OrderManifestSection extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _getItemPrice(OrderItem item) {
+    // Try to use the price field first
+    if (item.price != null &&
+        item.price!.isNotEmpty &&
+        item.price != '0.00' &&
+        item.price != '0') {
+      return '₹${item.price}';
+    }
+
+    // Fallback to total if price is not available
+    if (item.total.isNotEmpty && item.total != '0.00' && item.total != '0') {
+      return '₹${item.total}';
+    }
+
+    // Fallback to lineTotal if available
+    if (item.lineTotal != null &&
+        item.lineTotal!.isNotEmpty &&
+        item.lineTotal != '0.00' &&
+        item.lineTotal != '0') {
+      return '₹${item.lineTotal}';
+    }
+
+    // Last resort: check product price
+    if (item.product?.retailerPrice != null &&
+        item.product!.retailerPrice.isNotEmpty &&
+        item.product!.retailerPrice != '0.00') {
+      return '₹${item.product!.retailerPrice}';
+    }
+
+    return '₹0.00';
   }
 }

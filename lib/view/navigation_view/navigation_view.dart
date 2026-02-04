@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
+import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
@@ -10,16 +12,83 @@ import 'package:samrudhi_delivery_agent_app/view/navigation_view/widgets/custome
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/widgets/order_manifest_section.dart';
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/widgets/payment_collection_card.dart';
 import 'package:intl/intl.dart';
+import 'dart:developer' as dev;
 
-class NavigationView extends StatelessWidget {
+class NavigationView extends StatefulWidget {
   final int? orderId;
   final Order? order;
   const NavigationView({super.key, this.orderId, this.order});
 
   @override
+  State<NavigationView> createState() => _NavigationViewState();
+}
+
+class _NavigationViewState extends State<NavigationView> {
+  final ApiService _apiService = ApiService();
+  Order? _order;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrderDetails();
+  }
+
+  Future<void> _fetchOrderDetails() async {
+    // If we have an orderId, fetch full details
+    if (widget.orderId != null) {
+      try {
+        final orderDetails = await _apiService.getOrderDetails(widget.orderId!);
+        if (mounted) {
+          setState(() {
+            _order = orderDetails;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            // Fallback to passed order if fetch fails
+            _order = widget.order;
+          });
+        }
+      }
+    } else {
+      // Use the passed order
+      setState(() {
+        _order = widget.order;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     R.init(context);
     final topInset = MediaQuery.of(context).padding.top;
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FBF9),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Debug logging
+    dev.log('=== NAVIGATION VIEW ORDER DATA ===');
+    dev.log('Order ID: ${_order?.id}');
+    dev.log('Delivery Address: ${_order?.deliveryAddress}');
+    if (_order?.deliveryAddress != null) {
+      dev.log('  - addressLine1: ${_order!.deliveryAddress!.addressLine1}');
+      dev.log('  - addressLine2: ${_order!.deliveryAddress!.addressLine2}');
+      dev.log('  - city: ${_order!.deliveryAddress!.city}');
+      dev.log('  - state: ${_order!.deliveryAddress!.state}');
+      dev.log('  - postcode: ${_order!.deliveryAddress!.postcode}');
+    }
+    dev.log('==================================');
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FBF9),
@@ -36,7 +105,7 @@ class NavigationView extends StatelessWidget {
                 SizedBox(width: R.w(12)),
                 Flexible(
                   child: Text(
-                    'Order #${order?.orderNumber ?? '00000'}',
+                    'Order #${_order?.orderNumber ?? '00000'}',
                     style: TextStyle(
                       fontSize: R.sp(20),
                       fontWeight: FontWeight.w800,
@@ -73,27 +142,26 @@ class NavigationView extends StatelessWidget {
               child: Column(
                 children: [
                   DeliveryProgressTimeline(
-                    pickedUpTime: order != null
-                        ? DateFormat('hh:mm a').format(order!.createdAt)
+                    pickedUpTime: _order != null
+                        ? DateFormat('hh:mm a').format(_order!.createdAt)
                         : 'Today, 10:30 AM',
                     isReachedLocation: false,
                   ),
                   SizedBox(height: R.h(24)),
                   CustomerDetailsCard(
-                    name: order?.user?.fullName ?? 'Unknown Customer',
+                    name: _order?.user?.fullName ?? 'Unknown Customer',
                     membershipType: 'Premium Member',
-                    address:
-                        order?.deliveryAddress?.addressLine1 ?? 'No Address',
-                    profileImage: order?.user?.profilePhoto,
+                    address: _buildAddress(_order?.deliveryAddress),
+                    profileImage: _order?.user?.profilePhoto,
                     onCall: () async {
-                      final phone = order?.user?.mobile;
+                      final phone = _order?.user?.mobile;
                       if (phone != null) {
                         final url = Uri.parse('tel:$phone');
                         if (await canLaunchUrl(url)) await launchUrl(url);
                       }
                     },
                     onMessage: () async {
-                      final phone = order?.user?.mobile;
+                      final phone = _order?.user?.mobile;
                       if (phone != null) {
                         final url = Uri.parse('sms:$phone');
                         if (await canLaunchUrl(url)) await launchUrl(url);
@@ -102,14 +170,14 @@ class NavigationView extends StatelessWidget {
                   ),
                   SizedBox(height: R.h(24)),
                   OrderManifestSection(
-                    items: order?.orderItems ?? [],
+                    items: _order?.orderItems ?? [],
                   ),
                   SizedBox(height: R.h(24)),
                   PaymentCollectionCard(
-                    totalAmount: order?.totalAmount ?? '0',
-                    paymentMethod: order?.paymentMethod ?? 'COD',
+                    totalAmount: _order?.totalAmount ?? '0',
+                    paymentMethod: _order?.paymentMethod ?? 'COD',
                   ),
-                  SizedBox(height: R.h(20)),
+                  SizedBox(height: R.h(12)),
                 ],
               ),
             ),
@@ -132,17 +200,18 @@ class NavigationView extends StatelessWidget {
               top: false,
               child: SizedBox(
                 width: double.infinity,
-                height: R.h(50),
+                height: R.h(48),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
+                    PersistentNavBarNavigator.pushNewScreen(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => VerificationView(
-                          order: order,
-                          orderId: order?.id,
-                        ),
+                      screen: VerificationView(
+                        order: _order,
+                        orderId: _order?.id,
                       ),
+                      withNavBar: false,
+                      pageTransitionAnimation:
+                          PageTransitionAnimation.cupertino,
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -177,5 +246,40 @@ class NavigationView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _buildAddress(DeliveryAddress? address) {
+    if (address == null) return 'Address not available';
+
+    // Build address parts, filtering out empty/null values
+    final parts = <String>[];
+
+    if (address.addressLine1.isNotEmpty) {
+      parts.add(address.addressLine1);
+    }
+
+    if (address.addressLine2 != null && address.addressLine2!.isNotEmpty) {
+      parts.add(address.addressLine2!);
+    }
+
+    if (address.city.isNotEmpty) {
+      parts.add(address.city);
+    }
+
+    if (address.state.isNotEmpty) {
+      parts.add(address.state);
+    }
+
+    if (address.postcode.isNotEmpty) {
+      parts.add(address.postcode);
+    }
+
+    // If no parts were added, return fallback
+    if (parts.isEmpty) {
+      return 'Address details not available';
+    }
+
+    // Join parts with comma and space
+    return parts.join(', ');
   }
 }

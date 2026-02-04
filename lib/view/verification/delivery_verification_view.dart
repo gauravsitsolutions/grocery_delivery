@@ -137,7 +137,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: R.h(20)),
+              SizedBox(height: R.h(10)),
               // Header Icon
               AvatarGlow(
                 glowColor: AppColors.primaryGreen,
@@ -160,7 +160,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                   ),
                 ),
               ),
-              SizedBox(height: R.h(32)),
+              SizedBox(height: R.h(16)),
 
               // Title and Description
               const Text(
@@ -201,7 +201,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                   ),
                 ),
               ],
-              SizedBox(height: R.h(40)),
+              SizedBox(height: R.h(24)),
 
               // OTP Fields
               Row(
@@ -255,7 +255,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                   );
                 }),
               ),
-              SizedBox(height: R.h(40)),
+              SizedBox(height: R.h(24)),
 
               // Resend Button
               TextButton.icon(
@@ -283,12 +283,12 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                 ),
               ),
 
-              SizedBox(height: R.h(60)),
+              SizedBox(height: R.h(30)),
 
               // Verify Button
               SizedBox(
                 width: double.infinity,
-                height: R.h(60),
+                height: R.h(48),
                 child: ElevatedButton(
                   onPressed: viewModel.isLoading
                       ? null

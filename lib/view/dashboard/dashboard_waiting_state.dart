@@ -30,7 +30,7 @@ class DashboardWaitingState extends StatelessWidget {
           goal: dailyGoal,
         ),
 
-        SizedBox(height: R.h(40)),
+        SizedBox(height: R.h(16)),
 
         // 2. Waiting Indicator (Ripple)
         WaitingForOrders(
@@ -38,7 +38,7 @@ class DashboardWaitingState extends StatelessWidget {
           onToggle: onToggle,
         ),
 
-        SizedBox(height: R.h(40)), // Bottom padding
+        SizedBox(height: R.h(16)), // Bottom padding
       ],
     );
   }

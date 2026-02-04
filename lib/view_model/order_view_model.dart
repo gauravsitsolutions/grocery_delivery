@@ -6,6 +6,9 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/cancellation_reason_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/api_service.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 class OrderViewModel extends ChangeNotifier {
   final int orderId;
@@ -240,15 +243,50 @@ class OrderViewModel extends ChangeNotifier {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
-        imageQuality: 70,
+        imageQuality: 85, // Initial quality from picker
       );
+
       if (pickedFile != null) {
-        _pickupProofImage = File(pickedFile.path);
-        notifyListeners();
+        // Compress the image further
+        final compressedFile = await _compressImage(File(pickedFile.path));
+
+        if (compressedFile != null) {
+          _pickupProofImage = compressedFile;
+          notifyListeners();
+        } else {
+          // Fallback to original if compression fails
+          _pickupProofImage = File(pickedFile.path);
+          notifyListeners();
+        }
       }
     } catch (e) {
       _error = "Failed to pick image: $e";
       notifyListeners();
+    }
+  }
+
+  /// Compress image to reduce file size
+  Future<File?> _compressImage(File file) async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final targetPath = path.join(
+        dir.path,
+        'pickup_proof_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+
+      final result = await FlutterImageCompress.compressAndGetFile(
+        file.absolute.path,
+        targetPath,
+        quality: 70,
+        minWidth: 1920,
+        minHeight: 1080,
+        format: CompressFormat.jpeg,
+      );
+
+      return result != null ? File(result.path) : null;
+    } catch (e) {
+      log('Image compression failed: $e');
+      return null; // Return null to fallback to original
     }
   }
 

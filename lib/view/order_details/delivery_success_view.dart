@@ -173,7 +173,7 @@ class DeliverySuccessView extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: R.w(24)),
               child: SizedBox(
                 width: double.infinity,
-                height: R.h(56),
+                height: R.h(48),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pushAndRemoveUntil(
@@ -220,7 +220,7 @@ class DeliverySuccessView extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: R.h(16)),
+            SizedBox(height: R.h(8)),
             Text(
               'Scanning for available tasks...',
               style: TextStyle(
@@ -229,7 +229,7 @@ class DeliverySuccessView extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: R.h(24)),
+            SizedBox(height: R.h(12)),
           ],
         ),
       ),

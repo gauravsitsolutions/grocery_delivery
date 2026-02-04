@@ -32,8 +32,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
 
         // 2. The Card
         Container(
-          margin: EdgeInsets.symmetric(horizontal: R.w(4)),
-          padding: EdgeInsets.all(R.w(16)),
+          margin: EdgeInsets.symmetric(horizontal: R.w(2)),
+          padding: EdgeInsets.all(R.w(12)),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(R.r(24)),
@@ -138,7 +138,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                 ],
               ),
 
-              SizedBox(height: R.h(24)),
+              SizedBox(height: R.h(16)),
 
               // Bottom Section: Buttons
               Row(
@@ -147,7 +147,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                     child: GestureDetector(
                       onTap: widget.onDecline,
                       child: Container(
-                        height: R.h(50),
+                        height: R.h(42),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.ghostButtonBg,
@@ -180,7 +180,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                     child: GestureDetector(
                       onTap: widget.onAccept,
                       child: Container(
-                        height: R.h(50),
+                        height: R.h(42),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.primaryGreen,

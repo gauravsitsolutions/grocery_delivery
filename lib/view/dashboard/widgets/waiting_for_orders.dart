@@ -45,32 +45,32 @@ class WaitingForOrders extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: R.h(30)),
+        SizedBox(height: R.h(12)),
         Text(
           'Waiting for next order...',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: R.sp(20),
+            fontSize: R.sp(18), // Slightly smaller
             fontWeight: FontWeight.w800,
             color: AppColors.headingText,
           ),
         ),
-        SizedBox(height: R.h(8)),
+        SizedBox(height: R.h(6)),
         Text(
           isOnline
               ? 'Auto-refresh active. Stay tuned!'
               : 'Go online to start receiving orders.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: R.sp(14),
+            fontSize: R.sp(13), // Slightly smaller
             color: AppColors.bodyText,
           ),
         ),
         if (!isOnline && onToggle != null) ...[
-          SizedBox(height: R.h(32)),
+          SizedBox(height: R.h(16)),
           SizedBox(
-            width: R.w(200),
-            height: R.h(50),
+            width: R.w(180),
+            height: R.h(46),
             child: ElevatedButton(
               onPressed: onToggle,
               style: ElevatedButton.styleFrom(

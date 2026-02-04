@@ -62,7 +62,7 @@ class OrderShimmer extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    height: R.h(56),
+                    height: R.h(42),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(R.r(16)),
@@ -72,7 +72,7 @@ class OrderShimmer extends StatelessWidget {
                 SizedBox(width: R.w(12)),
                 Expanded(
                   child: Container(
-                    height: R.h(56),
+                    height: R.h(42),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(R.r(16)),
@@ -138,7 +138,7 @@ class CurrentTaskShimmer extends StatelessWidget {
             ),
             SizedBox(height: R.h(16)),
             Container(
-              height: R.h(60),
+              height: R.h(46),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(R.r(12)),
@@ -146,7 +146,7 @@ class CurrentTaskShimmer extends StatelessWidget {
             ),
             SizedBox(height: R.h(16)),
             Container(
-              height: R.h(56),
+              height: R.h(46),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(R.r(14)),

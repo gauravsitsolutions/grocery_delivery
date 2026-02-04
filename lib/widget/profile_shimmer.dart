@@ -42,9 +42,36 @@ class ProfileShimmer extends StatelessWidget {
             ),
             SizedBox(height: R.h(28)),
 
-            // Stats Shimmer
+            SizedBox(height: R.h(28)),
+            // Stats Row Shimmer
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: R.h(80),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(R.r(16)),
+                    ),
+                  ),
+                ),
+                SizedBox(width: R.w(12)),
+                Expanded(
+                  child: Container(
+                    height: R.h(80),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(R.r(16)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: R.h(24)),
+
+            // Graph / Container Shimmer
             Container(
-              height: R.h(180),
+              height: R.h(200),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(R.r(24)),

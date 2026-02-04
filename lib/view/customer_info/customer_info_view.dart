@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
@@ -8,6 +10,7 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:developer' as dev;
 
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
 
@@ -47,6 +50,30 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
               body: const Center(child: Text('Order not found')),
             );
           }
+
+          // Debug logging
+          dev.log('=== ORDER DATA DEBUG ===');
+          dev.log('Order ID: ${order.id}');
+          dev.log('Delivery Address: ${order.deliveryAddress}');
+          if (order.deliveryAddress != null) {
+            dev.log('  - addressLine1: ${order.deliveryAddress!.addressLine1}');
+            dev.log('  - addressLine2: ${order.deliveryAddress!.addressLine2}');
+            dev.log('  - city: ${order.deliveryAddress!.city}');
+            dev.log('  - state: ${order.deliveryAddress!.state}');
+            dev.log('  - postcode: ${order.deliveryAddress!.postcode}');
+          }
+          dev.log('Order Items Count: ${order.orderItems.length}');
+          if (order.orderItems.isNotEmpty) {
+            final firstItem = order.orderItems.first;
+            dev.log('First Item:');
+            dev.log('  - name: ${firstItem.product?.name}');
+            dev.log('  - price: ${firstItem.price}');
+            dev.log('  - total: ${firstItem.total}');
+            dev.log('  - lineTotal: ${firstItem.lineTotal}');
+            dev.log(
+                '  - product.retailerPrice: ${firstItem.product?.retailerPrice}');
+          }
+          dev.log('========================');
 
           final instructionsRead =
               viewModel.hasReadInstructions || _localInstructionsRead;
@@ -100,7 +127,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                     else
                       ...order.orderItems.map((item) => _orderItem(
                             item.product?.name ?? 'Unknown Item',
-                            '${item.quantity}${item.product?.unitValue ?? ''} • ₹${item.total}',
+                            '${item.quantity}${item.product?.unitValue ?? ''} • ${_getItemPrice(item)}',
                             (item.product?.productImageUrls.isNotEmpty == true)
                                 ? item.product!.productImageUrls.first
                                 : '',
@@ -123,14 +150,15 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                       child: ElevatedButton(
                         onPressed: instructionsRead
                             ? () {
-                                Navigator.push(
+                                PersistentNavBarNavigator.pushNewScreen(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) => NavigationView(
-                                      order: order,
-                                      orderId: order.id,
-                                    ),
+                                  screen: NavigationView(
+                                    order: order,
+                                    orderId: order.id,
                                   ),
+                                  withNavBar: false,
+                                  pageTransitionAnimation:
+                                      PageTransitionAnimation.cupertino,
                                 );
                               }
                             : null,
@@ -340,21 +368,15 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                 ),
                 SizedBox(height: R.h(8)),
                 Text(
-                  address?.addressLine1 ?? 'Address not available',
+                  _buildAddress(address),
                   style: TextStyle(
-                    fontSize: R.sp(18),
-                    fontWeight: FontWeight.w800,
+                    fontSize: R.sp(16),
+                    fontWeight: FontWeight.w700,
                     color: AppColors.headingText,
+                    height: 1.4,
                   ),
-                ),
-                SizedBox(height: R.h(4)),
-                Text(
-                  '${address?.city ?? ''}, ${address?.postcode ?? ''}',
-                  style: TextStyle(
-                    fontSize: R.sp(14),
-                    color: AppColors.bodyText.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w500,
-                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -452,12 +474,9 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
           ClipRRect(
             borderRadius: BorderRadius.circular(R.r(12)),
             child: image.isNotEmpty
-                ? Image.network(
-                    image,
-                    width: R.w(56),
-                    height: R.h(56),
+                ? CustomNetworkImage(
+                    imageUrl: image,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _noImagePlaceholder(),
                   )
                 : _noImagePlaceholder(),
           ),
@@ -536,5 +555,72 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
       ),
       child: child,
     );
+  }
+
+  String _buildAddress(DeliveryAddress? address) {
+    if (address == null) return 'Address not available';
+
+    // Build address parts, filtering out empty/null values
+    final parts = <String>[];
+
+    if (address.addressLine1.isNotEmpty) {
+      parts.add(address.addressLine1);
+    }
+
+    if (address.addressLine2 != null && address.addressLine2!.isNotEmpty) {
+      parts.add(address.addressLine2!);
+    }
+
+    if (address.city.isNotEmpty) {
+      parts.add(address.city);
+    }
+
+    if (address.state.isNotEmpty) {
+      parts.add(address.state);
+    }
+
+    if (address.postcode.isNotEmpty) {
+      parts.add(address.postcode);
+    }
+
+    // If no parts were added, return fallback
+    if (parts.isEmpty) {
+      return 'Address details not available';
+    }
+
+    // Join parts with comma and space
+    return parts.join(', ');
+  }
+
+  String _getItemPrice(OrderItem item) {
+    // Try to use the price field first
+    if (item.price != null &&
+        item.price!.isNotEmpty &&
+        item.price != '0.00' &&
+        item.price != '0') {
+      return '₹${item.price}';
+    }
+
+    // Fallback to total if price is not available
+    if (item.total.isNotEmpty && item.total != '0.00' && item.total != '0') {
+      return '₹${item.total}';
+    }
+
+    // Fallback to lineTotal if available
+    if (item.lineTotal != null &&
+        item.lineTotal!.isNotEmpty &&
+        item.lineTotal != '0.00' &&
+        item.lineTotal != '0') {
+      return '₹${item.lineTotal}';
+    }
+
+    // Last resort: check product price
+    if (item.product?.retailerPrice != null &&
+        item.product!.retailerPrice.isNotEmpty &&
+        item.product!.retailerPrice != '0.00') {
+      return '₹${item.product!.retailerPrice}';
+    }
+
+    return '₹0.00';
   }
 }

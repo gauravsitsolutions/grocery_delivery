@@ -640,6 +640,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           if (_currentOrder == null && _myOrders.isNotEmpty) {
             _currentOrder = _myOrders.first;
           }
+
+          // Clear from removing set - order has been successfully processed
+          _removingOrderIds.remove(orderId);
         });
 
         // Sync with Deliveries Tab ViewModel
@@ -719,6 +722,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           _availableOrders.removeWhere((o) => o.id == orderId);
           _myOrders.removeWhere((o) => o.id == orderId);
           _pendingOrders = _myOrders.length;
+
+          // Clear from removing set - order has been successfully processed
+          _removingOrderIds.remove(orderId);
         });
 
         // Pass the actual reason string
@@ -737,6 +743,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             _availableOrders.removeWhere((o) => o.id == orderId);
             _myOrders.removeWhere((o) => o.id == orderId);
             _pendingOrders = _myOrders.length;
+
+            // Clear from removing set - order has been successfully processed
+            _removingOrderIds.remove(orderId);
           });
 
           await _showRejectSuccessDialog(orderId, selectedReason.reason);
@@ -765,6 +774,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             _availableOrders.removeWhere((o) => o.id == orderId);
             _myOrders.removeWhere((o) => o.id == orderId);
             _pendingOrders = _myOrders.length;
+
+            // Clear from removing set - order has been successfully processed
+            _removingOrderIds.remove(orderId);
           });
 
           await _showRejectSuccessDialog(orderId, 'Order already removed');
@@ -797,8 +809,9 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
     return GestureDetector(
       onTap: () => _navigateToOrder(order),
       child: Container(
-        margin: EdgeInsets.only(bottom: R.h(12)),
-        padding: EdgeInsets.symmetric(horizontal: R.w(16), vertical: R.h(16)),
+        margin: EdgeInsets.only(bottom: R.h(6)), // Reduced from 8
+        padding: EdgeInsets.symmetric(
+            horizontal: R.w(12), vertical: R.h(12)), // Reduced from 16
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(R.r(24)),
@@ -922,15 +935,15 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         orderNumber: order.orderNumber,
         order: order,
       ),
-      withNavBar: true,
+      withNavBar: false,
       pageTransitionAnimation: PageTransitionAnimation.cupertino,
     );
   }
 
   Widget _availableOrderItem(Order order) {
     return Container(
-      margin: EdgeInsets.only(bottom: R.h(16)),
-      padding: EdgeInsets.all(R.w(20)),
+      margin: EdgeInsets.only(bottom: R.h(12)),
+      padding: EdgeInsets.all(R.w(16)),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(R.r(24)), // More rounded
@@ -1039,7 +1052,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 child: GestureDetector(
                   onTap: () => _acceptOrder(order.id),
                   child: Container(
-                    height: R.h(50),
+                    height: R.h(46),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: AppColors.primaryGreen, // Bright Green
@@ -1069,7 +1082,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                 child: GestureDetector(
                   onTap: () => _rejectOrder(order.id),
                   child: Container(
-                    height: R.h(50),
+                    height: R.h(46),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: AppColors.ghostButtonBg, // Grey
@@ -1209,8 +1222,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
           bottom: false,
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: R.w(16),
-              vertical: R.h(12),
+              horizontal: R.w(12),
+              vertical: R.h(8),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1239,8 +1252,8 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.symmetric(
-            horizontal: R.w(16),
-            vertical: R.h(12),
+            horizontal: R.w(12),
+            vertical: R.h(8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1363,7 +1376,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                               title: 'New Order Request',
                               count: _newRequests.length,
                             ),
-                            SizedBox(height: R.h(12)),
+                            SizedBox(height: R.h(8)),
                             // Header is now inside KeyRequestCard
                             Column(
                               children: _newRequests
@@ -1384,7 +1397,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                 );
                               }).toList(),
                             ),
-                            SizedBox(height: R.h(24)),
+                            SizedBox(height: R.h(16)),
                           ],
 
                           // 2. My Queue (Pending Orders including Active)
@@ -1393,7 +1406,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                               title: 'My Queue',
                               count: _myOrders.length,
                             ),
-                            SizedBox(height: R.h(12)),
+                            SizedBox(height: R.h(8)),
                             Column(
                               children: _myOrders
                                   .take(3) // Show up to 3 items
@@ -1427,7 +1440,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   ),
                                 ),
                               ),
-                            SizedBox(height: R.h(24)),
+                            SizedBox(height: R.h(16)),
                           ],
 
                           // 3. Nearby Available (Pool)
@@ -1512,19 +1525,20 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                                   ),
                                 ),
                               ),
-                            SizedBox(height: R.h(24)),
+                            SizedBox(height: R.h(16)),
                           ],
                         ],
                       ),
                     ),
                   ),
                 ),
-              SizedBox(height: R.h(24)),
+              SizedBox(height: R.h(16)),
               PerformanceStatsRow(
                 pending: _pendingOrders > 0 ? _pendingOrders : _myOrders.length,
                 completed: _completedDeliveries,
                 cancelled: _cancelledOrders,
                 loginHours: _serverLoginHours + (_localSessionSeconds / 3600.0),
+                dailyGoal: _dailyGoal,
               ),
             ],
           ),
@@ -1580,7 +1594,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
 
   Widget _dashboardHeader(bool isOnline) {
     return Padding(
-      padding: EdgeInsets.only(bottom: R.h(24)),
+      padding: EdgeInsets.only(bottom: R.h(16)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

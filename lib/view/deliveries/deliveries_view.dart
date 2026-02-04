@@ -43,7 +43,6 @@ class _DeliveriesViewState extends State<DeliveriesView> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OrderListViewModel>().fetchActiveOrders(refresh: true);
-      context.read<OrderListViewModel>().fetchNewOrders(refresh: true);
     });
   }
 
@@ -60,7 +59,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
       PersistentNavBarNavigator.pushNewScreen(
         context,
         screen: OrderCancelledDetailsView(order: order),
-        withNavBar: true,
+        withNavBar: false,
         pageTransitionAnimation: PageTransitionAnimation.cupertino,
       );
       return;
@@ -71,7 +70,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
       PersistentNavBarNavigator.pushNewScreen(
         context,
         screen: DeliveryCompletedView(order: order),
-        withNavBar: true,
+        withNavBar: false,
         pageTransitionAnimation: PageTransitionAnimation.cupertino,
       );
       return;
@@ -83,7 +82,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
       PersistentNavBarNavigator.pushNewScreen(
         context,
         screen: NavigationView(orderId: order.id, order: order),
-        withNavBar: true,
+        withNavBar: false,
         pageTransitionAnimation: PageTransitionAnimation.cupertino,
       );
       return;
@@ -97,7 +96,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
         orderNumber: order.orderNumber,
         order: order,
       ),
-      withNavBar: true,
+      withNavBar: false,
       pageTransitionAnimation: PageTransitionAnimation.cupertino,
     );
   }
@@ -351,14 +350,14 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                             );
                           }).toList(),
                         ),
-                        SizedBox(height: R.h(24)),
+                        SizedBox(height: R.h(16)),
                       ],
 
                       if (orders.isNotEmpty) ...[
                         _sectionLabel('IN PROGRESS'),
                         SizedBox(height: R.h(10)),
                         _inProgressCard(orders.first),
-                        SizedBox(height: R.h(20)),
+                        SizedBox(height: R.h(12)),
                       ],
                       if (orders.length > 1) ...[
                         _sectionLabel('UP NEXT'),
@@ -400,7 +399,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                         },
                       ),
                     ],
-                    SizedBox(height: R.h(20)),
+                    SizedBox(height: R.h(8)),
                   ],
                 ),
               ),
@@ -583,11 +582,12 @@ class _DeliveriesViewState extends State<DeliveriesView> {
       child: Row(
         children: [
           _statusTab('Pending',
-              count: viewModel.deliveryStatus?.pendingOrders.toString(),
+              count: (viewModel.deliveryStatus?.pendingOrders ??
+                      viewModel.myDeliveries.length)
+                  .toString(),
               active: _selectedStatus == 'Pending', onTap: () {
             setState(() => _selectedStatus = 'Pending');
             viewModel.fetchActiveOrders(refresh: true);
-            viewModel.fetchNewOrders(refresh: true);
           }),
           _statusTab('Delivered',
               count: viewModel.deliveryStatus?.deliveredOrders.toString(),
@@ -970,7 +970,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     foregroundColor: AppColors.white,
-                    minimumSize: Size(double.infinity, R.h(50)),
+                    minimumSize: Size(double.infinity, R.h(48)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(R.r(12)),
                     ),

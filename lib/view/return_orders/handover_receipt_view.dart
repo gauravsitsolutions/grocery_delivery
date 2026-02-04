@@ -268,7 +268,7 @@ class HandoverReceiptView extends StatelessWidget {
               // Save as PDF Button
               SizedBox(
                 width: double.infinity,
-                height: R.h(50),
+                height: R.h(48),
                 child: ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(

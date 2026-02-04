@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
@@ -352,13 +353,15 @@ class _ReturningToStoreViewState extends State<ReturningToStoreView> {
               // Print Handover Receipt Button
               SizedBox(
                 width: double.infinity,
-                height: R.h(50),
+                height: R.h(44),
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.push(
+                    PersistentNavBarNavigator.pushNewScreen(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const HandoverReceiptView()),
+                      screen: const HandoverReceiptView(),
+                      withNavBar: false,
+                      pageTransitionAnimation:
+                          PageTransitionAnimation.cupertino,
                     );
                   },
                   style: OutlinedButton.styleFrom(
@@ -391,13 +394,15 @@ class _ReturningToStoreViewState extends State<ReturningToStoreView> {
               // Arrived at Store Button
               SizedBox(
                 width: double.infinity,
-                height: R.h(56),
+                height: R.h(48),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
+                    PersistentNavBarNavigator.pushNewScreen(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const ItemsHandoverView()),
+                      screen: const ItemsHandoverView(),
+                      withNavBar: false,
+                      pageTransitionAnimation:
+                          PageTransitionAnimation.cupertino,
                     );
                   },
                   style: ElevatedButton.styleFrom(

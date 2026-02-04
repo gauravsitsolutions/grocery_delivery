@@ -75,7 +75,7 @@ class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
             _primaryButton(),
             SizedBox(height: R.h(32)),
 // Rating section removed
-            SizedBox(height: R.h(40)),
+            SizedBox(height: R.h(12)),
           ],
         ),
       ),
@@ -447,7 +447,7 @@ class _DeliveryCompletedViewState extends State<DeliveryCompletedView> {
   Widget _primaryButton() {
     return SizedBox(
       width: double.infinity,
-      height: R.h(56),
+      height: R.h(48),
       child: ElevatedButton(
         onPressed: () async {
           await _requestReview();

@@ -200,16 +200,6 @@ class OrderListViewModel extends ChangeNotifier {
       _isMyDeliveriesLoading = false;
       _isMyDeliveriesLoadingMore = false;
 
-      // Sync pending count with local list length for consistency
-      if (_deliveryStatus != null) {
-        _deliveryStatus = DeliveryStatus(
-          deliveredOrders: _deliveryStatus!.deliveredOrders,
-          pendingOrders: _myDeliveries.length, // Sync here
-          cancelledOrders: _deliveryStatus!.cancelledOrders,
-          totalOrders: _deliveryStatus!.totalOrders,
-        );
-      }
-
       notifyListeners();
     } catch (e) {
       if (_isHistoryList) return; // Check again just in case

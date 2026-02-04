@@ -8,6 +8,7 @@ class PerformanceStatsRow extends StatelessWidget {
   final int completed;
   final int cancelled;
   final double loginHours;
+  final int? dailyGoal;
 
   const PerformanceStatsRow({
     super.key,
@@ -15,6 +16,7 @@ class PerformanceStatsRow extends StatelessWidget {
     required this.completed,
     required this.cancelled,
     this.loginHours = 0.0,
+    this.dailyGoal,
   });
 
   @override
@@ -25,29 +27,27 @@ class PerformanceStatsRow extends StatelessWidget {
         Text(
           "Performance Today",
           style: TextStyle(
-            fontSize: R.sp(22),
+            fontSize: R.sp(20), // Slightly smaller
             fontWeight: FontWeight.w900,
             color: AppColors.headingText,
             letterSpacing: -0.5,
           ),
         ),
-        SizedBox(height: R.h(20)),
+        SizedBox(height: R.h(16)), // Reduced from 20
         Row(
           children: [
             // Card 1: Completed
             Expanded(
               child: Container(
-                padding:
-                    EdgeInsets.fromLTRB(R.w(20), R.w(24), R.w(20), R.w(20)),
+                padding: EdgeInsets.all(R.w(16)), // Tightened padding
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(
-                      R.r(45)), // Very high radius as per image
+                  borderRadius: BorderRadius.circular(R.r(24)),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.shadow.withValues(alpha: 0.03),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
@@ -57,24 +57,31 @@ class PerformanceStatsRow extends StatelessWidget {
                     Text(
                       'COMPLETED',
                       style: TextStyle(
-                        fontSize: R.sp(14),
+                        fontSize: R.sp(12),
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF71717A),
                         letterSpacing: 0.5,
                       ),
                     ),
-                    SizedBox(height: R.h(12)),
+                    SizedBox(height: R.h(8)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '$completed',
-                          style: TextStyle(
-                            fontSize: R.sp(42),
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.headingText,
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              completed.toString(),
+                              style: TextStyle(
+                                fontSize: R.sp(32),
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.headingText,
+                              ),
+                            ),
                           ),
                         ),
+                        SizedBox(width: R.w(8)),
                         Container(
                           padding: EdgeInsets.all(R.w(4)),
                           decoration: BoxDecoration(
@@ -85,16 +92,16 @@ class PerformanceStatsRow extends StatelessWidget {
                           child: Icon(
                             Icons.check,
                             color: AppColors.primaryGreen,
-                            size: R.sp(18),
+                            size: R.sp(16),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: R.h(12)),
+                    SizedBox(height: R.h(4)),
                     Text(
                       'Great job!',
                       style: TextStyle(
-                        fontSize: R.sp(13),
+                        fontSize: R.sp(11),
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryGreen,
                       ),
@@ -104,22 +111,20 @@ class PerformanceStatsRow extends StatelessWidget {
               ),
             ),
 
-            SizedBox(width: R.w(16)),
+            SizedBox(width: R.w(12)),
 
             // Card 2: Login Hours
             Expanded(
               child: Container(
-                width: double.infinity,
-                padding:
-                    EdgeInsets.fromLTRB(R.w(20), R.w(24), R.w(20), R.w(20)),
+                padding: EdgeInsets.all(R.w(16)), // Tightened padding
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(R.r(45)),
+                  borderRadius: BorderRadius.circular(R.r(24)),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.shadow.withValues(alpha: 0.03),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
@@ -129,40 +134,43 @@ class PerformanceStatsRow extends StatelessWidget {
                     Text(
                       'LOGIN HOURS',
                       style: TextStyle(
-                        fontSize: R.sp(14),
+                        fontSize: R.sp(12),
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF71717A),
                         letterSpacing: 0.5,
                       ),
                     ),
-                    SizedBox(height: R.h(12)),
+                    SizedBox(height: R.h(8)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Flexible(
-                          child: Text(
-                            '${loginHours.toStringAsFixed(1)}h',
-                            style: TextStyle(
-                              fontSize: R.sp(42),
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.headingText,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${loginHours.toStringAsFixed(1)}h',
+                              style: TextStyle(
+                                fontSize: R.sp(32),
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.headingText,
+                              ),
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         SizedBox(width: R.w(8)),
                         Icon(
                           RemixIcons.time_line,
                           color: AppColors.primaryGreen,
-                          size: R.sp(24),
+                          size: R.sp(20),
                         ),
                       ],
                     ),
-                    SizedBox(height: R.h(12)),
+                    SizedBox(height: R.h(4)),
                     Text(
                       'Active Today',
                       style: TextStyle(
-                        fontSize: R.sp(13),
+                        fontSize: R.sp(11),
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryGreen,
                       ),

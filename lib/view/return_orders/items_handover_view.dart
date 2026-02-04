@@ -3,6 +3,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view/return_orders/handover_receipt_view.dart';
+import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 
 class ItemsHandoverView extends StatefulWidget {
   final String orderId;
@@ -240,8 +241,10 @@ class _ItemsHandoverViewState extends State<ItemsHandoverView> {
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         shape: BoxShape.circle,
-                        image: DecorationImage(
-                          image: NetworkImage(item['image']), // Placeholder
+                      ),
+                      child: ClipOval(
+                        child: CustomNetworkImage(
+                          imageUrl: item['image'],
                           fit: BoxFit.cover,
                         ),
                       ),
