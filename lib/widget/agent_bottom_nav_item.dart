@@ -4,7 +4,6 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/view/dashboard/agent_home_dashboard_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/deliveries/deliveries_view.dart';
-import 'package:samrudhi_delivery_agent_app/view/delivery_history/delivery_history_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/profile/profile_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/return_orders/returning_to_store_view.dart';
 import '../../constant/app_color.dart';
@@ -138,6 +137,16 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                   final apiService = ApiService();
                   await apiService.updateAgentStatus(val);
 
+                  // Reset duty timer when going offline
+                  if (!val) {
+                    try {
+                      await apiService.resetDuty();
+                    } catch (resetError) {
+                      // Log but don't fail the offline operation
+                      debugPrint('Failed to reset duty: $resetError');
+                    }
+                  }
+
                   if (!context.mounted) return;
 
                   // Success - State is already updated optimistically in cache and RAM.
@@ -178,15 +187,6 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
                         context, e.toString().replaceAll('Exception: ', ''));
                   }
                 }
-              },
-              onViewDeliveries: () {
-                // _controller.jumpToTab(1);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DeliveryHistoryView(),
-                  ),
-                );
               },
             ),
             const DeliveriesView(),

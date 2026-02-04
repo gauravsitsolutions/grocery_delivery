@@ -38,14 +38,12 @@ class AgentDashboardView extends StatefulWidget {
   final bool isOnline;
   final String? dutyStatus; // Added parameter
   final ValueChanged<bool> onStatusChanged;
-  final VoidCallback? onViewDeliveries;
 
   const AgentDashboardView({
     super.key,
     required this.isOnline,
     this.dutyStatus,
     required this.onStatusChanged,
-    this.onViewDeliveries,
   });
 
   @override
@@ -1443,17 +1441,6 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                           if (_myOrders.length > 1) ...[
                             _sectionHeader(
                               title: 'My Queue',
-                              action: GestureDetector(
-                                onTap: widget.onViewDeliveries,
-                                child: Text(
-                                  'View All',
-                                  style: TextStyle(
-                                    fontSize: R.sp(14),
-                                    color: AppColors.primaryGreen,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
                             ),
                             SizedBox(height: R.h(12)),
                             Column(

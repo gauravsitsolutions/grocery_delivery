@@ -139,14 +139,18 @@ class PerformanceStatsRow extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '${loginHours.toStringAsFixed(1)}h',
-                          style: TextStyle(
-                            fontSize: R.sp(42),
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.headingText,
+                        Flexible(
+                          child: Text(
+                            '${loginHours.toStringAsFixed(1)}h',
+                            style: TextStyle(
+                              fontSize: R.sp(42),
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.headingText,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        SizedBox(width: R.w(8)),
                         Icon(
                           RemixIcons.time_line,
                           color: AppColors.primaryGreen,
