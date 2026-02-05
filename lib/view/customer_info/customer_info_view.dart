@@ -11,9 +11,9 @@ import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/order_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:developer' as dev;
-
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
+import 'dart:developer' as dev;
 
 class CustomerInfoView extends StatefulWidget {
   final int? orderId;
@@ -126,14 +126,34 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                     if (order.orderItems.isEmpty)
                       const Center(child: Text('No items found'))
                     else
-                      ...order.orderItems.map((item) => _orderItem(
-                            item.product?.name ?? 'Unknown Item',
-                            '${item.quantity}${item.product?.unitValue ?? ''} • ${_getItemPrice(item)}',
-                            (item.product?.productImageUrls.isNotEmpty == true)
-                                ? item.product!.productImageUrls.first
-                                : '',
-                            qty: 'x${item.quantity}',
-                          )),
+                      ...order.orderItems.map((item) {
+                        final product = item.product;
+                        final unitPrice = _getItemPrice(item);
+                        final totalLinePrice =
+                            (item.total != '0.00' && item.total.isNotEmpty)
+                                ? '₹${item.total}'
+                                : unitPrice;
+
+                        // Enhanced Image Logic
+                        String imageUrl = '';
+                        if (product?.productImageUrls.isNotEmpty == true) {
+                          imageUrl = product!.productImageUrls.first;
+                        } else if (product?.productImages.isNotEmpty == true) {
+                          imageUrl = AppUrls.productImages +
+                              product!.productImages.first;
+                        }
+
+                        return _orderItem(
+                          product?.name ?? 'Unknown Item',
+                          '${item.quantity} ${product?.unitValue ?? ''} • $unitPrice',
+                          imageUrl,
+                          qty: 'x${item.quantity}',
+                          lineTotal: totalLinePrice,
+                        );
+                      }),
+                    SizedBox(height: R.h(24)),
+                    _billSummary(order),
+                    SizedBox(height: R.h(24)),
                   ],
                 ),
               ),
@@ -315,6 +335,60 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                     size: R.sp(22),
                   ),
                 ),
+              ),
+            ],
+          ),
+          SizedBox(height: R.h(20)),
+          const Divider(height: 1, color: AppColors.borderLight),
+          SizedBox(height: R.h(20)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PAYMENT METHOD',
+                    style: TextStyle(
+                      fontSize: R.sp(11),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.bodyText.withValues(alpha: 0.5),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  SizedBox(height: R.h(4)),
+                  Text(
+                    order.paymentMethod?.toUpperCase() ?? 'COD',
+                    style: TextStyle(
+                      fontSize: R.sp(16),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.headingText,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'TOTAL PRICE',
+                    style: TextStyle(
+                      fontSize: R.sp(11),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.bodyText.withValues(alpha: 0.5),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  SizedBox(height: R.h(4)),
+                  Text(
+                    '₹${order.totalAmount}',
+                    style: TextStyle(
+                      fontSize: R.sp(20),
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -672,6 +746,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
     String subtitle,
     String image, {
     String qty = 'x1',
+    String? lineTotal,
   }) {
     return _card(
       margin: EdgeInsets.only(top: R.h(12)),
@@ -718,17 +793,36 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
             ),
           ),
           SizedBox(width: R.w(12)),
-          Container(
-            padding:
-                EdgeInsets.symmetric(horizontal: R.w(10), vertical: R.h(6)),
-            decoration: BoxDecoration(
-              color: AppColors.scaffoldBg,
-              borderRadius: BorderRadius.circular(R.r(10)),
-            ),
-            child: Text(
-              qty,
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: R.sp(14)),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (lineTotal != null)
+                Text(
+                  lineTotal,
+                  style: TextStyle(
+                    fontSize: R.sp(15),
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+              SizedBox(height: R.h(4)),
+              Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: R.w(8), vertical: R.h(4)),
+                decoration: BoxDecoration(
+                  color: AppColors.scaffoldBg,
+                  borderRadius: BorderRadius.circular(R.r(8)),
+                ),
+                child: Text(
+                  qty,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: R.sp(12),
+                    color: AppColors.bodyText,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -800,6 +894,96 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
 
     // Join parts with comma and space
     return parts.join(', ');
+  }
+
+  Widget _billSummary(Order order) {
+    return Container(
+      padding: EdgeInsets.all(R.w(20)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(R.r(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'BILL SUMMARY',
+            style: TextStyle(
+              fontSize: R.sp(12),
+              fontWeight: FontWeight.w800,
+              color: AppColors.bodyText.withValues(alpha: 0.4),
+              letterSpacing: 1.0,
+            ),
+          ),
+          SizedBox(height: R.h(16)),
+          _summaryRow('Delivery Charge', '₹${order.deliveryCharge}',
+              isFree: order.deliveryCharge == '0.00'),
+          if (double.tryParse(order.discount) != 0)
+            _summaryRow('Discount', '-₹${order.discount}', isDiscount: true),
+          SizedBox(height: R.h(12)),
+          const Divider(height: 1),
+          SizedBox(height: R.h(12)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Grand Total',
+                style: TextStyle(
+                  fontSize: R.sp(18),
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.headingText,
+                ),
+              ),
+              Text(
+                '₹${order.totalAmount}',
+                style: TextStyle(
+                  fontSize: R.sp(22),
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value,
+      {bool isDiscount = false, bool isFree = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: R.h(10)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: R.sp(14),
+              fontWeight: FontWeight.w500,
+              color: AppColors.bodyText.withValues(alpha: 0.7),
+            ),
+          ),
+          Text(
+            isFree ? 'FREE' : value,
+            style: TextStyle(
+              fontSize: R.sp(14),
+              fontWeight: FontWeight.w700,
+              color: isDiscount
+                  ? AppColors.primaryGreen
+                  : (isFree ? AppColors.primaryGreen : AppColors.headingText),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _getItemPrice(OrderItem item) {

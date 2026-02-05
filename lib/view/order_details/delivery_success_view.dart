@@ -110,11 +110,31 @@ class DeliverySuccessView extends StatelessWidget {
                         Text(
                           'Order #${order.orderNumber}',
                           style: TextStyle(
-                            fontSize: R.sp(20),
-                            fontWeight: FontWeight.w800,
+                            fontSize: R.sp(22),
+                            fontWeight: FontWeight.w900,
                             color: AppColors.headingText,
+                            letterSpacing: -0.5,
                           ),
                         ),
+                        if (order.id != 0)
+                          Container(
+                            margin: EdgeInsets.only(top: R.h(4)),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: R.w(8), vertical: R.h(2)),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppColors.primaryGreen.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(R.r(4)),
+                            ),
+                            child: Text(
+                              'System ID: ${order.id}',
+                              style: TextStyle(
+                                fontSize: R.sp(10),
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ),
                         if (order.user != null) ...[
                           SizedBox(height: R.h(12)),
                           Row(

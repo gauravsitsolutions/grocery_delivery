@@ -3,6 +3,7 @@ import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
 
 class OrderManifestSection extends StatelessWidget {
   final List<OrderItem> items;
@@ -84,7 +85,10 @@ class OrderManifestSection extends StatelessWidget {
                       child: CustomNetworkImage(
                         imageUrl: product?.productImageUrls.isNotEmpty == true
                             ? product!.productImageUrls.first
-                            : '',
+                            : (product?.productImages.isNotEmpty == true
+                                ? AppUrls.productImages +
+                                    product!.productImages.first
+                                : ''),
                         placeholder: const Icon(Icons.shopping_basket,
                             color: Colors.grey),
                       ),

@@ -673,7 +673,7 @@ class ApiService {
     }
   }
 
-  Future<List<OrderItem>> getOrderItems(int orderId) async {
+  Future<Map<String, dynamic>> getOrderItems(int orderId) async {
     final uri = Uri.parse(AppUrls.orderItems(orderId));
     log('API Request: GET $uri');
 
@@ -682,22 +682,7 @@ class ApiService {
           headers: await _getHeaders(),
         ));
 
-    dynamic itemsData = response['data'];
-
-    // Handle nested Map format: { "status": true, "data": { "orderId": 1, "items": [...] } }
-    if (itemsData is Map) {
-      if (itemsData['items'] is List) {
-        itemsData = itemsData['items'];
-      } else if (itemsData['order_items'] is List) {
-        itemsData = itemsData['order_items'];
-      }
-    }
-
-    if (response['status'] == true && itemsData is List) {
-      return itemsData.map((e) => OrderItem.fromJson(e)).toList();
-    } else {
-      throw ValidationException(response['message'] ?? 'Failed to parse items');
-    }
+    return response;
   }
 
   Future<bool> uploadPickupProof(int orderId, File imageFile) async {

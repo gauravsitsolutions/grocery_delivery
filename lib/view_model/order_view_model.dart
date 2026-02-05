@@ -89,6 +89,32 @@ class OrderViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _processItemsResponse(Map<String, dynamic> response) async {
+    dynamic itemsData = response['data'];
+
+    // Handle nested Map format if any
+    if (itemsData is Map) {
+      if (itemsData['items'] is List) {
+        itemsData = itemsData['items'];
+      } else if (itemsData['order_items'] is List) {
+        itemsData = itemsData['order_items'];
+      }
+    }
+
+    if (itemsData is List) {
+      _orderItems = itemsData.map((e) => OrderItem.fromJson(e)).toList();
+
+      // Check for grand_total or total in the items response
+      final String? responseTotal = response['grand_total']?.toString() ??
+          response['total_amount']?.toString() ??
+          response['total']?.toString();
+
+      if (responseTotal != null && _order != null) {
+        _order = _order!.copyWith(totalAmount: responseTotal);
+      }
+    }
+  }
+
   Future<void> fetchOrderDetails() async {
     if (_order == null) {
       _isLoading = false;
@@ -103,10 +129,13 @@ class OrderViewModel extends ChangeNotifier {
       ]);
 
       final fetchedOrder = results[0] as Order;
-      _orderItems = results[1] as List<OrderItem>;
+      final itemsResponse = results[1] as Map<String, dynamic>;
 
-      // Update the order object with the fetched items to ensure consistency across views
-      _order = fetchedOrder.copyWith(orderItems: _orderItems);
+      _order = fetchedOrder;
+      await _processItemsResponse(itemsResponse);
+
+      // Re-apply order items to ensure copyWith consistency
+      _order = _order?.copyWith(orderItems: _orderItems);
 
       // Sync checked items with backend state
       _checkedItems.clear();

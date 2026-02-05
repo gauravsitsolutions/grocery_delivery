@@ -158,7 +158,10 @@ class _VerificationViewState extends State<VerificationView> {
                         _subtitle(),
                         SizedBox(height: R.h(40)),
                         _otpFields(),
-                        SizedBox(height: R.h(32)),
+                        SizedBox(height: R.h(24)),
+                        if (viewModel.order != null)
+                          _orderPriceInfo(viewModel.order!),
+                        SizedBox(height: R.h(24)),
                         _timerWidget(),
                         SizedBox(height: R.h(40)),
                         _resend(viewModel),
@@ -181,6 +184,70 @@ class _VerificationViewState extends State<VerificationView> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _orderPriceInfo(Order order) {
+    final isCOD = order.paymentMethod?.toUpperCase().contains('COD') == true ||
+        order.paymentMethod?.toUpperCase().contains('CASH') == true;
+
+    return Container(
+      padding: EdgeInsets.all(R.w(16)),
+      decoration: BoxDecoration(
+        color: isCOD ? const Color(0xFFFFF7ED) : const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(R.r(16)),
+        border: Border.all(
+          color: isCOD
+              ? const Color(0xFFFED7AA).withValues(alpha: 0.5)
+              : const Color(0xFFBBF7D0).withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isCOD ? 'COLLECT CASH' : 'PAYMENT PAID',
+                style: TextStyle(
+                  fontSize: R.sp(11),
+                  fontWeight: FontWeight.w800,
+                  color:
+                      isCOD ? const Color(0xFFC2410C) : const Color(0xFF15803D),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              SizedBox(height: R.h(4)),
+              Text(
+                '₹${order.totalAmount}',
+                style: TextStyle(
+                  fontSize: R.sp(24),
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.headingText,
+                ),
+              ),
+            ],
+          ),
+          Container(
+            padding:
+                EdgeInsets.symmetric(horizontal: R.w(12), vertical: R.h(6)),
+            decoration: BoxDecoration(
+              color: isCOD ? const Color(0xFFC2410C) : const Color(0xFF15803D),
+              borderRadius: BorderRadius.circular(R.r(8)),
+            ),
+            child: Text(
+              order.paymentMethod?.toUpperCase() ?? 'N/A',
+              style: TextStyle(
+                fontSize: R.sp(12),
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

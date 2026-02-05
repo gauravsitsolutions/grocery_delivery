@@ -554,16 +554,20 @@ class _PickupTaskViewState extends State<PickupTaskView> {
               gap: 5,
             ),
             child: Container(
-              height: R.h(140),
+              height: R.w(300), // Make it more square-like based on width
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(R.r(40)),
+                borderRadius: BorderRadius.circular(R.r(24)),
               ),
               child: viewModel.pickupProofImage != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(R.r(40)),
-                      child: Image.file(viewModel.pickupProofImage!,
-                          fit: BoxFit.cover),
+                      borderRadius: BorderRadius.circular(R.r(24)),
+                      child: Image.file(
+                        viewModel.pickupProofImage!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
                     )
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,

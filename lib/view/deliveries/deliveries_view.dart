@@ -56,8 +56,16 @@ class _DeliveriesViewState extends State<DeliveriesView> {
   }
 
   void _navigateToOrder(Order order) {
-    // 1. If cancelled, show cancelled details
-    if (order.status == 'cancelled') {
+    final lowerStatus = order.status.toLowerCase();
+    // 1. If cancelled or rejected, show cancelled details
+    if (lowerStatus == 'cancelled' ||
+        lowerStatus == 'canceled' ||
+        lowerStatus == 'rejected' ||
+        lowerStatus == 'declined' ||
+        lowerStatus == 'failed' ||
+        lowerStatus.contains('cancel') ||
+        lowerStatus.contains('reject') ||
+        lowerStatus.contains('decline')) {
       PersistentNavBarNavigator.pushNewScreen(
         context,
         screen: OrderCancelledDetailsView(order: order),
@@ -152,7 +160,14 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                       matchStatus = orderStatus == 'cancelled' ||
                           orderStatus == 'canceled' ||
                           orderStatus == 'rejected' ||
-                          orderStatus == 'declined';
+                          orderStatus == 'declined' ||
+                          orderStatus == 'failed' ||
+                          orderStatus.contains('reject') ||
+                          orderStatus.contains('cancel') ||
+                          orderStatus.contains('decline');
+                    } else if (statusFilter == 'delivered') {
+                      matchStatus = orderStatus == 'delivered' ||
+                          orderStatus == 'completed';
                     } else {
                       matchStatus = orderStatus == statusFilter;
                     }
@@ -670,11 +685,16 @@ class _DeliveriesViewState extends State<DeliveriesView> {
 
   Widget _orderCard(Order order) {
     Color statusColor;
-    switch (order.status) {
+    switch (order.status.toLowerCase().trim()) {
       case 'delivered':
+      case 'completed':
         statusColor = AppColors.primaryGreen;
         break;
       case 'cancelled':
+      case 'canceled':
+      case 'rejected':
+      case 'declined':
+      case 'failed':
         statusColor = AppColors.error;
         break;
       default:

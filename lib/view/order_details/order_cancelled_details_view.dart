@@ -125,7 +125,7 @@ class OrderCancelledDetailsView extends StatelessWidget {
 
           // Status Text
           Text(
-            'CANCELLED',
+            order.status.toUpperCase(),
             style: TextStyle(
               color: AppColors.white,
               fontSize: R.sp(24),

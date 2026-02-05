@@ -35,27 +35,33 @@ class _NavigationViewState extends State<NavigationView> {
   }
 
   Future<void> _fetchOrderDetails() async {
-    // If we have an orderId, fetch full details
     if (widget.orderId != null) {
       try {
-        final orderDetails = await _apiService.getOrderDetails(widget.orderId!);
+        // Fetch both details and items to ensure everything is visible
+        final results = await Future.wait([
+          _apiService.getOrderDetails(widget.orderId!),
+          _apiService.getOrderItems(widget.orderId!),
+        ]);
+
         if (mounted) {
           setState(() {
-            _order = orderDetails;
+            final orderData = results[0] as Order;
+            final items = results[1] as List<OrderItem>;
+            // Combine items into order
+            _order = orderData.copyWith(orderItems: items);
             _isLoading = false;
           });
         }
       } catch (e) {
+        dev.log('Error fetching order details in NavigationView: $e');
         if (mounted) {
           setState(() {
             _isLoading = false;
-            // Fallback to passed order if fetch fails
             _order = widget.order;
           });
         }
       }
     } else {
-      // Use the passed order
       setState(() {
         _order = widget.order;
         _isLoading = false;
@@ -104,14 +110,29 @@ class _NavigationViewState extends State<NavigationView> {
                 const CustomBackButton(color: Colors.black),
                 SizedBox(width: R.w(12)),
                 Flexible(
-                  child: Text(
-                    'Order #${_order?.orderNumber ?? '00000'}',
-                    style: TextStyle(
-                      fontSize: R.sp(20),
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Order #${_order?.orderNumber ?? widget.order?.orderNumber ?? _order?.id ?? widget.orderId ?? '00000'}',
+                        style: TextStyle(
+                          fontSize: R.sp(20),
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (_order?.id != null)
+                        Text(
+                          'ID: ${_order?.id}',
+                          style: TextStyle(
+                            fontSize: R.sp(12),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const Spacer(),
