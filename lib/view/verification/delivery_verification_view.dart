@@ -29,16 +29,13 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   Future<void> _launchMap(String? lat, String? lng, {String? address}) async {
     String googleMapsUrl;
 
-    // PRIORITIZE ADDRESS: Use the text address if available so Map matches App text.
+    // EXCLUSIVELY USE ADDRESS per user request
     if (address != null && address.isNotEmpty) {
       googleMapsUrl =
           "https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(address)}";
-    } else if (lat != null && lng != null && lat.isNotEmpty && lng.isNotEmpty) {
-      googleMapsUrl =
-          "https://www.google.com/maps/dir/?api=1&destination=$lat,$lng";
     } else {
       if (mounted) {
-        CustomSnackBar.showError(context, "Location unavailable");
+        CustomSnackBar.showError(context, "Address unavailable");
       }
       return;
     }
