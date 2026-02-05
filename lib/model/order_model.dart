@@ -411,10 +411,11 @@ class OrderItem {
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     // If name/image are at root, create a fallback product
     Product? fallbackProduct;
-    if (json['name'] != null) {
+    final String? productName = json['name'] ?? json['product_name'];
+    if (productName != null) {
       fallbackProduct = Product(
         id: json['product_id'] ?? 0,
-        name: json['name'],
+        name: productName,
         basePrice: '0.00',
         retailerPrice: '0.00',
         mrp: '0.00',
