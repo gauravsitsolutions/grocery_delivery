@@ -387,54 +387,183 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
   }
 
   Widget _instructionCard(OrderViewModel viewModel) {
+    final hasInstructions =
+        viewModel.order?.deliveryInstructions?.isNotEmpty == true;
+    final isRead = viewModel.hasReadInstructions || _localInstructionsRead;
+
     return Container(
-      padding: EdgeInsets.all(R.w(16)),
+      padding: EdgeInsets.all(R.w(20)),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7E0),
-        borderRadius: BorderRadius.circular(R.r(16)),
-        border: Border.all(color: AppColors.borderLight),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFFFF9E6),
+            const Color(0xFFFFF3D6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(R.r(24)),
+        border: Border.all(
+          color: const Color(0xFFFFE4A3).withValues(alpha: 0.5),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFB800).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             children: [
-              Icon(Icons.info, color: AppColors.headingText, size: R.sp(20)),
-              SizedBox(width: R.w(8)),
-              Text(
-                'DELIVERY INSTRUCTIONS',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.headingText,
-                  fontSize: R.sp(14),
+              Container(
+                padding: EdgeInsets.all(R.w(10)),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFB800).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(R.r(12)),
+                ),
+                child: Icon(
+                  RemixIcons.information_fill,
+                  color: const Color(0xFFD97706),
+                  size: R.sp(20),
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: R.h(12)),
-          Text(
-            viewModel.order?.deliveryInstructions?.isNotEmpty == true
-                ? viewModel.order!.deliveryInstructions!
-                : 'No specific instructions provided.',
-            style: TextStyle(fontSize: R.sp(14)),
-          ),
-          SizedBox(height: R.h(12)),
-          Row(
-            children: [
+              SizedBox(width: R.w(12)),
               Expanded(
-                child: Text(
-                  'I have read the instructions',
-                  style: TextStyle(fontSize: R.sp(14)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'DELIVERY INSTRUCTIONS',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF92400E),
+                        fontSize: R.sp(12),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    if (hasInstructions)
+                      Text(
+                        'Please read carefully',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFD97706).withValues(alpha: 0.7),
+                          fontSize: R.sp(11),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              RemixIconToggle(
-                value: viewModel.hasReadInstructions || _localInstructionsRead,
-                onChanged: (v) {
-                  setState(() => _localInstructionsRead = v);
-                  viewModel.hasReadInstructions = v;
-                },
-              ),
             ],
+          ),
+
+          SizedBox(height: R.h(16)),
+
+          // Instructions Content
+          Container(
+            padding: EdgeInsets.all(R.w(16)),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(R.r(16)),
+              border: Border.all(
+                color: const Color(0xFFFFE4A3).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: EdgeInsets.only(top: R.h(2)),
+                  padding: EdgeInsets.all(R.w(4)),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFB800).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    RemixIcons.chat_quote_line,
+                    size: R.sp(14),
+                    color: const Color(0xFFD97706),
+                  ),
+                ),
+                SizedBox(width: R.w(10)),
+                Expanded(
+                  child: Text(
+                    hasInstructions
+                        ? viewModel.order!.deliveryInstructions!
+                        : 'No specific instructions provided for this delivery.',
+                    style: TextStyle(
+                      fontSize: R.sp(14),
+                      fontWeight: FontWeight.w600,
+                      color: hasInstructions
+                          ? AppColors.headingText
+                          : AppColors.bodyText.withValues(alpha: 0.6),
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: R.h(16)),
+
+          // Confirmation Toggle
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: R.w(16),
+              vertical: R.h(12),
+            ),
+            decoration: BoxDecoration(
+              color: isRead
+                  ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(R.r(16)),
+              border: Border.all(
+                color: isRead
+                    ? const Color(0xFF16A34A).withValues(alpha: 0.3)
+                    : const Color(0xFFFFE4A3).withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isRead
+                      ? RemixIcons.checkbox_circle_fill
+                      : RemixIcons.checkbox_blank_circle_line,
+                  color: isRead
+                      ? const Color(0xFF16A34A)
+                      : const Color(0xFFD97706).withValues(alpha: 0.5),
+                  size: R.sp(20),
+                ),
+                SizedBox(width: R.w(12)),
+                Expanded(
+                  child: Text(
+                    'I have read and understood the instructions',
+                    style: TextStyle(
+                      fontSize: R.sp(14),
+                      fontWeight: FontWeight.w700,
+                      color: isRead
+                          ? const Color(0xFF16A34A)
+                          : AppColors.headingText,
+                    ),
+                  ),
+                ),
+                SizedBox(width: R.w(8)),
+                RemixIconToggle(
+                  value: isRead,
+                  onChanged: (v) {
+                    setState(() => _localInstructionsRead = v);
+                    viewModel.hasReadInstructions = v;
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -473,12 +602,16 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(R.r(12)),
-            child: image.isNotEmpty
-                ? CustomNetworkImage(
-                    imageUrl: image,
-                    fit: BoxFit.cover,
-                  )
-                : _noImagePlaceholder(),
+            child: SizedBox(
+              width: R.w(56),
+              height: R.h(56),
+              child: image.isNotEmpty
+                  ? CustomNetworkImage(
+                      imageUrl: image,
+                      fit: BoxFit.cover,
+                    )
+                  : _noImagePlaceholder(),
+            ),
           ),
           SizedBox(width: R.w(12)),
           Expanded(
