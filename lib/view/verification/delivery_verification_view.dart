@@ -420,6 +420,19 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                   onPressed: viewModel.isLoading
                       ? null
                       : () async {
+                          // Address Validation Check
+                          final address = viewModel.order?.deliveryAddress;
+                          final hasAddress = address != null &&
+                              (address.addressLine1.isNotEmpty ||
+                                  (address.addressLine2 != null &&
+                                      address.addressLine2!.isNotEmpty));
+
+                          if (!hasAddress) {
+                            CustomSnackBar.showError(context,
+                                "Cannot complete delivery: Address is missing");
+                            return;
+                          }
+
                           final otp = _otpCode;
                           if (otp.length != 4) {
                             CustomSnackBar.showError(context,

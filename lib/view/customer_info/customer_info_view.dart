@@ -151,6 +151,19 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                       child: ElevatedButton(
                         onPressed: instructionsRead
                             ? () {
+                                // Address Validation Check
+                                final address = order.deliveryAddress;
+                                final hasAddress = address != null &&
+                                    (address.addressLine1.isNotEmpty ||
+                                        (address.addressLine2 != null &&
+                                            address.addressLine2!.isNotEmpty));
+
+                                if (!hasAddress) {
+                                  CustomSnackBar.showError(context,
+                                      "Cannot start delivery: Delivery address is missing");
+                                  return;
+                                }
+
                                 PersistentNavBarNavigator.pushNewScreen(
                                   context,
                                   screen: NavigationView(
