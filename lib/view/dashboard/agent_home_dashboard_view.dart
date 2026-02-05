@@ -861,9 +861,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
                   ),
                   SizedBox(height: R.h(2)),
                   Text(
-                    isPickup
-                        ? '${order.orderItems.length} Items • Ready in 2 mins'
-                        : '1.4 km from Store',
+                    '#${order.orderNumber.isNotEmpty ? order.orderNumber : order.id} • ${isPickup ? '${order.orderItems.length} Items' : '${order.distance ?? '1.4'} km from Store'}',
                     style: TextStyle(
                       fontSize: R.sp(12),
                       fontWeight: FontWeight.w600,
@@ -962,7 +960,7 @@ class _AgentDashboardViewState extends State<AgentDashboardView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '#${order.id}',
+                '#${order.orderNumber.isNotEmpty ? order.orderNumber : order.id}',
                 style: TextStyle(
                   fontSize: R.sp(16),
                   fontWeight: FontWeight.w800,

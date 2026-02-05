@@ -429,7 +429,7 @@ class OrderItem {
     }
 
     return OrderItem(
-      id: json['id'] ?? 0,
+      id: json['id'] ?? json['order_item_id'] ?? 0,
       orderId: json['order_id'] ?? 0,
       productId: json['product_id'] ?? 0,
       quantity:
@@ -444,7 +444,9 @@ class OrderItem {
       taxPercent: json['tax_percent']?.toString(),
       taxAmount: json['tax_amount']?.toString(),
       lineTotal: json['line_total']?.toString(),
-      total: json['total']?.toString() ?? '0.00',
+      total: json['total']?.toString() ??
+          json['final_price']?.toString() ??
+          '0.00',
       createdAt: _parseDate(json['created_at']),
       updatedAt: _parseDate(json['updated_at']),
       product: json['product'] is Map

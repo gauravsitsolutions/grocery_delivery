@@ -27,20 +27,18 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
 
   Future<void> _launchMap(String? lat, String? lng, {String? address}) async {
-    String googleMapsUrl;
-
-    // EXCLUSIVELY USE ADDRESS per user request
-    if (address != null && address.isNotEmpty) {
-      googleMapsUrl =
-          "https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(address)}";
-    } else {
+    if (address == null || address.isEmpty) {
       if (mounted) {
         CustomSnackBar.showError(context, "Address unavailable");
       }
       return;
     }
 
+    // Use standard Google Maps URL with address as destination
+    final googleMapsUrl =
+        "https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(address)}";
     final uri = Uri.parse(googleMapsUrl);
+
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         if (!await launchUrl(uri, mode: LaunchMode.platformDefault)) {

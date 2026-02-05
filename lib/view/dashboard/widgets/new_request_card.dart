@@ -97,13 +97,29 @@ class _NewRequestCardState extends State<NewRequestCard> {
                                 color:
                                     AppColors.bodyText.withValues(alpha: 0.5)),
                             SizedBox(width: R.w(4)),
-                            Text(
-                              '${widget.order.distance ?? "2.5"} km away',
-                              style: TextStyle(
-                                fontSize: R.sp(12),
-                                color:
-                                    AppColors.bodyText.withValues(alpha: 0.6),
-                                fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${widget.order.distance ?? "2.5"} km away',
+                                    style: TextStyle(
+                                      fontSize: R.sp(12),
+                                      color: AppColors.bodyText
+                                          .withValues(alpha: 0.6),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (widget.order.orderNumber.isNotEmpty)
+                                    Text(
+                                      'Order #${widget.order.orderNumber}',
+                                      style: TextStyle(
+                                        fontSize: R.sp(11),
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primaryGreen,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           ],

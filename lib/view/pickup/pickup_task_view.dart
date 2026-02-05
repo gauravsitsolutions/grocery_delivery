@@ -428,7 +428,7 @@ class _PickupTaskViewState extends State<PickupTaskView> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          "ITEM CHECKLIST",
+          "ITEM CHECKLIST - #${viewModel.order?.orderNumber ?? widget.orderNumber ?? widget.orderId}",
           style: TextStyle(
             fontSize: R.sp(16),
             fontWeight: FontWeight.w800,

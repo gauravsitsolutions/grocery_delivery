@@ -455,7 +455,7 @@ class ApiService {
   }
 
   Future<OrderResponse> getNewOrders({int page = 1}) async {
-    final uri = Uri.parse('${AppUrls.pendingList}?page=$page');
+    final uri = Uri.parse('${AppUrls.newOrders}?page=$page');
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
