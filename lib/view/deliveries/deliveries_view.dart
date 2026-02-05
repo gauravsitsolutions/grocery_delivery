@@ -42,7 +42,9 @@ class _DeliveriesViewState extends State<DeliveriesView> {
     super.initState();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OrderListViewModel>().fetchActiveOrders(refresh: true);
+      final viewModel = context.read<OrderListViewModel>();
+      viewModel.fetchActiveOrders(refresh: true);
+      viewModel.fetchNewOrders(refresh: true);
     });
   }
 

@@ -24,6 +24,17 @@ class CustomNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (imageUrl.trim().isEmpty) {
+      return errorWidget ??
+          Container(
+            width: width,
+            height: height,
+            color: AppColors.shimmerBase,
+            child: const Icon(Icons.image_not_supported_outlined,
+                color: AppColors.grey),
+          );
+    }
+
     return FutureBuilder<String?>(
       future: SharedPrefsUtil.getToken(),
       builder: (context, snapshot) {
@@ -32,7 +43,8 @@ class CustomNetworkImage extends StatelessWidget {
 
         if (token != null && token.isNotEmpty) {
           headers = {
-            'Authorization': token.startsWith('Bearer ') ? token : 'Bearer $token',
+            'Authorization':
+                token.startsWith('Bearer ') ? token : 'Bearer $token',
             'Accept': 'application/json',
           };
         }
@@ -60,7 +72,8 @@ class CustomNetworkImage extends StatelessWidget {
                     width: width,
                     height: height,
                     color: AppColors.shimmerBase,
-                    child: const Icon(Icons.image_not_supported_outlined, color: AppColors.grey),
+                    child: const Icon(Icons.image_not_supported_outlined,
+                        color: AppColors.grey),
                   ),
         );
       },

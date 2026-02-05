@@ -181,7 +181,7 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      id: json['id'] ?? json['orderId'] ?? 0,
+      id: json['id'] ?? json['orderId'] ?? json['order_id'] ?? 0,
       userId: json['user_id'] ?? 0,
       deliveryAgentId: json['delivery_agent_id'],
       offerId: json['offer_id'],
@@ -307,6 +307,8 @@ class Order {
 
 class DeliveryAddress {
   final int id;
+  final String? name; // Added name
+  final String? phone; // Added phone
   final String addressLine1;
   final String? addressLine2;
   final String city;
@@ -317,6 +319,8 @@ class DeliveryAddress {
 
   DeliveryAddress({
     required this.id,
+    this.name,
+    this.phone,
     required this.addressLine1,
     this.addressLine2,
     required this.city,
@@ -329,13 +333,15 @@ class DeliveryAddress {
   factory DeliveryAddress.fromJson(Map<String, dynamic> json) {
     return DeliveryAddress(
       id: json['id'] ?? 0,
+      name: json['name'],
+      phone: json['phone'],
       addressLine1: json['address_line_1'] ?? json['address'] ?? '',
-      addressLine2: json['address_line_2'] ?? json['area'],
+      addressLine2: json['address_line_2'] ?? json['area'] ?? json['landmark'],
       city: json['city'] ?? '',
       state: json['state'] ?? '',
       postcode: json['postcode'] ?? json['pincode'] ?? '',
-      latitude: json['latitude']?.toString(),
-      longitude: json['longitude']?.toString(),
+      latitude: json['latitude']?.toString() ?? json['lat']?.toString(),
+      longitude: json['longitude']?.toString() ?? json['lng']?.toString(),
     );
   }
 }

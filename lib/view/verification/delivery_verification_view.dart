@@ -10,6 +10,7 @@ import 'package:samrudhi_delivery_agent_app/view/order_details/delivery_success_
 import 'package:animations/animations.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_back_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DeliveryVerificationView extends StatefulWidget {
   final int orderId;
@@ -24,6 +25,37 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   final List<TextEditingController> _controllers =
       List.generate(4, (index) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
+
+  Future<void> _launchMap(String? lat, String? lng, {String? address}) async {
+    String googleMapsUrl;
+
+    // PRIORITIZE ADDRESS: Use the text address if available so Map matches App text.
+    if (address != null && address.isNotEmpty) {
+      googleMapsUrl =
+          "https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(address)}";
+    } else if (lat != null && lng != null && lat.isNotEmpty && lng.isNotEmpty) {
+      googleMapsUrl =
+          "https://www.google.com/maps/dir/?api=1&destination=$lat,$lng";
+    } else {
+      if (mounted) {
+        CustomSnackBar.showError(context, "Location unavailable");
+      }
+      return;
+    }
+
+    final uri = Uri.parse(googleMapsUrl);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        if (!await launchUrl(uri, mode: LaunchMode.platformDefault)) {
+          throw 'Could not launch map';
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.showError(context, "Could not launch map");
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -160,7 +192,105 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
                   ),
                 ),
               ),
-              SizedBox(height: R.h(16)),
+              SizedBox(height: R.h(24)),
+
+              // Drop Off Point & Navigation
+              if (viewModel.order?.deliveryAddress != null)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(R.w(16)),
+                  decoration: BoxDecoration(
+                    color: AppColors.softGreyBg,
+                    borderRadius: BorderRadius.circular(R.r(16)),
+                    border: Border.all(
+                      color: Colors.grey.shade300,
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Drop Off Point",
+                            style: TextStyle(
+                              fontSize: R.sp(14),
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.bodyText.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              final address = viewModel.order?.deliveryAddress;
+
+                              // Construct full address string for fallback/context
+                              final fullAddress = [
+                                address?.addressLine1,
+                                address?.addressLine2,
+                                address?.city,
+                                address?.state,
+                                address?.postcode
+                              ]
+                                  .where((e) => e != null && e.isNotEmpty)
+                                  .join(', ');
+
+                              _launchMap(address?.latitude, address?.longitude,
+                                  address: fullAddress);
+                            },
+                            child: Container(
+                              padding: EdgeInsets.all(R.w(8)),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(R.r(8)),
+                                border: Border.all(
+                                    color: AppColors.primaryGreen
+                                        .withValues(alpha: 0.2)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primaryGreen
+                                        .withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Remix.direction_line,
+                                color: AppColors.primaryGreen,
+                                size: R.sp(20),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: R.h(8)),
+                      Row(
+                        children: [
+                          Icon(
+                            Remix.map_pin_line,
+                            size: R.sp(16),
+                            color: AppColors.headingText,
+                          ),
+                          SizedBox(width: R.w(8)),
+                          Expanded(
+                            child: Text(
+                              "${viewModel.order?.deliveryAddress?.addressLine1 ?? ''}, ${viewModel.order?.deliveryAddress?.addressLine2 ?? ''}, ${viewModel.order?.deliveryAddress?.city ?? ''}",
+                              style: TextStyle(
+                                fontSize: R.sp(14),
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.headingText,
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              SizedBox(height: R.h(24)),
 
               // Title and Description
               const Text(

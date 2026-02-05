@@ -4,6 +4,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_network_image.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_color.dart';
 import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view.dart';
+import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/utils/responsive.dart';
 import 'package:samrudhi_delivery_agent_app/widget/custom_toggle_button.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
@@ -309,6 +310,37 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
     );
   }
 
+  Future<void> _launchMap(String? lat, String? lng, {String? address}) async {
+    String googleMapsUrl;
+
+    // PRIORITIZE ADDRESS: Use the text address if available so Map matches App text.
+    if (address != null && address.isNotEmpty) {
+      googleMapsUrl =
+          "https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(address)}";
+    } else if (lat != null && lng != null && lat.isNotEmpty && lng.isNotEmpty) {
+      googleMapsUrl =
+          "https://www.google.com/maps/dir/?api=1&destination=$lat,$lng";
+    } else {
+      if (mounted) {
+        CustomSnackBar.showError(context, "Location unavailable");
+      }
+      return;
+    }
+
+    final uri = Uri.parse(googleMapsUrl);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        if (!await launchUrl(uri, mode: LaunchMode.platformDefault)) {
+          throw 'Could not launch map';
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.showError(context, "Could not launch map");
+      }
+    }
+  }
+
   Widget _mapCard(Order order) {
     final address = order.deliveryAddress;
     return Container(
@@ -357,14 +389,52 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'DROP-OFF POINT',
-                  style: TextStyle(
-                    color: AppColors.bodyText.withValues(alpha: 0.5),
-                    fontWeight: FontWeight.w700,
-                    fontSize: R.sp(11),
-                    letterSpacing: 1.0,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'DROP-OFF POINT',
+                      style: TextStyle(
+                        color: AppColors.bodyText.withValues(alpha: 0.5),
+                        fontWeight: FontWeight.w700,
+                        fontSize: R.sp(11),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        // Construct full address string for fallback/context
+                        final fullAddress = [
+                          address?.addressLine1,
+                          address?.addressLine2,
+                          address?.city,
+                          address?.state,
+                          address?.postcode
+                        ].where((e) => e != null && e.isNotEmpty).join(', ');
+
+                        _launchMap(
+                          address?.latitude,
+                          address?.longitude,
+                          address: fullAddress,
+                        );
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(R.w(8)),
+                        decoration: BoxDecoration(
+                          color: AppColors.softGreenBg,
+                          borderRadius: BorderRadius.circular(R.r(8)),
+                          border: Border.all(
+                              color: AppColors.primaryGreen
+                                  .withValues(alpha: 0.2)),
+                        ),
+                        child: Icon(
+                          RemixIcons.direction_line,
+                          color: AppColors.primaryGreen,
+                          size: R.sp(20),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: R.h(8)),
                 Text(
