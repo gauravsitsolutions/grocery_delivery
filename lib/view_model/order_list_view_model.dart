@@ -31,6 +31,11 @@ class OrderListViewModel extends ChangeNotifier {
   bool _availableOrdersHasMore = false;
   String? _availableOrdersError;
 
+  // State for "Pending Orders" (Additional List)
+  List<Order> _pendingOrdersList = [];
+  bool _isPendingOrdersLoading = false;
+  String? _pendingOrdersError;
+
   // Track which type of list is currently loaded
   bool _isHistoryList = false;
 
@@ -52,6 +57,10 @@ class OrderListViewModel extends ChangeNotifier {
   bool get isAvailableOrdersLoadingMore => _isAvailableOrdersLoadingMore;
   bool get availableOrdersHasMore => _availableOrdersHasMore;
   String? get availableOrdersError => _availableOrdersError;
+
+  List<Order> get pendingOrdersList => _pendingOrdersList;
+  bool get isPendingOrdersLoading => _isPendingOrdersLoading;
+  String? get pendingOrdersError => _pendingOrdersError;
 
   // Filters from Sheet
   String _activeDateFilter = 'All';
@@ -208,16 +217,41 @@ class OrderListViewModel extends ChangeNotifier {
       _isMyDeliveriesLoadingMore = false;
       notifyListeners();
     }
+    }
   }
 
+  // Fetch PENDING Orders (api/orders/pending)
+  Future<void> fetchPendingOrders({bool refresh = false}) async {
+    _isPendingOrdersLoading = true;
+    if (refresh) {
+      _pendingOrdersError = null;
+      notifyListeners();
+    }
+
+    try {
+      final response = await _apiService.getPendingOrders();
+      _pendingOrdersList = response.data;
+      _isPendingOrdersLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _pendingOrdersError = e is AppException ? e.message : e.toString();
+      _isPendingOrdersLoading = false;
+      notifyListeners();
+    }
+  }
+
+  String? _currentHistoryStatus;
+
   // Fetch HISTORY Orders - typically "Delivered", "Cancelled"
-  Future<void> fetchHistoryOrders({bool refresh = false}) async {
+  Future<void> fetchHistoryOrders(
+      {bool refresh = false, String? status}) async {
     if (refresh) {
       _isHistoryList = true; // Mark as History
       _myDeliveriesPage = 1;
       _myDeliveriesHasMore = false;
       _myDeliveriesError = null;
       _isMyDeliveriesLoading = true;
+      if (status != null) _currentHistoryStatus = status;
       notifyListeners();
     } else if (!_isHistoryList) {
       return;
@@ -225,7 +259,8 @@ class OrderListViewModel extends ChangeNotifier {
 
     try {
       // Use getDeliveries for History
-      final response = await _apiService.getDeliveries(page: _myDeliveriesPage);
+      final response = await _apiService.getDeliveries(
+          page: _myDeliveriesPage, status: _currentHistoryStatus);
 
       // Guard: If we switched to active while fetching, discard this result
       if (!_isHistoryList) return;

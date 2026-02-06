@@ -45,6 +45,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
       final viewModel = context.read<OrderListViewModel>();
       viewModel.fetchActiveOrders(refresh: true);
       viewModel.fetchNewOrders(refresh: true);
+      viewModel.fetchPendingOrders(refresh: true);
     });
   }
 
@@ -221,6 +222,7 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                   await Future.wait([
                     viewModel.fetchActiveOrders(refresh: true),
                     viewModel.fetchNewOrders(refresh: true),
+                    viewModel.fetchPendingOrders(refresh: true),
                   ]);
                 } else {
                   await viewModel.fetchHistoryOrders(refresh: true);
@@ -370,6 +372,22 @@ class _DeliveriesViewState extends State<DeliveriesView> {
                         SizedBox(height: R.h(16)),
                       ],
 
+                      // 2. Pending Orders Section
+                      if (viewModel.pendingOrdersList.isNotEmpty) ...[
+                        _sectionLabel('PENDING'),
+                        SizedBox(height: R.h(10)),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: viewModel.pendingOrdersList.length,
+                          itemBuilder: (context, index) {
+                            final order = viewModel.pendingOrdersList[index];
+                            return _orderCard(order);
+                          },
+                        ),
+                        SizedBox(height: R.h(16)),
+                      ],
+
                       if (orders.isNotEmpty) ...[
                         _sectionLabel('IN PROGRESS'),
                         SizedBox(height: R.h(10)),
@@ -453,8 +471,9 @@ class _DeliveriesViewState extends State<DeliveriesView> {
           if (newStatus == 'Pending') {
             viewModel.fetchActiveOrders(refresh: true);
             viewModel.fetchNewOrders(refresh: true);
+            viewModel.fetchPendingOrders(refresh: true);
           } else {
-            viewModel.fetchHistoryOrders(refresh: true);
+            viewModel.fetchHistoryOrders(refresh: true, status: newStatus.toLowerCase());
           }
         }
       }
@@ -605,18 +624,19 @@ class _DeliveriesViewState extends State<DeliveriesView> {
               active: _selectedStatus == 'Pending', onTap: () {
             setState(() => _selectedStatus = 'Pending');
             viewModel.fetchActiveOrders(refresh: true);
+            viewModel.fetchPendingOrders(refresh: true);
           }),
           _statusTab('Delivered',
               count: viewModel.deliveryStatus?.deliveredOrders.toString(),
               active: _selectedStatus == 'Delivered', onTap: () {
             setState(() => _selectedStatus = 'Delivered');
-            viewModel.fetchHistoryOrders(refresh: true);
+            viewModel.fetchHistoryOrders(refresh: true, status: 'delivered');
           }),
           _statusTab('Cancelled',
               count: viewModel.deliveryStatus?.cancelledOrders.toString(),
               active: _selectedStatus == 'Cancelled', onTap: () {
             setState(() => _selectedStatus = 'Cancelled');
-            viewModel.fetchHistoryOrders(refresh: true);
+            viewModel.fetchHistoryOrders(refresh: true, status: 'cancelled');
           }),
         ],
       ),

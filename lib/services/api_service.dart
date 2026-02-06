@@ -549,8 +549,13 @@ class ApiService {
     return OrderResponse.fromJson(response);
   }
 
-  Future<DeliveryHistoryResponse> getDeliveries({int page = 1}) async {
-    final uri = Uri.parse('${AppUrls.deliveries}?page=$page');
+  Future<DeliveryHistoryResponse> getDeliveries(
+      {int page = 1, String? status}) async {
+    String url = '${AppUrls.deliveries}?page=$page';
+    if (status != null && status.isNotEmpty) {
+      url += '&status=$status';
+    }
+    final uri = Uri.parse(url);
     log('API Request: GET $uri');
 
     final response = await _processRequest(() async => http.get(
@@ -568,6 +573,21 @@ class ApiService {
       );
     }
     return DeliveryHistoryResponse.fromJson(response);
+  }
+
+  Future<OrderResponse> getPendingOrders({int page = 1}) async {
+    final uri = Uri.parse('${AppUrls.pendingList}?page=$page');
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(),
+        ));
+
+    if (response is List) {
+      return OrderResponse.fromJson({'data': response, 'status': true});
+    }
+    return OrderResponse.fromJson(response);
   }
 
   Future<OrderResponse> searchDeliveries(String query, {int page = 1}) async {
