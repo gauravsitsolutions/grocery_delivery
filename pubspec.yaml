@@ -32,6 +32,8 @@ dependencies:
   animations: ^2.1.1
   internet_connection_checker: ^3.0.1
   flutter_image_compress: ^2.3.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

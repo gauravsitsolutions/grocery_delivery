@@ -217,7 +217,6 @@ class OrderListViewModel extends ChangeNotifier {
       _isMyDeliveriesLoadingMore = false;
       notifyListeners();
     }
-    }
   }
 
   // Fetch PENDING Orders (api/orders/pending)
