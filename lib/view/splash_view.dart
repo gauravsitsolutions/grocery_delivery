@@ -121,12 +121,19 @@ class _SplashScreenState extends State<SplashScreen>
       statusBarIconBrightness: Brightness.dark,
     ));
 
-    if (_savedToken != null && _savedToken!.isNotEmpty) {
+    // Ensure session is fresh and loaded
+    final token = await SharedPrefsUtil.getToken();
+
+    if (token != null && token.isNotEmpty) {
       debugPrint('Splash: Navigating to Dashboard (Session Valid)');
-      Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
+      }
     } else {
       debugPrint('Splash: Navigating to Login (No Session)');
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
     }
   }
 
