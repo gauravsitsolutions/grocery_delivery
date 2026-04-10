@@ -447,11 +447,15 @@ class _LoginViewState extends State<LoginView> {
         ),
         SizedBox(height: R.h(16)),
         GestureDetector(
-          onTap: () async {
-            final url = Uri.parse(AppUrls.privacyPolicy);
-            if (await canLaunchUrl(url)) {
-              await launchUrl(url, mode: LaunchMode.inAppWebView);
-            }
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              AppRoutes.webView,
+              arguments: {
+                'url': AppUrls.privacyPolicy,
+                'title': 'Privacy Policy',
+              },
+            );
           },
           child: Text(
             'Privacy Policy',

@@ -11,6 +11,7 @@ import 'package:samrudhi_delivery_agent_app/view/navigation_view/navigation_view
 import 'package:samrudhi_delivery_agent_app/view/notification/notifications_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/verification/verification_view.dart';
 import 'package:samrudhi_delivery_agent_app/view/pickup/pickup_task_view.dart';
+import 'package:samrudhi_delivery_agent_app/view/web_view/web_view_screen.dart';
 import 'package:samrudhi_delivery_agent_app/model/order_model.dart';
 import 'package:samrudhi_delivery_agent_app/widget/agent_bottom_nav_item.dart';
 
@@ -116,6 +117,17 @@ class AppPages {
           } catch (_) {
             page = const PickupTaskView(orderId: 0); // Error fallback
           }
+        }
+        break;
+      case AppRoutes.webView:
+        final dynamic args = settings.arguments;
+        if (args is Map<String, dynamic>) {
+          page = AppWebViewScreen(
+            url: args['url'] ?? '',
+            title: args['title'] ?? '',
+          );
+        } else {
+          page = const AppWebViewScreen(url: '', title: '');
         }
         break;
       default:

@@ -18,4 +18,5 @@ class AppRoutes {
   static const verificationView = '/verification-view';
   static const pickupTask = '/pickup-task';
   static const notificationView = '/notification-view';
+  static const webView = '/web-view';
 }

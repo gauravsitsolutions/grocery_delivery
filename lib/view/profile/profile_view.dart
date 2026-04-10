@@ -238,17 +238,15 @@ class _ProfileViewState extends State<ProfileView> {
                           RemixIcons.shield_user_line,
                           'Privacy Policy',
                           'Read our privacy policy',
-                          onTap: () async {
-                            final url = Uri.parse(AppUrls.privacyPolicy);
-                            if (await canLaunchUrl(url)) {
-                              await launchUrl(url,
-                                  mode: LaunchMode.inAppWebView);
-                            } else {
-                              if (mounted) {
-                                CustomSnackBar.showError(
-                                    context, 'Could not launch Privacy Policy');
-                              }
-                            }
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.webView,
+                              arguments: {
+                                'url': AppUrls.privacyPolicy,
+                                'title': 'Privacy Policy',
+                              },
+                            );
                           },
                         ),
                       ],
