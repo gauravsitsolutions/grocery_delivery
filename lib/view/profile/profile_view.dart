@@ -16,6 +16,7 @@ import 'package:samrudhi_delivery_agent_app/widget/custom_retry_button.dart';
 import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart'; // Restore Import
 import 'package:fl_chart/fl_chart.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -227,6 +228,29 @@ class _ProfileViewState extends State<ProfileView> {
                                 ? 'Verified & Active'
                                 : 'Inactive',
                             highlight: profile?.status == 1),
+                      ],
+                    ),
+                    SizedBox(height: R.h(28)),
+                    _infoSection(
+                      title: 'Support & Legal',
+                      children: [
+                        _infoRow(
+                          RemixIcons.shield_user_line,
+                          'Privacy Policy',
+                          'Read our privacy policy',
+                          onTap: () async {
+                            final url = Uri.parse(AppUrls.privacyPolicy);
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url,
+                                  mode: LaunchMode.inAppWebView);
+                            } else {
+                              if (mounted) {
+                                CustomSnackBar.showError(
+                                    context, 'Could not launch Privacy Policy');
+                              }
+                            }
+                          },
+                        ),
                       ],
                     ),
                     SizedBox(height: R.h(32)),

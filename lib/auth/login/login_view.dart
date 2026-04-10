@@ -11,6 +11,8 @@ import 'package:samrudhi_delivery_agent_app/utils/custom_snackbar.dart';
 import 'package:samrudhi_delivery_agent_app/view_model/auth_view_model.dart';
 
 import 'package:animations/animations.dart';
+import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum LoginMethod { password, otp }
 
@@ -424,22 +426,43 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Widget _buildSupportText() {
-    return Center(
-      child: RichText(
-        text: TextSpan(
-          text: 'Having trouble? ',
-          style: AppTextStyles.subHeading.copyWith(fontSize: R.sp(14)),
-          children: const [
-            TextSpan(
-              text: 'Contact Support',
-              style: TextStyle(
-                color: AppColors.primaryGreen,
-                fontWeight: FontWeight.w700,
-              ),
+    return Column(
+      children: [
+        Center(
+          child: RichText(
+            text: TextSpan(
+              text: 'Having trouble? ',
+              style: AppTextStyles.subHeading.copyWith(fontSize: R.sp(14)),
+              children: const [
+                TextSpan(
+                  text: 'Contact Support',
+                  style: TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        SizedBox(height: R.h(16)),
+        GestureDetector(
+          onTap: () async {
+            final url = Uri.parse(AppUrls.privacyPolicy);
+            if (await canLaunchUrl(url)) {
+              await launchUrl(url, mode: LaunchMode.inAppWebView);
+            }
+          },
+          child: Text(
+            'Privacy Policy',
+            style: TextStyle(
+              color: AppColors.bodyText.withValues(alpha: 0.7),
+              fontSize: R.sp(12),
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

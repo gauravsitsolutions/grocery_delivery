@@ -63,6 +63,7 @@ class AppUrls {
       '$baseUrl/api/partner/orders/$id/delivery/verify-otp';
   static String rateCustomer(int id) => '$baseUrl/api/orders/$id/rate-customer';
 
+  static const String privacyPolicy = '$baseUrl/privacy-policy';
   static const String notifications = '$baseUrl/api/notifications';
   static const String loginHours = '$baseUrl/api/partner/stats/login-hours';
   static const String totalOrders = '$baseUrl/api/partner/status/orders';
