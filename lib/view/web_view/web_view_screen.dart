@@ -68,7 +68,8 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> {
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.headingText),
+          icon: const Icon(Icons.arrow_back_ios_new,
+              color: AppColors.headingText),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,

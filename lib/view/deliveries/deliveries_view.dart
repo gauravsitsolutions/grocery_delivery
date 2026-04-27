@@ -473,7 +473,8 @@ class _DeliveriesViewState extends State<DeliveriesView> {
             viewModel.fetchNewOrders(refresh: true);
             viewModel.fetchPendingOrders(refresh: true);
           } else {
-            viewModel.fetchHistoryOrders(refresh: true, status: newStatus.toLowerCase());
+            viewModel.fetchHistoryOrders(
+                refresh: true, status: newStatus.toLowerCase());
           }
         }
       }

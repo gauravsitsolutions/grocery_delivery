@@ -135,7 +135,19 @@ class _AgentBottomNavViewState extends State<AgentBottomNavView> {
 
                 try {
                   final apiService = ApiService();
-                  await apiService.updateAgentStatus(val);
+                  final response = await apiService.updateAgentStatus(val);
+
+                  // Show duty time if stopping
+                  if (!val && response['todayDutyTime'] != null) {
+                    final dutyHours =
+                        (response['todayDutyTime'] as num).toDouble().abs();
+                    final hours = dutyHours.floor();
+                    final minutes = ((dutyHours - hours) * 60).floor();
+                    if (context.mounted) {
+                      CustomSnackBar.showSuccess(context,
+                          'Duty stopped. Today: ${hours}h ${minutes}m');
+                    }
+                  }
 
                   // Reset duty timer when going offline
                   if (!val) {

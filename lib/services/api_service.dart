@@ -16,6 +16,7 @@ import 'package:samrudhi_delivery_agent_app/model/delivery_summary_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/delivery_history_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/partner_summary_model.dart';
 import 'package:samrudhi_delivery_agent_app/model/partner_performance_model.dart';
+import 'package:samrudhi_delivery_agent_app/model/duty_slot_model.dart';
 import 'package:samrudhi_delivery_agent_app/services/app_exceptions.dart';
 
 import 'package:samrudhi_delivery_agent_app/utils/shared_prefs_util.dart';
@@ -1143,5 +1144,17 @@ class ApiService {
       throw ValidationException(
           response['message'] ?? 'Failed to complete return handover');
     }
+  }
+
+  Future<List<DutySlot>> getDutySlots() async {
+    final uri = Uri.parse(AppUrls.dutySlots);
+    log('API Request: GET $uri');
+
+    final response = await _processRequest(() async => http.get(
+          uri,
+          headers: await _getHeaders(),
+        ));
+
+    return DutySlotModel.fromJson(response).data;
   }
 }

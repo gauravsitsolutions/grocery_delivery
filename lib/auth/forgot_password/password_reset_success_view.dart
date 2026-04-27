@@ -9,7 +9,8 @@ class PasswordResetSuccessView extends StatefulWidget {
   const PasswordResetSuccessView({super.key});
 
   @override
-  State<PasswordResetSuccessView> createState() => _PasswordResetSuccessViewState();
+  State<PasswordResetSuccessView> createState() =>
+      _PasswordResetSuccessViewState();
 }
 
 class _PasswordResetSuccessViewState extends State<PasswordResetSuccessView> {

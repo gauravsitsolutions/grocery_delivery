@@ -85,4 +85,5 @@ class AppUrls {
   static String returnHandover(int id) =>
       '$baseUrl/api/v1/partner/returns/$id/handover';
   static String returnDetails(int id) => '$baseUrl/api/v1/partner/returns/$id';
+  static const String dutySlots = '$baseUrl/api/partner/duty-slots';
 }
