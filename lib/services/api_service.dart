@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -129,6 +130,7 @@ class ApiService {
   Future<Map<String, dynamic>> sendOtp(String mobile) async {
     final uri = Uri.parse(AppUrls.loginOtp);
     log('API Request: POST $uri');
+    debugPrint('📤 [Login OTP] Sending OTP to mobile: $mobile');
 
     final response = await _processRequest(() => http.post(
           uri,
@@ -138,6 +140,12 @@ class ApiService {
           },
           body: jsonEncode({'mobile': mobile}),
         ));
+
+    final dynamic otp = response['otp'] ?? response['data']?['otp'];
+    if (otp != null) {
+      log('Login OTP Received: $otp');
+      debugPrint('🔑 [Login OTP] Received OTP from server: $otp');
+    }
     return response;
   }
 
@@ -173,7 +181,8 @@ class ApiService {
 
   Future<LoginResponse> verifyOtp(String mobile, String otp) async {
     final uri = Uri.parse(AppUrls.verifyOtp);
-    log('API Request: POST $uri');
+    log('API Request: POST $uri | Body: {mobile: $mobile, otp: $otp}');
+    debugPrint('🚀 [Login OTP Verification] Verifying OTP: "$otp" for Mobile: $mobile');
 
     final response = await _processRequest(() => http.post(
           uri,
@@ -185,8 +194,10 @@ class ApiService {
         ));
 
     if (response['status'] == true) {
+      debugPrint('✅ [Login OTP Verification] Successfully verified OTP for Mobile: $mobile');
       return LoginResponse.fromJson(response);
     } else {
+      debugPrint('❌ [Login OTP Verification] Failed: ${response['message']}');
       throw ValidationException(
           response['message'] ?? 'OTP Verification failed');
     }
@@ -195,6 +206,7 @@ class ApiService {
   Future<Map<String, dynamic>> resendOtp(String mobile) async {
     final uri = Uri.parse(AppUrls.resendOtp);
     log('API Request: POST $uri');
+    debugPrint('🔄 [Login OTP] Resending OTP to mobile: $mobile');
 
     final response = await _processRequest(() => http.post(
           uri,
@@ -204,12 +216,19 @@ class ApiService {
           },
           body: jsonEncode({'mobile': mobile}),
         ));
+
+    final dynamic otp = response['otp'] ?? response['data']?['otp'];
+    if (otp != null) {
+      log('Resent Login OTP Received: $otp');
+      debugPrint('🔑 [Login OTP] Received resent OTP from server: $otp');
+    }
     return response;
   }
 
   Future<Map<String, dynamic>> sendForgotPasswordOtp(String mobile) async {
     final uri = Uri.parse(AppUrls.forgotPasswordSendOtp);
     log('API Request: POST $uri');
+    debugPrint('📤 [Forgot Password OTP] Sending OTP to mobile: $mobile');
 
     final response = await _processRequest(() => http.post(
           uri,
@@ -219,13 +238,20 @@ class ApiService {
           },
           body: jsonEncode({'mobile': mobile}),
         ));
+
+    final dynamic otp = response['otp'] ?? response['data']?['otp'];
+    if (otp != null) {
+      log('Forgot Password OTP Received: $otp');
+      debugPrint('🔑 [Forgot Password OTP] Received OTP from server: $otp');
+    }
     return response;
   }
 
   Future<Map<String, dynamic>> verifyForgotPasswordOtp(
       String mobile, String otp) async {
     final uri = Uri.parse(AppUrls.verifyForgotPasswordOtp);
-    log('API Request: POST $uri');
+    log('API Request: POST $uri | Body: {mobile: $mobile, otp: $otp}');
+    debugPrint('🚀 [Forgot Password OTP Verification] Verifying OTP: "$otp" for Mobile: $mobile');
 
     final response = await _processRequest(() => http.post(
           uri,
@@ -235,6 +261,12 @@ class ApiService {
           },
           body: jsonEncode({'mobile': mobile, 'otp': otp}),
         ));
+
+    if (response['status'] == true) {
+      debugPrint('✅ [Forgot Password OTP Verification] Successfully verified OTP for Mobile: $mobile');
+    } else {
+      debugPrint('❌ [Forgot Password OTP Verification] Failed: ${response['message']}');
+    }
     return response;
   }
 
@@ -825,7 +857,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> completeDelivery(int orderId, String otp) async {
     final uri = Uri.parse(AppUrls.completeDelivery(orderId));
-    log('API Request: POST $uri');
+    log('API Request: POST $uri | Body: {otp: $otp, type: delivery}');
+    debugPrint('🚀 [Delivery Verification OTP] Verifying OTP: "$otp" for Order ID: $orderId');
 
     final response = await _processRequest(() async => http.post(
           uri,
@@ -837,16 +870,21 @@ class ApiService {
         ));
 
     if (response['status'] == true) {
+      log('Delivery Verification OTP verified successfully for Order ID: $orderId');
+      debugPrint('✅ [Delivery Verification OTP] Successfully verified OTP for Order ID: $orderId');
       return response;
     } else {
+      log('Delivery Verification OTP failed: ${response['message']}');
+      debugPrint('❌ [Delivery Verification OTP] Failed for Order ID $orderId: ${response['message']}');
       throw ValidationException(
           response['message'] ?? 'Failed to complete delivery');
     }
   }
 
-  Future<void> sendDeliveryOtp(int orderId) async {
+  Future<Map<String, dynamic>> sendDeliveryOtp(int orderId) async {
     final uri = Uri.parse(AppUrls.sendDeliveryOtp(orderId));
     log('API Request: POST $uri');
+    debugPrint('📤 [Delivery Verification OTP] Requesting OTP send for Order ID: $orderId');
 
     final response = await _processRequest(() async => http.post(
           uri,
@@ -854,14 +892,26 @@ class ApiService {
         ));
 
     if (response['status'] != true) {
+      debugPrint('❌ [Delivery Verification OTP] Failed to send OTP: ${response['message']}');
       throw ValidationException(
           response['message'] ?? 'Failed to send delivery OTP');
     }
+
+    final dynamic otp = response['otp'] ?? response['data']?['otp'];
+    if (otp != null) {
+      log('Delivery Verification OTP Received: $otp');
+      debugPrint('🔑 [Delivery Verification OTP] OTP received from server for Order #$orderId: $otp');
+    } else {
+      debugPrint('📩 [Delivery Verification OTP] OTP sent successfully for Order #$orderId');
+    }
+
+    return response;
   }
 
-  Future<void> resendDeliveryOtp(int orderId) async {
+  Future<Map<String, dynamic>> resendDeliveryOtp(int orderId) async {
     final uri = Uri.parse(AppUrls.resendDeliveryOtp(orderId));
     log('API Request: POST $uri');
+    debugPrint('🔄 [Delivery Verification OTP] Requesting OTP resend for Order ID: $orderId');
 
     final response = await _processRequest(() async => http.post(
           uri,
@@ -869,9 +919,20 @@ class ApiService {
         ));
 
     if (response['status'] != true) {
+      debugPrint('❌ [Delivery Verification OTP] Failed to resend OTP: ${response['message']}');
       throw ValidationException(
           response['message'] ?? 'Failed to resend delivery OTP');
     }
+
+    final dynamic otp = response['otp'] ?? response['data']?['otp'];
+    if (otp != null) {
+      log('Resent Delivery Verification OTP Received: $otp');
+      debugPrint('🔑 [Delivery Verification OTP] Resent OTP received from server for Order #$orderId: $otp');
+    } else {
+      debugPrint('📩 [Delivery Verification OTP] OTP resent successfully for Order #$orderId');
+    }
+
+    return response;
   }
 
   Future<Map<String, dynamic>> getOrderSummary(int orderId) async {

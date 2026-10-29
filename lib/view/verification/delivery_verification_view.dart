@@ -58,7 +58,11 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
     super.initState();
     // Send OTP automatically when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OrderViewModel>().sendDeliveryOtp();
+      final vm = context.read<OrderViewModel>();
+      final customerMobile = vm.order?.user?.mobile ?? "";
+      final customerName = vm.order?.user?.fullName ?? "Customer";
+      debugPrint('📱 [DeliveryVerificationView] Verification initiated for customer: $customerName, mobile no: $customerMobile (Order #${widget.orderId})');
+      vm.sendDeliveryOtp();
     });
   }
 
@@ -99,11 +103,16 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
     final otp = _otpCode;
     if (otp.length != 4) return;
 
+    final customerMobile = viewModel.order?.user?.mobile ?? "";
+    final customerName = viewModel.order?.user?.fullName ?? "Customer";
+
+    debugPrint('📱 [DeliveryVerificationView] Delivery boy verifying customer mobile no: $customerMobile (Customer: $customerName, Order #${widget.orderId}) with OTP: "$otp"');
     final success = await viewModel.verifyDeliveryOtp(otp);
 
     if (!mounted) return;
 
     if (success) {
+      debugPrint('🎉 [DeliveryVerificationView] Customer mobile no $customerMobile verified successfully for Order #${widget.orderId}');
       CustomSnackBar.showSuccess(context, "Delivery Verified Successfully!");
 
       // Navigate to Delivered Details View

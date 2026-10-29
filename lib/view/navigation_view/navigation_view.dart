@@ -177,6 +177,7 @@ class _NavigationViewState extends State<NavigationView> {
                     onCall: () async {
                       final phone = _order?.user?.mobile;
                       if (phone != null) {
+                        debugPrint('📞 [NavigationView] Calling customer mobile no: $phone (Customer: ${_order?.user?.fullName}, Order #${_order?.orderNumber})');
                         final url = Uri.parse('tel:$phone');
                         if (await canLaunchUrl(url)) await launchUrl(url);
                       }
@@ -184,6 +185,7 @@ class _NavigationViewState extends State<NavigationView> {
                     onMessage: () async {
                       final phone = _order?.user?.mobile;
                       if (phone != null) {
+                        debugPrint('💬 [NavigationView] Messaging customer mobile no: $phone (Customer: ${_order?.user?.fullName}, Order #${_order?.orderNumber})');
                         final url = Uri.parse('sms:$phone');
                         if (await canLaunchUrl(url)) await launchUrl(url);
                       }

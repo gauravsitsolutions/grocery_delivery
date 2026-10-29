@@ -159,12 +159,14 @@ class AuthViewModel extends ChangeNotifier {
       return {'success': false, 'message': 'Please enter valid OTP'};
     }
 
+    debugPrint('📱 [AuthViewModel] Verifying login OTP: "$otp" for mobile: $mobile');
     _setLoading(true);
 
     try {
       final response = await _apiService.verifyOtp(mobile, otp);
 
       if (response.status) {
+        debugPrint('✅ [AuthViewModel] Login OTP verification succeeded for mobile: $mobile');
         if (response.token != null) {
           await SharedPrefsUtil.saveUserSession(
             token: response.token!,

@@ -68,10 +68,17 @@ class _VerificationViewState extends State<VerificationView> {
 
   void _onVerify(OrderViewModel viewModel) async {
     final otp = _controllers.map((c) => c.text).join();
+    final customer = widget.order?.user ?? viewModel.order?.user;
+    final customerMobile = customer?.mobile ?? "N/A";
+    final customerName = customer?.fullName ?? "Customer";
+    final orderId = widget.orderId ?? viewModel.orderId;
+
+    debugPrint('📱 [VerificationView] Delivery boy verifying customer mobile no: $customerMobile (Customer: $customerName, Order #$orderId) with OTP: "$otp"');
 
     final success = await viewModel.verifyDeliveryOtp(otp);
 
     if (success && mounted) {
+      debugPrint('🎉 [VerificationView] Customer mobile no $customerMobile verified successfully for Order #$orderId');
       Navigator.pushAndRemoveUntil(
         context,
         PageRouteBuilder(

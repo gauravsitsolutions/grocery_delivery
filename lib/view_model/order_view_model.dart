@@ -176,6 +176,10 @@ class OrderViewModel extends ChangeNotifier {
   File? get pickupProofImage => _pickupProofImage;
 
   Future<bool> verifyDeliveryOtp(String otp) async {
+    final customerMobile = _order?.user?.mobile ?? "N/A";
+    final customerName = _order?.user?.fullName ?? "Customer";
+    log('OrderViewModel: Delivery agent verifying customer mobile no: $customerMobile with OTP: $otp for order #$orderId');
+    debugPrint('📱 [Delivery Verification] Delivery boy verifying customer mobile no: $customerMobile (Customer: $customerName, Order #$orderId) with OTP: "$otp"');
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -183,6 +187,7 @@ class OrderViewModel extends ChangeNotifier {
     try {
       // 1. Complete Delivery (OTP Verification)
       await _apiService.completeDelivery(orderId, otp);
+      debugPrint('✅ [Delivery Verification] Customer mobile no: $customerMobile verified successfully for Order #$orderId');
 
       // 2. Fetch Summary to check current status
       final summaryData = await _apiService.getOrderSummary(orderId);
@@ -222,6 +227,7 @@ class OrderViewModel extends ChangeNotifier {
       return true;
     } catch (e) {
       _error = e is AppException ? e.message : e.toString();
+      debugPrint('❌ [Delivery Verification] Failed to verify customer mobile no: $customerMobile for Order #$orderId: $_error');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -229,18 +235,27 @@ class OrderViewModel extends ChangeNotifier {
   }
 
   Future<bool> sendDeliveryOtp() async {
+    final customerMobile = _order?.user?.mobile ?? "N/A";
+    final customerName = _order?.user?.fullName ?? "Customer";
+    debugPrint('📤 [Delivery Verification] Sending verification OTP to customer mobile no: $customerMobile (Customer: $customerName, Order #$orderId)');
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _apiService.sendDeliveryOtp(orderId);
+      final res = await _apiService.sendDeliveryOtp(orderId);
+      final dynamic otp = res['otp'] ?? res['data']?['otp'];
+      if (otp != null) {
+        log('OrderViewModel: Delivery OTP for customer $customerMobile is $otp');
+        debugPrint('🔑 [Delivery Verification] Delivery OTP for customer mobile no $customerMobile (Order #$orderId) is: $otp');
+      }
 
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _error = e is AppException ? e.message : e.toString();
+      debugPrint('❌ [Delivery Verification] Error sending OTP to customer mobile no $customerMobile for Order #$orderId: $_error');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -248,18 +263,27 @@ class OrderViewModel extends ChangeNotifier {
   }
 
   Future<bool> resendDeliveryOtp() async {
+    final customerMobile = _order?.user?.mobile ?? "N/A";
+    final customerName = _order?.user?.fullName ?? "Customer";
+    debugPrint('🔄 [Delivery Verification] Resending verification OTP to customer mobile no: $customerMobile (Customer: $customerName, Order #$orderId)');
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _apiService.resendDeliveryOtp(orderId);
+      final res = await _apiService.resendDeliveryOtp(orderId);
+      final dynamic otp = res['otp'] ?? res['data']?['otp'];
+      if (otp != null) {
+        log('OrderViewModel: Resent Delivery OTP for customer $customerMobile is $otp');
+        debugPrint('🔑 [Delivery Verification] Resent Delivery OTP for customer mobile no $customerMobile (Order #$orderId) is: $otp');
+      }
 
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _error = e is AppException ? e.message : e.toString();
+      debugPrint('❌ [Delivery Verification] Error resending OTP to customer mobile no $customerMobile for Order #$orderId: $_error');
       _isLoading = false;
       notifyListeners();
       return false;

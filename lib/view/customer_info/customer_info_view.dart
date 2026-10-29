@@ -320,6 +320,7 @@ class _CustomerInfoViewState extends State<CustomerInfoView> {
                 onTap: () async {
                   final phone = order.user?.mobile;
                   if (phone != null) {
+                    debugPrint('📞 [CustomerInfoView] Calling customer mobile no: $phone (Customer: ${order.user?.fullName}, Order #${order.orderNumber})');
                     final url = Uri.parse('tel:$phone');
                     if (await canLaunchUrl(url)) {
                       await launchUrl(url);

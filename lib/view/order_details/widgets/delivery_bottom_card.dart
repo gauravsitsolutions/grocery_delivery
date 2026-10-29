@@ -73,9 +73,11 @@ class DeliveryBottomCard extends StatelessWidget {
                 ),
               ),
               _buildActionButton(Remix.phone_fill, () async {
+                final phone = order.user?.mobile ?? '';
+                debugPrint('📞 [DeliveryBottomCard] Calling customer mobile no: $phone (Customer: ${order.user?.fullName}, Order #${order.orderNumber})');
                 final Uri launchUri = Uri(
                   scheme: 'tel',
-                  path: order.user?.mobile ?? '',
+                  path: phone,
                 );
                 await launchUrl(launchUri);
               }),

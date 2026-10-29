@@ -12,7 +12,6 @@ import 'package:samrudhi_delivery_agent_app/view_model/auth_view_model.dart';
 
 import 'package:animations/animations.dart';
 import 'package:samrudhi_delivery_agent_app/constant/app_url.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 enum LoginMethod { password, otp }
 
@@ -50,6 +49,7 @@ class _LoginViewState extends State<LoginView> {
       if (!viewModel.isOtpSent) {
         result = await viewModel.sendOtp(_mobileController.text.trim());
       } else {
+        debugPrint('📱 [LoginView] Submitting login OTP: "${_otpController.text.trim()}" for mobile: ${_mobileController.text.trim()}');
         result = await viewModel.verifyOtp(
             _mobileController.text.trim(), _otpController.text.trim());
       }

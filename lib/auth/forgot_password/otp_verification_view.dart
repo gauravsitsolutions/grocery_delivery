@@ -270,12 +270,14 @@ class _ForgotPasswordOTPViewState extends State<ForgotPasswordOTPView> {
                                   final otp =
                                       _controllers.map((c) => c.text).join();
                                   final mobile = mobileArgs.toString();
+                                  debugPrint('📱 [ForgotPasswordOTPView] Submitting OTP verification: "$otp" for mobile: $mobile');
 
                                   // Call API
                                   await _apiService.verifyForgotPasswordOtp(
                                       mobile, otp);
 
                                   if (!context.mounted) return;
+                                  debugPrint('🎉 [ForgotPasswordOTPView] Forgot Password OTP verified successfully for mobile: $mobile');
 
                                   // Pass the mobile number to the next screen
                                   Navigator.pushNamed(
