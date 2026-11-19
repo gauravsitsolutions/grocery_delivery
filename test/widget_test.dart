@@ -16,7 +16,7 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     PackageInfo.setMockInitialValues(
-      appName: 'Samruddha-Kirana',
+      appName: 'Samrudhi Delivery Agent',
       packageName: 'com.samrudhi.delivery',
       version: '1.0.0',
       buildNumber: '1',
@@ -24,8 +24,7 @@ void main() {
     );
   });
 
-  testWidgets('App smoke test - renders splash screen',
-      (WidgetTester tester) async {
+  testWidgets('App smoke test - renders splash screen', (WidgetTester tester) async {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -41,6 +40,6 @@ void main() {
     );
 
     expect(find.byType(MyApp), findsOneWidget);
-    expect(find.text('Samruddha-Kirana Delivery Agent'), findsOneWidget);
+    expect(find.text('Samruddha Kirana'), findsOneWidget);
   });
 }

@@ -1,4 +1,4 @@
-# Samruddha-Kirana Delivery Agent
+# Samruddha Kirana Bajar Delivery Agent App
 
 A new Flutter project.
 
