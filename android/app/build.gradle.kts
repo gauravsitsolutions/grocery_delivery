@@ -33,6 +33,42 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    applicationVariants.all {
+        outputs.all {
+            val output = this as? com.android.build.gradle.api.ApkVariantOutput
+            val type = buildType.name
+            output?.outputFileName = if (type == "release") {
+                "Samruddha-Kirana.apk"
+            } else {
+                "Samruddha-Kirana-$type.apk"
+            }
+        }
+    }
+}
+
+tasks.register("copyCustomApk") {
+    doLast {
+        val buildDir = project.layout.buildDirectory.asFile.get()
+        val flutterApkDir = File(buildDir, "outputs/flutter-apk")
+        if (flutterApkDir.exists()) {
+            flutterApkDir.listFiles()?.forEach { file ->
+                if (file.extension == "apk" && file.name.startsWith("app-")) {
+                    val mode = file.name.substringAfter("app-").substringBefore(".apk")
+                    file.copyTo(File(flutterApkDir, "Samruddha-Kirana-$mode.apk"), overwrite = true)
+                    file.copyTo(File(flutterApkDir, "Samruddha Kirana-$mode.apk"), overwrite = true)
+                    if (mode == "release") {
+                        file.copyTo(File(flutterApkDir, "Samruddha-Kirana.apk"), overwrite = true)
+                        file.copyTo(File(flutterApkDir, "Samruddha Kirana.apk"), overwrite = true)
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.matching { it.name.startsWith("assemble") || it.name.startsWith("copyFlutterApks") }.configureEach {
+    finalizedBy("copyCustomApk")
 }
 
 kotlin {
