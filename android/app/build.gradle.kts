@@ -51,13 +51,29 @@ tasks.register("copyCustomApk") {
     doLast {
         val buildDir = project.layout.buildDirectory.asFile.get()
         val flutterApkDir = File(buildDir, "outputs/flutter-apk")
-        if (flutterApkDir.exists()) {
-            flutterApkDir.listFiles()?.forEach { file ->
-                if (file.extension == "apk" && file.name.startsWith("app-")) {
-                    val mode = file.name.substringAfter("app-").substringBefore(".apk")
-                    file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent-$mode.apk"), overwrite = true)
-                    file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent.apk"), overwrite = true)
+        val apkOutputDir = File(buildDir, "outputs/apk")
+
+        flutterApkDir.mkdirs()
+
+        // Copy from apkOutputDir variants if available
+        listOf("release", "debug").forEach { variant ->
+            val variantDir = File(apkOutputDir, variant)
+            if (variantDir.exists()) {
+                variantDir.listFiles()?.forEach { file ->
+                    if (file.extension == "apk") {
+                        file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent.apk"), overwrite = true)
+                        file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent-$variant.apk"), overwrite = true)
+                    }
                 }
+            }
+        }
+
+        // Copy from flutterApkDir if standard app-<mode>.apk exists
+        flutterApkDir.listFiles()?.forEach { file ->
+            if (file.extension == "apk" && file.name.startsWith("app-")) {
+                val mode = file.name.substringAfter("app-").substringBefore(".apk")
+                file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent-$mode.apk"), overwrite = true)
+                file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent.apk"), overwrite = true)
             }
         }
     }
