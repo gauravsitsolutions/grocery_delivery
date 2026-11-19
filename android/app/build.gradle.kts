@@ -56,11 +56,7 @@ tasks.register("copyCustomApk") {
                 if (file.extension == "apk" && file.name.startsWith("app-")) {
                     val mode = file.name.substringAfter("app-").substringBefore(".apk")
                     file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent-$mode.apk"), overwrite = true)
-                    file.copyTo(File(flutterApkDir, "Samruddha-Kirana Delivery Agent-$mode.apk"), overwrite = true)
-                    if (mode == "release") {
-                        file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent.apk"), overwrite = true)
-                        file.copyTo(File(flutterApkDir, "Samruddha-Kirana Delivery Agent.apk"), overwrite = true)
-                    }
+                    file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent.apk"), overwrite = true)
                 }
             }
         }
