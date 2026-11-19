@@ -68,6 +68,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Samruddha Kirana Delivery',
       debugShowCheckedModeBanner: false,
       navigatorKey: NavigationService.navigatorKey, // Registered GlobalKey
       initialRoute: AppRoutes.splash,

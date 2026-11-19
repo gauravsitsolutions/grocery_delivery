@@ -1,6 +1,6 @@
 {
-    "name": "samrudhi_delivery_agent_app",
-    "short_name": "samrudhi_delivery_agent_app",
+    "name": "Samruddha Kirana Delivery",
+    "short_name": "Samruddha Delivery",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

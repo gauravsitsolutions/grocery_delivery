@@ -365,7 +365,7 @@
 				DEVELOPMENT_TEAM = G8VHC4LNLV;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Samruddhi Delivery Agent";
+				INFOPLIST_KEY_CFBundleDisplayName = "Samruddha Kirana Delivery";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				IPHONEOS_DEPLOYMENT_TARGET = 18;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -554,7 +554,7 @@
 				DEVELOPMENT_TEAM = G8VHC4LNLV;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Samruddhi Delivery Agent";
+				INFOPLIST_KEY_CFBundleDisplayName = "Samruddha Kirana Delivery";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				IPHONEOS_DEPLOYMENT_TARGET = 18;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -586,7 +586,7 @@
 				DEVELOPMENT_TEAM = G8VHC4LNLV;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Samruddhi Delivery Agent";
+				INFOPLIST_KEY_CFBundleDisplayName = "Samruddha Kirana Delivery";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				IPHONEOS_DEPLOYMENT_TARGET = 18;
 				LD_RUNPATH_SEARCH_PATHS = (

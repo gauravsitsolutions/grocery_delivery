@@ -16,7 +16,7 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     PackageInfo.setMockInitialValues(
-      appName: 'Samrudhi Delivery Agent',
+      appName: 'Samruddha Kirana Delivery',
       packageName: 'com.samrudhi.delivery',
       version: '1.0.0',
       buildNumber: '1',
@@ -40,6 +40,6 @@ void main() {
     );
 
     expect(find.byType(MyApp), findsOneWidget);
-    expect(find.text('Samruddha Kirana'), findsOneWidget);
+    expect(find.text('Samruddha Kirana Delivery'), findsOneWidget);
   });
 }
