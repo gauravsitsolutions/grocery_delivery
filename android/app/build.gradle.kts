@@ -39,9 +39,9 @@ android {
             val output = this as? com.android.build.gradle.api.ApkVariantOutput
             val type = buildType.name
             output?.outputFileName = if (type == "release") {
-                "Samruddha-Kirana.apk"
+                "Samruddha-Kirana-Delivery-Agent.apk"
             } else {
-                "Samruddha-Kirana-$type.apk"
+                "Samruddha-Kirana-Delivery-Agent-$type.apk"
             }
         }
     }
@@ -55,11 +55,11 @@ tasks.register("copyCustomApk") {
             flutterApkDir.listFiles()?.forEach { file ->
                 if (file.extension == "apk" && file.name.startsWith("app-")) {
                     val mode = file.name.substringAfter("app-").substringBefore(".apk")
-                    file.copyTo(File(flutterApkDir, "Samruddha-Kirana-$mode.apk"), overwrite = true)
-                    file.copyTo(File(flutterApkDir, "Samruddha Kirana-$mode.apk"), overwrite = true)
+                    file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent-$mode.apk"), overwrite = true)
+                    file.copyTo(File(flutterApkDir, "Samruddha-Kirana Delivery Agent-$mode.apk"), overwrite = true)
                     if (mode == "release") {
-                        file.copyTo(File(flutterApkDir, "Samruddha-Kirana.apk"), overwrite = true)
-                        file.copyTo(File(flutterApkDir, "Samruddha Kirana.apk"), overwrite = true)
+                        file.copyTo(File(flutterApkDir, "Samruddha-Kirana-Delivery-Agent.apk"), overwrite = true)
+                        file.copyTo(File(flutterApkDir, "Samruddha-Kirana Delivery Agent.apk"), overwrite = true)
                     }
                 }
             }
