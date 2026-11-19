@@ -188,10 +188,9 @@ class _SplashScreenState extends State<SplashScreen>
                       colors: [AppColors.primaryGreen, AppColors.primaryGreen],
                     ).createShader(bounds),
                     child: Text(
-                      'Samruddha Kirana Delivery',
-                      textAlign: TextAlign.center,
+                      'Samruddha Kirana',
                       style: TextStyle(
-                        fontSize: R.sp(26),
+                        fontSize: R.sp(30),
                         fontWeight: FontWeight.bold,
                         color: AppColors.white,
                         letterSpacing: 1.2,
